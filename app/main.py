@@ -49,6 +49,11 @@
 # uvicorn app.main:app --reload --reload-dir app
 # C:\Users\Kirill\Documents\New Best Life\employee-tracker> uvicorn app.main:app --reload --reload-dir app
 
+# github
+# git branch -M main
+# git remote add origin https://github.com/llkirill12qb/qbtracker.git
+# 
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from app.database import engine, Base
