@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from app.database import engine, Base
@@ -10,6 +11,7 @@ from app.routes.qr import router as qr_router
 from app.routes import dashboard
 from app.routes.employees_page import router as employees_page_router
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 
@@ -23,6 +25,7 @@ app.include_router(terminal_router)
 app.include_router(qr_router)
 app.include_router(dashboard.router)
 app.include_router(employees_page_router)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 # app.mount("/static", StaticFiles(directory="app/static"), name="static")
