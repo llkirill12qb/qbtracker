@@ -4,12 +4,18 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import datetime, date, time
 
-from app.database import get_db
-from app.models.employee import Employee
-from app.models.scan_log import ScanLog
+from app.core.database import SessionLocal
+from app.models.employee_model import Employee
+from app.models.scan_log_model import ScanLog
 
 router = APIRouter()
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 @router.get("/api/dashboard")
 def dashboard_data(db: Session = Depends(get_db)):
@@ -37,7 +43,7 @@ def dashboard_data(db: Session = Depends(get_db)):
     recent = []
     for log, emp in recent_logs:
         recent.append({
-            "employee_name": emp.name,
+            "employee_name": emp.full_name,
             "card_id": emp.card_id,
             "time": log.scanned_at.isoformat()
         })

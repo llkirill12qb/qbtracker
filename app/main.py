@@ -1,15 +1,15 @@
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from app.database import engine, Base
-from app.models.employee import Employee
-from app.models.scan_log import ScanLog
-from app.routes.employees import router as employees_router
-from app.routes.scan import router as scan_router
-from app.routes.terminal import router as terminal_router
-from app.routes.qr import router as qr_router
-from app.routes import dashboard
-from app.routes.employees_page import router as employees_page_router
+from app.core.database import engine, Base
+from app.models.employee_model import Employee
+from app.models.scan_log_model import ScanLog
+from app.api.routes.employees_routes import router as employees_router
+from app.api.routes.scan_routes import router as scan_router
+from app.api.routes.terminal_routes import router as terminal_router
+from app.api.routes.qr_routes import router as qr_router
+from app.api.routes import dashboard_routes as dashboard
+from app.api.routes.employees_page_routes import router as employees_page_router
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 

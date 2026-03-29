@@ -3,8 +3,8 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
-from app.database import SessionLocal
-from app.models.employee import Employee
+from app.core.database import SessionLocal
+from app.models.employee_model import Employee
 
 router = APIRouter()
 
