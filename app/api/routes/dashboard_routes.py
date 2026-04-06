@@ -27,9 +27,17 @@ def dashboard_data(db: Session = Depends(get_db)):
     start_today = datetime.combine(today, time.min)
     end_today = datetime.combine(today, time.max)
 
-    total_employees = (
+    active_employees = (
         db.query(func.count(Employee.id))
         .filter(Employee.company_id == DEFAULT_COMPANY_ID)
+        .filter(Employee.is_active.is_(True))
+        .scalar()
+    )
+
+    archived_employees = (
+        db.query(func.count(Employee.id))
+        .filter(Employee.company_id == DEFAULT_COMPANY_ID)
+        .filter(Employee.is_active.is_(False))
         .scalar()
     )
 
@@ -60,7 +68,8 @@ def dashboard_data(db: Session = Depends(get_db)):
         })
 
     return {
-        "employees": total_employees or 0,
+        "employees": active_employees or 0,
+        "archived_employees": archived_employees or 0,
         "scans_today": scans_today or 0,
         "currently_inside": 0,
         "recent": recent
@@ -185,8 +194,13 @@ def dashboard_page():
 
             <div class="cards">
                 <div class="card">
-                    <h3>Total Employees</h3>
+                    <h3>Active Employees</h3>
                     <div class="value" id="employees">0</div>
+                </div>
+
+                <div class="card">
+                    <h3>Archived Employees</h3>
+                    <div class="value" id="archivedEmployees">0</div>
                 </div>
 
                 <div class="card">
@@ -226,6 +240,7 @@ def dashboard_page():
                     const data = await response.json();
 
                     document.getElementById("employees").innerText = data.employees;
+                    document.getElementById("archivedEmployees").innerText = data.archived_employees;
                     document.getElementById("scans").innerText = data.scans_today;
                     document.getElementById("inside").innerText = data.currently_inside;
 
