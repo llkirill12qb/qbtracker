@@ -2,37 +2,98 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Employees (TEST)</title>
+    <title>Employees</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            padding: 40px;
-            margin: 0;
-            color: #111827;
+        :root {
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --line: #d1d5db;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --danger: #dc2626;
+            --danger-dark: #b91c1c;
+            --success-bg: #ecfdf5;
+            --success-text: #166534;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         }
 
-        h1 {
-            margin-bottom: 20px;
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            padding: 40px;
+            margin: 0;
+            color: var(--text);
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
         }
 
         .page-wrap {
-            max-width: 1100px;
+            max-width: 1160px;
             margin: 0 auto;
         }
 
-        .form-box {
-            background: white;
-            padding: 24px;
-            border-radius: 14px;
-            margin-bottom: 30px;
-            max-width: 520px;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+        .top-row {
+            display: grid;
+            grid-template-columns: minmax(320px, 520px) 1fr;
+            gap: 24px;
+            align-items: start;
+            margin-bottom: 26px;
         }
 
-        .form-box h3 {
-            margin-top: 0;
+        .box {
+            background: var(--card);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .form-header,
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
             margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .mode-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: #eff6ff;
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .status-message {
+            display: none;
+            margin-bottom: 14px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-weight: bold;
+        }
+
+        .status-message.success {
+            display: block;
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+
+        .status-message.error {
+            display: block;
+            background: #fee2e2;
+            color: #991b1b;
         }
 
         input,
@@ -42,8 +103,7 @@
             width: 100%;
             margin-bottom: 12px;
             padding: 12px;
-            box-sizing: border-box;
-            border: 1px solid #d1d5db;
+            border: 1px solid var(--line);
             border-radius: 10px;
             font-size: 15px;
             background: white;
@@ -56,31 +116,54 @@
 
         input[type="file"] {
             padding: 8px;
-            background: #fff;
+        }
+
+        .form-actions,
+        .card-actions,
+        .row-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         button {
             padding: 10px 16px;
-            background: #2563eb;
-            color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
         }
 
-        button:hover {
-            background: #1d4ed8;
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-dark);
         }
 
         .employee-card-box {
             display: none;
-            background: white;
-            padding: 24px;
-            border-radius: 16px;
-            margin-bottom: 30px;
-            max-width: 950px;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+            min-height: 100%;
         }
 
         .employee-card-layout {
@@ -99,21 +182,27 @@
             min-width: 300px;
         }
 
-        .employee-photo-large {
-            width: 120px;
-            height: 120px;
+        .employee-photo-large,
+        .employee-photo-small {
             object-fit: cover;
-            border-radius: 14px;
             background: #e5e7eb;
             border: 1px solid #ddd;
         }
 
-        .employee-card-info {
-            min-width: 220px;
+        .employee-photo-large {
+            width: 120px;
+            height: 120px;
+            border-radius: 14px;
+        }
+
+        .employee-photo-small {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
         }
 
         .employee-card-name {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: bold;
             margin-bottom: 10px;
         }
@@ -122,12 +211,6 @@
             margin-bottom: 6px;
             font-size: 15px;
             color: #374151;
-        }
-
-        .employee-qr-box {
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
         .employee-qr {
@@ -141,12 +224,15 @@
             display: block;
         }
 
-        .card-actions {
-            margin-top: 20px;
+        .empty-card {
+            color: var(--muted);
+            line-height: 1.6;
         }
 
-        .list-title {
-            margin-bottom: 14px;
+        .employee-list-box {
+            background: transparent;
+            box-shadow: none;
+            padding: 0;
         }
 
         .employee {
@@ -160,7 +246,6 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             cursor: pointer;
             transition: 0.2s ease;
-            justify-content: space-between;
         }
 
         .employee:hover {
@@ -169,22 +254,14 @@
         }
 
         .employee.selected {
-            border: 2px solid #2563eb;
+            border: 2px solid var(--primary);
             background: #eff6ff;
-        }
-
-        .employee-photo-small {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 10px;
-            background: #e5e7eb;
-            border: 1px solid #ddd;
         }
 
         .employee-info {
             flex: 1;
             min-width: 220px;
+            line-height: 1.45;
         }
 
         .employee strong {
@@ -202,7 +279,13 @@
         }
 
         .muted {
-            color: #6b7280;
+            color: var(--muted);
+        }
+
+        @media (max-width: 920px) {
+            .top-row {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 700px) {
@@ -210,21 +293,8 @@
                 padding: 20px;
             }
 
-            .employee-card-layout {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .employee-card-left {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .employee-qr-box {
-                width: 100%;
-                justify-content: flex-start;
-            }
-
+            .employee-card-layout,
+            .employee-card-left,
             .employee {
                 flex-direction: column;
                 align-items: flex-start;
@@ -237,10 +307,11 @@
                 padding: 0;
             }
 
-            .form-box,
+            #employeeFormBox,
             .list-title,
             #employees,
-            h1 {
+            h1,
+            .status-message {
                 display: none !important;
             }
 
@@ -258,77 +329,193 @@
         }
     </style>
 </head>
-
 <body>
 <div class="page-wrap">
     <h1>Employees</h1>
 
-    <form id="employeeForm" class="form-box">
-        <h3>Add Employee</h3>
+    <div class="top-row">
+        <div id="employeeFormBox" class="box">
+            <div class="form-header">
+                <div>
+                    <h3 id="formTitle">Add Employee</h3>
+                    <div class="muted" id="formSubtitle">Create a new employee profile with card, photo, and contact details.</div>
+                </div>
+                <div id="formModeBadge" class="mode-badge">Create Mode</div>
+            </div>
 
-        <input name="full_name" placeholder="Full name" required>
-        <input name="card_id" placeholder="Card ID" required>
-        <input name="department" placeholder="Department">
-        <input name="position" placeholder="Position">
-        <input name="phone" placeholder="Phone">
-        <input type="email" name="email" placeholder="Email">
+            <div id="statusMessage" class="status-message"></div>
 
-        <select name="employee_type">
-            <option value="full_time">Full Time</option>
-            <option value="part_time">Part Time</option>
-            <option value="contractor">Contractor</option>
-        </select>
+            <form id="employeeForm">
+                <input type="hidden" id="employeeId" name="employee_id">
 
-        <select name="status">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="on_leave">On Leave</option>
-        </select>
+                <input name="full_name" placeholder="Full name" required>
+                <input name="card_id" placeholder="Card ID" required>
+                <input name="department" placeholder="Department">
+                <input name="position" placeholder="Position">
+                <input name="phone" placeholder="Phone">
+                <input type="email" name="email" placeholder="Email">
 
-        <textarea name="notes" placeholder="Notes"></textarea>
+                <select name="employee_type">
+                    <option value="full_time">Full Time</option>
+                    <option value="part_time">Part Time</option>
+                    <option value="contractor">Contractor</option>
+                </select>
 
-        <input type="file" name="photo">
-        <button>Add Employee</button>
-    </form>
+                <select name="status">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="on_leave">On Leave</option>
+                </select>
 
-    <div id="employeeCard" class="employee-card-box">
-        <h2>Employee Card</h2>
+                <textarea name="notes" placeholder="Notes"></textarea>
+                <input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp">
 
-        <div class="employee-card-layout">
-            <div class="employee-card-left">
-                <img id="cardPhoto" src="" alt="Employee Photo" class="employee-photo-large">
+                <div class="form-actions">
+                    <button id="submitButton" class="btn-primary" type="submit">Add Employee</button>
+                    <button id="cancelEditButton" class="btn-secondary" type="button" style="display: none;">Cancel Edit</button>
+                </div>
+            </form>
+        </div>
 
-                <div class="employee-card-info">
-                    <div id="cardName" class="employee-card-name"></div>
-                    <div id="cardCardId" class="employee-card-line"></div>
-                    <div id="cardDepartment" class="employee-card-line"></div>
-                    <div id="cardPosition" class="employee-card-line"></div>
-                    <div id="cardPhone" class="employee-card-line"></div>
-                    <div id="cardEmail" class="employee-card-line"></div>
-                    <div id="cardType" class="employee-card-line"></div>
-                    <div id="cardStatus" class="employee-card-line"></div>
-                    <div id="cardNotes" class="employee-card-line"></div>
-                    <div class="employee-card-line muted">Ready for print</div>
+        <div id="employeeCard" class="box employee-card-box">
+            <div class="card-header">
+                <div>
+                    <h2>Employee Card</h2>
+                    <div class="muted">Selected employee details and print-ready badge.</div>
                 </div>
             </div>
 
-            <div class="employee-qr-box">
-                <img id="cardQR" src="" alt="QR Code" class="employee-qr">
+            <div class="employee-card-layout">
+                <div class="employee-card-left">
+                    <img id="cardPhoto" src="" alt="Employee Photo" class="employee-photo-large">
+
+                    <div class="employee-card-info">
+                        <div id="cardName" class="employee-card-name"></div>
+                        <div id="cardCardId" class="employee-card-line"></div>
+                        <div id="cardDepartment" class="employee-card-line"></div>
+                        <div id="cardPosition" class="employee-card-line"></div>
+                        <div id="cardPhone" class="employee-card-line"></div>
+                        <div id="cardEmail" class="employee-card-line"></div>
+                        <div id="cardType" class="employee-card-line"></div>
+                        <div id="cardStatus" class="employee-card-line"></div>
+                        <div id="cardNotes" class="employee-card-line"></div>
+                        <div class="employee-card-line muted">Ready for print</div>
+                    </div>
+                </div>
+
+                <div class="employee-qr-box">
+                    <img id="cardQR" src="" alt="QR Code" class="employee-qr">
+                </div>
+            </div>
+
+            <div class="card-actions" style="margin-top: 20px;">
+                <button id="editCardButton" class="btn-primary" type="button">Edit</button>
+                <button id="deleteCardButton" class="btn-danger" type="button">Delete</button>
+                <button class="btn-secondary" type="button" onclick="window.print()">Print</button>
             </div>
         </div>
 
-        <div class="card-actions">
-            <button type="button" onclick="window.print()">Print</button>
+        <div id="emptyCard" class="box">
+            <h2>Employee Card</h2>
+            <div class="empty-card">
+                Select an employee from the list to view the large card, edit details, delete the record, or print the QR card.
+            </div>
         </div>
     </div>
 
-    <h2 class="list-title">Employees List</h2>
-    <div id="employees"></div>
+    <div class="employee-list-box">
+        <h2 class="list-title">Employees List</h2>
+        <div id="employees"></div>
+    </div>
 </div>
 
 <script>
+const form = document.getElementById("employeeForm");
+const employeeIdInput = document.getElementById("employeeId");
+const statusMessage = document.getElementById("statusMessage");
+const formTitle = document.getElementById("formTitle");
+const formSubtitle = document.getElementById("formSubtitle");
+const formModeBadge = document.getElementById("formModeBadge");
+const submitButton = document.getElementById("submitButton");
+const cancelEditButton = document.getElementById("cancelEditButton");
+const employeesContainer = document.getElementById("employees");
+const employeeCard = document.getElementById("employeeCard");
+const emptyCard = document.getElementById("emptyCard");
+const editCardButton = document.getElementById("editCardButton");
+const deleteCardButton = document.getElementById("deleteCardButton");
+
+let employeesState = [];
+let selectedEmployeeId = null;
+let formMode = "create";
+
+function placeholderSvg(label, size) {
+    const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+            <rect width="100%" height="100%" fill="#e5e7eb"/>
+            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#6b7280" font-family="Arial" font-size="${Math.round(size * 0.16)}">${label}</text>
+        </svg>
+    `;
+    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function showStatus(message, type) {
+    statusMessage.className = "status-message " + type;
+    statusMessage.textContent = message;
+}
+
+function clearStatus() {
+    statusMessage.className = "status-message";
+    statusMessage.textContent = "";
+}
+
+function setFormMode(mode, employee = null) {
+    formMode = mode;
+
+    if (mode === "edit" && employee) {
+        formTitle.textContent = "Edit Employee";
+        formSubtitle.textContent = "Update the selected employee details without leaving the page.";
+        formModeBadge.textContent = "Edit Mode";
+        submitButton.textContent = "Save Changes";
+        cancelEditButton.style.display = "inline-flex";
+        employeeIdInput.value = employee.id;
+
+        form.full_name.value = employee.full_name ?? "";
+        form.card_id.value = employee.card_id ?? "";
+        form.department.value = employee.department ?? "";
+        form.position.value = employee.position ?? "";
+        form.phone.value = employee.phone ?? "";
+        form.email.value = employee.email ?? "";
+        form.employee_type.value = employee.employee_type ?? "full_time";
+        form.status.value = employee.status ?? "active";
+        form.notes.value = employee.notes ?? "";
+        form.photo.value = "";
+    } else {
+        formTitle.textContent = "Add Employee";
+        formSubtitle.textContent = "Create a new employee profile with card, photo, and contact details.";
+        formModeBadge.textContent = "Create Mode";
+        submitButton.textContent = "Add Employee";
+        cancelEditButton.style.display = "none";
+        employeeIdInput.value = "";
+        form.reset();
+    }
+}
+
+function getEmployeeById(employeeId) {
+    return employeesState.find(emp => emp.id === employeeId) || null;
+}
+
 function fillEmployeeCard(emp) {
-    document.getElementById("employeeCard").style.display = "block";
+    employeeCard.style.display = "block";
+    emptyCard.style.display = "none";
 
     document.getElementById("cardName").innerText = emp.full_name;
     document.getElementById("cardCardId").innerText = "Card ID: " + emp.card_id;
@@ -340,49 +527,53 @@ function fillEmployeeCard(emp) {
     document.getElementById("cardStatus").innerText = "Status: " + (emp.status ?? "");
     document.getElementById("cardNotes").innerText = "Notes: " + (emp.notes ?? "");
 
-    if (emp.photo_url) {
-        document.getElementById("cardPhoto").src = emp.photo_url + "?t=" + Date.now();
-    } else {
-        document.getElementById("cardPhoto").src = "https://via.placeholder.com/120?text=No+Photo";
-    }
+    document.getElementById("cardPhoto").src = emp.photo_url
+        ? emp.photo_url + "?t=" + Date.now()
+        : placeholderSvg("No Photo", 120);
 
     document.getElementById("cardQR").src = `/employee/${emp.id}/qr?t=` + Date.now();
+
+    editCardButton.onclick = () => setFormMode("edit", emp);
+    deleteCardButton.onclick = () => deleteEmployee(emp.id);
 }
 
-async function loadEmployees(selectedId = null) {
-    const response = await fetch("/employees");
-    const data = await response.json();
+function clearEmployeeCard() {
+    employeeCard.style.display = "none";
+    emptyCard.style.display = "block";
+}
 
-    const container = document.getElementById("employees");
-    container.innerHTML = "";
+function renderEmployees() {
+    employeesContainer.innerHTML = "";
 
-    data.forEach(emp => {
-        const div = document.createElement("div");
-        div.className = "employee";
+    employeesState.forEach(emp => {
+        const row = document.createElement("div");
+        row.className = "employee";
 
-        if (selectedId && emp.id === selectedId) {
-            div.classList.add("selected");
+        if (selectedEmployeeId === emp.id) {
+            row.classList.add("selected");
         }
+
+        row.addEventListener("click", () => {
+            selectedEmployeeId = emp.id;
+            renderEmployees();
+            fillEmployeeCard(emp);
+        });
 
         const photo = document.createElement("img");
         photo.className = "employee-photo-small";
-        if (emp.photo_url) {
-            photo.src = emp.photo_url;
-        } else {
-            photo.src = "https://via.placeholder.com/60?text=No";
-        }
+        photo.src = emp.photo_url ? emp.photo_url + "?t=" + Date.now() : placeholderSvg("No", 60);
 
         const info = document.createElement("div");
         info.className = "employee-info";
         info.innerHTML = `
-            <strong>${emp.full_name}</strong><br>
-            Card: ${emp.card_id}<br>
-            Dept: ${emp.department ?? ""}<br>
-            Position: ${emp.position ?? ""}<br>
-            Phone: ${emp.phone ?? ""}<br>
-            Email: ${emp.email ?? ""}<br>
-            Type: ${emp.employee_type ?? ""}<br>
-            Status: ${emp.status ?? ""}
+            <strong>${escapeHtml(emp.full_name)}</strong><br>
+            Card: ${escapeHtml(emp.card_id)}<br>
+            Dept: ${escapeHtml(emp.department ?? "")}<br>
+            Position: ${escapeHtml(emp.position ?? "")}<br>
+            Phone: ${escapeHtml(emp.phone ?? "")}<br>
+            Email: ${escapeHtml(emp.email ?? "")}<br>
+            Type: ${escapeHtml(emp.employee_type ?? "")}<br>
+            Status: ${escapeHtml(emp.status ?? "")}
         `;
 
         const qr = document.createElement("img");
@@ -390,40 +581,131 @@ async function loadEmployees(selectedId = null) {
         qr.src = `/employee/${emp.id}/qr?t=` + Date.now();
         qr.alt = "QR";
 
-        div.addEventListener("click", () => {
-            document.querySelectorAll(".employee").forEach(el => el.classList.remove("selected"));
-            div.classList.add("selected");
+        const actions = document.createElement("div");
+        actions.className = "row-actions";
+
+        const editButton = document.createElement("button");
+        editButton.type = "button";
+        editButton.className = "btn-secondary";
+        editButton.textContent = "Edit";
+        editButton.addEventListener("click", event => {
+            event.stopPropagation();
+            selectedEmployeeId = emp.id;
+            renderEmployees();
             fillEmployeeCard(emp);
+            setFormMode("edit", emp);
         });
 
-        div.appendChild(photo);
-        div.appendChild(info);
-        div.appendChild(qr);
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "btn-danger";
+        deleteButton.textContent = "Delete";
+        deleteButton.addEventListener("click", event => {
+            event.stopPropagation();
+            deleteEmployee(emp.id);
+        });
 
-        container.appendChild(div);
+        actions.appendChild(editButton);
+        actions.appendChild(deleteButton);
+
+        row.appendChild(photo);
+        row.appendChild(info);
+        row.appendChild(qr);
+        row.appendChild(actions);
+
+        employeesContainer.appendChild(row);
     });
 }
 
-document.getElementById("employeeForm").addEventListener("submit", async e => {
-    e.preventDefault();
+async function loadEmployees(selectedId = null) {
+    const response = await fetch("/employees");
+    const data = await response.json();
 
-    const form = e.target;
+    employeesState = data;
+
+    if (selectedId !== null) {
+        selectedEmployeeId = selectedId;
+    } else if (selectedEmployeeId && !getEmployeeById(selectedEmployeeId)) {
+        selectedEmployeeId = null;
+    }
+
+    renderEmployees();
+
+    const selectedEmployee = selectedEmployeeId ? getEmployeeById(selectedEmployeeId) : null;
+    if (selectedEmployee) {
+        fillEmployeeCard(selectedEmployee);
+    } else {
+        clearEmployeeCard();
+    }
+}
+
+async function deleteEmployee(employeeId) {
+    const employee = getEmployeeById(employeeId);
+    if (!employee) {
+        return;
+    }
+
+    const confirmed = window.confirm(`Delete employee "${employee.full_name}"?`);
+    if (!confirmed) {
+        return;
+    }
+
+    clearStatus();
+
+    const response = await fetch(`/employees/${employeeId}`, {
+        method: "DELETE"
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        showStatus(data.detail || "Error deleting employee", "error");
+        return;
+    }
+
+    if (selectedEmployeeId === employeeId) {
+        selectedEmployeeId = null;
+        clearEmployeeCard();
+    }
+
+    if (employeeIdInput.value === String(employeeId)) {
+        setFormMode("create");
+    }
+
+    showStatus("Employee deleted successfully.", "success");
+    await loadEmployees();
+}
+
+cancelEditButton.addEventListener("click", () => {
+    setFormMode("create");
+    clearStatus();
+});
+
+form.addEventListener("submit", async event => {
+    event.preventDefault();
+    clearStatus();
+
     const formData = new FormData(form);
+    const employeeId = employeeIdInput.value;
+    const isEdit = formMode === "edit" && employeeId;
 
-    const response = await fetch("/employees", {
-        method: "POST",
+    const response = await fetch(isEdit ? `/employees/${employeeId}` : "/employees", {
+        method: isEdit ? "PUT" : "POST",
         body: formData
     });
 
     const data = await response.json();
 
-    if (response.ok) {
-        form.reset();
-        fillEmployeeCard(data);
-        loadEmployees(data.id);
-    } else {
-        alert(data.detail || "Error creating employee");
+    if (!response.ok) {
+        showStatus(data.detail || "Error saving employee", "error");
+        return;
     }
+
+    selectedEmployeeId = data.id;
+    fillEmployeeCard(data);
+    setFormMode("create");
+    showStatus(isEdit ? "Employee updated successfully." : "Employee created successfully.", "success");
+    await loadEmployees(data.id);
 });
 
 loadEmployees();

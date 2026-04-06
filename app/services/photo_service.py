@@ -49,3 +49,12 @@ def save_employee_photo(upload_file, company_id: int, employee_id: int | None = 
 
     # возвращаем путь для фронта (с прямыми слешами)
     return str(file_path).replace("\\", "/")
+
+
+def delete_employee_photo(photo_filename: str | None, company_id: int) -> None:
+    if not photo_filename:
+        return
+
+    file_path = get_employee_upload_dir(company_id) / photo_filename
+    if file_path.exists():
+        file_path.unlink()

@@ -3,12 +3,18 @@ from sqlalchemy.orm import Session
 from app.models.employee_model import Employee
 
 
-def get_employee_by_card_id(db: Session, card_id: str):
-    return db.query(Employee).filter(Employee.card_id == card_id).first()
+def get_employee_by_card_id(db: Session, card_id: str, company_id: int | None = None):
+    query = db.query(Employee).filter(Employee.card_id == card_id)
+    if company_id is not None:
+        query = query.filter(Employee.company_id == company_id)
+    return query.first()
 
 
-def get_employee_by_id(db: Session, employee_id: int):
-    return db.query(Employee).filter(Employee.id == employee_id).first()
+def get_employee_by_id(db: Session, employee_id: int, company_id: int | None = None):
+    query = db.query(Employee).filter(Employee.id == employee_id)
+    if company_id is not None:
+        query = query.filter(Employee.company_id == company_id)
+    return query.first()
 
 
 def get_all_employees(db: Session, company_id: int):
@@ -53,3 +59,37 @@ def update_employee_photo(db: Session, employee: Employee, photo_filename: str):
     db.commit()
     db.refresh(employee)
     return employee
+
+
+def update_employee(
+    db: Session,
+    employee: Employee,
+    full_name: str,
+    card_id: str,
+    department: str = "",
+    position: str | None = None,
+    phone: str | None = None,
+    email: str | None = None,
+    employee_type: str = "full_time",
+    status: str = "active",
+    notes: str | None = None,
+):
+    employee.full_name = full_name
+    employee.card_id = card_id
+    employee.department = department
+    employee.position = position
+    employee.phone = phone
+    employee.email = email
+    employee.employee_type = employee_type
+    employee.status = status
+    employee.notes = notes
+    employee.is_active = status == "active"
+
+    db.commit()
+    db.refresh(employee)
+    return employee
+
+
+def delete_employee(db: Session, employee: Employee):
+    db.delete(employee)
+    db.commit()
