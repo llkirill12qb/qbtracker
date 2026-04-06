@@ -13,3 +13,11 @@ def employees_page(request: Request):
         "employees_page.html",
         {"request": request}
     )
+
+
+@router.get("/employees-archive", response_class=HTMLResponse)
+def employees_archive_page(request: Request):
+    return templates.TemplateResponse(
+        "employees_archive.html",
+        {"request": request}
+    )

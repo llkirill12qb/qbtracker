@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Employees Archive</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --line: #d1d5db;
+            --nav: #111827;
+            --nav-muted: rgba(255, 255, 255, 0.72);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .navbar {
+            background: var(--nav);
+            color: white;
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .nav-subtitle {
+            font-size: 13px;
+            color: var(--nav-muted);
+            margin-top: 4px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .nav-links a:hover {
+            color: #bfdbfe;
+        }
+
+        .page-wrap {
+            max-width: 1160px;
+            margin: 0 auto;
+            padding: 36px 40px 40px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .page-copy p {
+            margin: 8px 0 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .summary-chip {
+            background: white;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            padding: 12px 16px;
+            font-weight: bold;
+        }
+
+        .summary-chip small {
+            display: block;
+            color: var(--muted);
+            font-weight: normal;
+            font-size: 12px;
+        }
+
+        .status-message {
+            display: none;
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-weight: bold;
+            background: #ecfdf5;
+            color: #166534;
+        }
+
+        .status-message.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .box {
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+
+        .archive-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .archive-item {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            padding: 16px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .archive-item.selected {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+        .archive-main {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            flex: 1;
+            min-width: 260px;
+        }
+
+        .archive-photo {
+            width: 64px;
+            height: 64px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #e5e7eb;
+            border: 1px solid #ddd;
+        }
+
+        .archive-name {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .archive-meta {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.5;
+            margin-top: 4px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .empty-state {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .employee-card {
+            display: none;
+        }
+
+        .employee-card.active {
+            display: block;
+        }
+
+        .card-layout {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .card-left {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .card-photo {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 14px;
+            background: #e5e7eb;
+            border: 1px solid #ddd;
+        }
+
+        .card-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .card-line {
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        .card-qr {
+            width: 170px;
+            height: 170px;
+            object-fit: contain;
+            border: 1px solid #ddd;
+            border-radius: 14px;
+            padding: 10px;
+            background: white;
+        }
+
+        @media (max-width: 920px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-wrap {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .navbar {
+                padding: 16px 18px;
+            }
+
+            .archive-item,
+            .archive-main,
+            .card-layout,
+            .card-left {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="navbar">
+    <div>
+        <div class="nav-title">Time Tracking SaaS</div>
+        <div class="nav-subtitle">Archived employees</div>
+    </div>
+    <div class="nav-links">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/employees-page">Employees</a>
+        <a href="/employees-archive">Archive</a>
+        <a href="/terminal">Terminal</a>
+    </div>
+</div>
+
+<div class="page-wrap">
+    <div class="page-header">
+        <div class="page-copy">
+            <h1>Employees Archive</h1>
+            <p>Archived employees are hidden from the active workspace, but remain tied to the same company and keep their scan history.</p>
+        </div>
+        <div class="summary-chip">
+            <div>
+                <div id="archiveCount">0 archived</div>
+                <small>Current company workspace</small>
+            </div>
+        </div>
+    </div>
+
+    <div id="statusMessage" class="status-message"></div>
+
+    <div class="content-grid">
+        <div class="box">
+            <h2>Archived Employees</h2>
+            <div id="archiveList" class="archive-list"></div>
+        </div>
+
+        <div class="box">
+            <div id="emptyCard" class="empty-state">
+                Select an archived employee to review the card and restore the employee back to the active list.
+            </div>
+
+            <div id="employeeCard" class="employee-card">
+                <h2>Archived Employee Card</h2>
+                <div class="card-layout">
+                    <div class="card-left">
+                        <img id="cardPhoto" class="card-photo" src="" alt="Employee photo">
+                        <div>
+                            <div id="cardName" class="card-name"></div>
+                            <div id="cardCardId" class="card-line"></div>
+                            <div id="cardDepartment" class="card-line"></div>
+                            <div id="cardPosition" class="card-line"></div>
+                            <div id="cardPhone" class="card-line"></div>
+                            <div id="cardEmail" class="card-line"></div>
+                            <div id="cardType" class="card-line"></div>
+                            <div id="cardStatus" class="card-line"></div>
+                            <div id="cardNotes" class="card-line"></div>
+                        </div>
+                    </div>
+                    <img id="cardQR" class="card-qr" src="" alt="QR code">
+                </div>
+                <div style="margin-top: 20px;">
+                    <button id="restoreButton" class="btn-primary" type="button">Restore Employee</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const archiveList = document.getElementById("archiveList");
+const archiveCount = document.getElementById("archiveCount");
+const statusMessage = document.getElementById("statusMessage");
+const emptyCard = document.getElementById("emptyCard");
+const employeeCard = document.getElementById("employeeCard");
+const restoreButton = document.getElementById("restoreButton");
+
+let archivedEmployees = [];
+let selectedEmployeeId = null;
+let assetVersion = Date.now();
+
+function placeholderSvg(label, size) {
+    const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+            <rect width="100%" height="100%" fill="#e5e7eb"/>
+            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#6b7280" font-family="Arial" font-size="${Math.round(size * 0.16)}">${label}</text>
+        </svg>
+    `;
+    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+}
+
+function getEmployeeById(employeeId) {
+    return archivedEmployees.find(emp => emp.id === employeeId) || null;
+}
+
+function showStatus(message, type = "success") {
+    statusMessage.style.display = "block";
+    statusMessage.className = type === "error" ? "status-message error" : "status-message";
+    statusMessage.textContent = message;
+}
+
+function photoSrc(employee, sizeLabel, fallbackSize) {
+    return employee.photo_url ? `${employee.photo_url}?v=${assetVersion}` : placeholderSvg(sizeLabel, fallbackSize);
+}
+
+function qrSrc(employee) {
+    return `/employee/${employee.id}/qr?v=${assetVersion}`;
+}
+
+function fillEmployeeCard(employee) {
+    emptyCard.style.display = "none";
+    employeeCard.classList.add("active");
+
+    document.getElementById("cardPhoto").src = photoSrc(employee, "No Photo", 120);
+    document.getElementById("cardQR").src = qrSrc(employee);
+    document.getElementById("cardName").textContent = employee.full_name;
+    document.getElementById("cardCardId").textContent = "Card ID: " + employee.card_id;
+    document.getElementById("cardDepartment").textContent = "Department: " + (employee.department ?? "");
+    document.getElementById("cardPosition").textContent = "Position: " + (employee.position ?? "");
+    document.getElementById("cardPhone").textContent = "Phone: " + (employee.phone ?? "");
+    document.getElementById("cardEmail").textContent = "Email: " + (employee.email ?? "");
+    document.getElementById("cardType").textContent = "Type: " + (employee.employee_type ?? "");
+    document.getElementById("cardStatus").textContent = "Status: " + (employee.status ?? "");
+    document.getElementById("cardNotes").textContent = "Notes: " + (employee.notes ?? "");
+
+    restoreButton.onclick = () => restoreEmployee(employee.id);
+}
+
+function clearCard() {
+    emptyCard.style.display = "block";
+    employeeCard.classList.remove("active");
+}
+
+function updateSelection() {
+    document.querySelectorAll(".archive-item").forEach(row => {
+        row.classList.toggle("selected", row.dataset.employeeId === String(selectedEmployeeId));
+    });
+}
+
+function renderArchiveList() {
+    archiveCount.textContent = `${archivedEmployees.length} archived`;
+    archiveList.innerHTML = "";
+
+    if (!archivedEmployees.length) {
+        archiveList.innerHTML = `
+            <div class="empty-state">
+                No archived employees in this company yet.
+            </div>
+        `;
+        clearCard();
+        return;
+    }
+
+    archivedEmployees.forEach(employee => {
+        const row = document.createElement("div");
+        row.className = "archive-item";
+        row.dataset.employeeId = employee.id;
+        if (selectedEmployeeId === employee.id) {
+            row.classList.add("selected");
+        }
+
+        row.addEventListener("click", () => {
+            selectedEmployeeId = employee.id;
+            updateSelection();
+            fillEmployeeCard(employee);
+        });
+
+        const main = document.createElement("div");
+        main.className = "archive-main";
+        main.innerHTML = `
+            <img class="archive-photo" src="${photoSrc(employee, "No", 64)}" alt="Photo">
+            <div>
+                <div class="archive-name">${employee.full_name}</div>
+                <div class="archive-meta">
+                    Card: ${employee.card_id}<br>
+                    Department: ${employee.department ?? "-"}<br>
+                    Status: ${employee.status ?? "-"}
+                </div>
+            </div>
+        `;
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "btn-primary";
+        button.textContent = "Restore";
+        button.addEventListener("click", async event => {
+            event.stopPropagation();
+            await restoreEmployee(employee.id);
+        });
+
+        row.appendChild(main);
+        row.appendChild(button);
+        archiveList.appendChild(row);
+    });
+}
+
+async function loadArchivedEmployees(selectedId = null) {
+    const response = await fetch("/employees/archived");
+    const data = await response.json();
+
+    if (!response.ok) {
+        showStatus(data.detail || "Error loading archive", "error");
+        return;
+    }
+
+    archivedEmployees = data;
+    assetVersion = Date.now();
+
+    if (selectedId !== null) {
+        selectedEmployeeId = selectedId;
+    } else if (selectedEmployeeId && !getEmployeeById(selectedEmployeeId)) {
+        selectedEmployeeId = null;
+    }
+
+    renderArchiveList();
+
+    const employee = selectedEmployeeId ? getEmployeeById(selectedEmployeeId) : null;
+    if (employee) {
+        fillEmployeeCard(employee);
+    } else {
+        clearCard();
+    }
+}
+
+async function restoreEmployee(employeeId) {
+    const response = await fetch(`/employees/${employeeId}/restore`, {
+        method: "POST"
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+        showStatus(data.detail || "Error restoring employee", "error");
+        return;
+    }
+
+    selectedEmployeeId = null;
+    showStatus("Employee restored to active list.");
+    await loadArchivedEmployees();
+}
+
+loadArchivedEmployees();
+</script>
+</body>
+</html>

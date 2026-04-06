@@ -18,7 +18,19 @@ def get_employee_by_id(db: Session, employee_id: int, company_id: int | None = N
 
 
 def get_all_employees(db: Session, company_id: int):
-    return db.query(Employee).filter(Employee.company_id == company_id).all()
+    return (
+        db.query(Employee)
+        .filter(Employee.company_id == company_id, Employee.is_active.is_(True))
+        .all()
+    )
+
+
+def get_archived_employees(db: Session, company_id: int):
+    return (
+        db.query(Employee)
+        .filter(Employee.company_id == company_id, Employee.is_active.is_(False))
+        .all()
+    )
 
 
 def create_employee(
@@ -90,6 +102,17 @@ def update_employee(
     return employee
 
 
-def delete_employee(db: Session, employee: Employee):
-    db.delete(employee)
+def soft_delete_employee(db: Session, employee: Employee):
+    employee.status = "inactive"
+    employee.is_active = False
     db.commit()
+    db.refresh(employee)
+    return employee
+
+
+def restore_employee(db: Session, employee: Employee):
+    employee.status = "active"
+    employee.is_active = True
+    db.commit()
+    db.refresh(employee)
+    return employee

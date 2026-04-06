@@ -16,6 +16,8 @@
             --danger-dark: #b91c1c;
             --success-bg: #ecfdf5;
             --success-text: #166534;
+            --nav: #111827;
+            --nav-muted: rgba(255, 255, 255, 0.72);
             --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         }
 
@@ -26,7 +28,6 @@
         body {
             font-family: Arial, sans-serif;
             background: var(--bg);
-            padding: 40px;
             margin: 0;
             color: var(--text);
         }
@@ -35,9 +36,85 @@
             margin-top: 0;
         }
 
+        .navbar {
+            background: var(--nav);
+            color: white;
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .nav-subtitle {
+            font-size: 13px;
+            color: var(--nav-muted);
+            margin-top: 4px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .nav-links a:hover {
+            color: #bfdbfe;
+        }
+
         .page-wrap {
             max-width: 1160px;
             margin: 0 auto;
+            padding: 36px 40px 40px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 18px;
+            margin-bottom: 22px;
+            flex-wrap: wrap;
+        }
+
+        .page-copy {
+            max-width: 720px;
+        }
+
+        .page-copy p {
+            margin: 8px 0 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .summary-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: white;
+            box-shadow: var(--shadow);
+            font-weight: bold;
+        }
+
+        .summary-chip small {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: normal;
         }
 
         .top-row {
@@ -235,6 +312,15 @@
             padding: 0;
         }
 
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
         .employee {
             background: white;
             padding: 15px;
@@ -242,10 +328,12 @@
             margin-bottom: 12px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 15px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             cursor: pointer;
             transition: 0.2s ease;
+            flex-wrap: wrap;
         }
 
         .employee:hover {
@@ -264,6 +352,12 @@
             line-height: 1.45;
         }
 
+        .employee-meta {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
         .employee strong {
             font-size: 18px;
         }
@@ -278,19 +372,40 @@
             background: white;
         }
 
+        .employee-side {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: auto;
+        }
+
         .muted {
             color: var(--muted);
+        }
+
+        .empty-list {
+            background: white;
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: var(--shadow);
+            color: var(--muted);
+            line-height: 1.6;
         }
 
         @media (max-width: 920px) {
             .top-row {
                 grid-template-columns: 1fr;
             }
+
+            .page-wrap {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
         }
 
         @media (max-width: 700px) {
-            body {
-                padding: 20px;
+            .navbar {
+                padding: 16px 18px;
             }
 
             .employee-card-layout,
@@ -298,6 +413,12 @@
             .employee {
                 flex-direction: column;
                 align-items: flex-start;
+            }
+
+            .employee-side {
+                margin-left: 0;
+                width: 100%;
+                justify-content: space-between;
             }
         }
 
@@ -330,8 +451,32 @@
     </style>
 </head>
 <body>
+<div class="navbar">
+    <div>
+        <div class="nav-title">Time Tracking SaaS</div>
+        <div class="nav-subtitle">Employee management workspace</div>
+    </div>
+    <div class="nav-links">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/employees-page">Employees</a>
+        <a href="/employees-archive">Archive</a>
+        <a href="/terminal">Terminal</a>
+    </div>
+</div>
+
 <div class="page-wrap">
-    <h1>Employees</h1>
+    <div class="page-header">
+        <div class="page-copy">
+            <h1>Employees</h1>
+            <p>Create, edit, review, and prepare employee cards from one screen without breaking the existing workflow.</p>
+        </div>
+        <div class="summary-chip">
+            <div>
+                <div id="employeeCount">0 employees</div>
+                <small>Active employees only</small>
+            </div>
+        </div>
+    </div>
 
     <div class="top-row">
         <div id="employeeFormBox" class="box">
@@ -410,7 +555,7 @@
 
             <div class="card-actions" style="margin-top: 20px;">
                 <button id="editCardButton" class="btn-primary" type="button">Edit</button>
-                <button id="deleteCardButton" class="btn-danger" type="button">Delete</button>
+                <button id="deleteCardButton" class="btn-danger" type="button">Archive</button>
                 <button class="btn-secondary" type="button" onclick="window.print()">Print</button>
             </div>
         </div>
@@ -418,13 +563,16 @@
         <div id="emptyCard" class="box">
             <h2>Employee Card</h2>
             <div class="empty-card">
-                Select an employee from the list to view the large card, edit details, delete the record, or print the QR card.
+                Select an employee from the list to view the large card, edit details, archive the record, or print the QR card.
             </div>
         </div>
     </div>
 
     <div class="employee-list-box">
-        <h2 class="list-title">Employees List</h2>
+        <div class="list-header">
+            <h2 class="list-title">Employees List</h2>
+            <div class="muted">Click any employee row to open the large card. Archived employees are shown on the Archive page.</div>
+        </div>
         <div id="employees"></div>
     </div>
 </div>
@@ -443,10 +591,12 @@ const employeeCard = document.getElementById("employeeCard");
 const emptyCard = document.getElementById("emptyCard");
 const editCardButton = document.getElementById("editCardButton");
 const deleteCardButton = document.getElementById("deleteCardButton");
+const employeeCount = document.getElementById("employeeCount");
 
 let employeesState = [];
 let selectedEmployeeId = null;
 let formMode = "create";
+let assetVersion = Date.now();
 
 function placeholderSvg(label, size) {
     const svg = `
@@ -513,6 +663,29 @@ function getEmployeeById(employeeId) {
     return employeesState.find(emp => emp.id === employeeId) || null;
 }
 
+function getEmployeePhotoSrc(emp) {
+    return emp.photo_url
+        ? `${emp.photo_url}?v=${assetVersion}`
+        : placeholderSvg("No Photo", 120);
+}
+
+function getEmployeeListPhotoSrc(emp) {
+    return emp.photo_url
+        ? `${emp.photo_url}?v=${assetVersion}`
+        : placeholderSvg("No", 60);
+}
+
+function getEmployeeQrSrc(emp) {
+    return `/employee/${emp.id}/qr?v=${assetVersion}`;
+}
+
+function updateSelectedEmployeeRow() {
+    document.querySelectorAll(".employee").forEach(row => {
+        const isSelected = row.dataset.employeeId === String(selectedEmployeeId);
+        row.classList.toggle("selected", isSelected);
+    });
+}
+
 function fillEmployeeCard(emp) {
     employeeCard.style.display = "block";
     emptyCard.style.display = "none";
@@ -527,11 +700,8 @@ function fillEmployeeCard(emp) {
     document.getElementById("cardStatus").innerText = "Status: " + (emp.status ?? "");
     document.getElementById("cardNotes").innerText = "Notes: " + (emp.notes ?? "");
 
-    document.getElementById("cardPhoto").src = emp.photo_url
-        ? emp.photo_url + "?t=" + Date.now()
-        : placeholderSvg("No Photo", 120);
-
-    document.getElementById("cardQR").src = `/employee/${emp.id}/qr?t=` + Date.now();
+    document.getElementById("cardPhoto").src = getEmployeePhotoSrc(emp);
+    document.getElementById("cardQR").src = getEmployeeQrSrc(emp);
 
     editCardButton.onclick = () => setFormMode("edit", emp);
     deleteCardButton.onclick = () => deleteEmployee(emp.id);
@@ -544,10 +714,21 @@ function clearEmployeeCard() {
 
 function renderEmployees() {
     employeesContainer.innerHTML = "";
+    employeeCount.textContent = `${employeesState.length} employee${employeesState.length === 1 ? "" : "s"}`;
+
+    if (!employeesState.length) {
+        employeesContainer.innerHTML = `
+            <div class="empty-list">
+                No employees yet. Create the first employee from the form above to generate a card and QR code.
+            </div>
+        `;
+        return;
+    }
 
     employeesState.forEach(emp => {
         const row = document.createElement("div");
         row.className = "employee";
+        row.dataset.employeeId = emp.id;
 
         if (selectedEmployeeId === emp.id) {
             row.classList.add("selected");
@@ -555,31 +736,32 @@ function renderEmployees() {
 
         row.addEventListener("click", () => {
             selectedEmployeeId = emp.id;
-            renderEmployees();
+            updateSelectedEmployeeRow();
             fillEmployeeCard(emp);
         });
 
         const photo = document.createElement("img");
         photo.className = "employee-photo-small";
-        photo.src = emp.photo_url ? emp.photo_url + "?t=" + Date.now() : placeholderSvg("No", 60);
+        photo.src = getEmployeeListPhotoSrc(emp);
 
         const info = document.createElement("div");
         info.className = "employee-info";
         info.innerHTML = `
             <strong>${escapeHtml(emp.full_name)}</strong><br>
-            Card: ${escapeHtml(emp.card_id)}<br>
-            Dept: ${escapeHtml(emp.department ?? "")}<br>
+            <div class="employee-meta">Card: ${escapeHtml(emp.card_id)} | Dept: ${escapeHtml(emp.department ?? "-")} | Status: ${escapeHtml(emp.status ?? "-")}</div>
             Position: ${escapeHtml(emp.position ?? "")}<br>
             Phone: ${escapeHtml(emp.phone ?? "")}<br>
             Email: ${escapeHtml(emp.email ?? "")}<br>
-            Type: ${escapeHtml(emp.employee_type ?? "")}<br>
-            Status: ${escapeHtml(emp.status ?? "")}
+            Type: ${escapeHtml(emp.employee_type ?? "")}
         `;
 
         const qr = document.createElement("img");
         qr.className = "employee-qr-small";
-        qr.src = `/employee/${emp.id}/qr?t=` + Date.now();
+        qr.src = getEmployeeQrSrc(emp);
         qr.alt = "QR";
+
+        const side = document.createElement("div");
+        side.className = "employee-side";
 
         const actions = document.createElement("div");
         actions.className = "row-actions";
@@ -591,7 +773,7 @@ function renderEmployees() {
         editButton.addEventListener("click", event => {
             event.stopPropagation();
             selectedEmployeeId = emp.id;
-            renderEmployees();
+            updateSelectedEmployeeRow();
             fillEmployeeCard(emp);
             setFormMode("edit", emp);
         });
@@ -599,7 +781,7 @@ function renderEmployees() {
         const deleteButton = document.createElement("button");
         deleteButton.type = "button";
         deleteButton.className = "btn-danger";
-        deleteButton.textContent = "Delete";
+        deleteButton.textContent = "Archive";
         deleteButton.addEventListener("click", event => {
             event.stopPropagation();
             deleteEmployee(emp.id);
@@ -610,32 +792,44 @@ function renderEmployees() {
 
         row.appendChild(photo);
         row.appendChild(info);
-        row.appendChild(qr);
-        row.appendChild(actions);
+        side.appendChild(qr);
+        side.appendChild(actions);
+
+        row.appendChild(side);
 
         employeesContainer.appendChild(row);
     });
 }
 
 async function loadEmployees(selectedId = null) {
-    const response = await fetch("/employees");
-    const data = await response.json();
+    try {
+        const response = await fetch("/employees");
+        const data = await response.json();
 
-    employeesState = data;
+        if (!response.ok) {
+            showStatus(data.detail || "Error loading employees", "error");
+            return;
+        }
 
-    if (selectedId !== null) {
-        selectedEmployeeId = selectedId;
-    } else if (selectedEmployeeId && !getEmployeeById(selectedEmployeeId)) {
-        selectedEmployeeId = null;
-    }
+        employeesState = data;
+        assetVersion = Date.now();
 
-    renderEmployees();
+        if (selectedId !== null) {
+            selectedEmployeeId = selectedId;
+        } else if (selectedEmployeeId && !getEmployeeById(selectedEmployeeId)) {
+            selectedEmployeeId = null;
+        }
 
-    const selectedEmployee = selectedEmployeeId ? getEmployeeById(selectedEmployeeId) : null;
-    if (selectedEmployee) {
-        fillEmployeeCard(selectedEmployee);
-    } else {
-        clearEmployeeCard();
+        renderEmployees();
+
+        const selectedEmployee = selectedEmployeeId ? getEmployeeById(selectedEmployeeId) : null;
+        if (selectedEmployee) {
+            fillEmployeeCard(selectedEmployee);
+        } else {
+            clearEmployeeCard();
+        }
+    } catch (error) {
+        showStatus("Error loading employees", "error");
     }
 }
 
@@ -645,7 +839,7 @@ async function deleteEmployee(employeeId) {
         return;
     }
 
-    const confirmed = window.confirm(`Delete employee "${employee.full_name}"?`);
+    const confirmed = window.confirm(`Archive employee "${employee.full_name}"?`);
     if (!confirmed) {
         return;
     }
@@ -659,21 +853,17 @@ async function deleteEmployee(employeeId) {
     const data = await response.json();
 
     if (!response.ok) {
-        showStatus(data.detail || "Error deleting employee", "error");
+        showStatus(data.detail || "Error archiving employee", "error");
         return;
-    }
-
-    if (selectedEmployeeId === employeeId) {
-        selectedEmployeeId = null;
-        clearEmployeeCard();
     }
 
     if (employeeIdInput.value === String(employeeId)) {
         setFormMode("create");
     }
 
-    showStatus("Employee deleted successfully.", "success");
-    await loadEmployees();
+    selectedEmployeeId = employeeId;
+    showStatus("Employee archived successfully.", "success");
+    await loadEmployees(employeeId);
 }
 
 cancelEditButton.addEventListener("click", () => {

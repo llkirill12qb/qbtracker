@@ -1,16 +1,17 @@
 import os
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
 from app.crud.employee_crud import (
     create_employee as create_employee_crud,
-    delete_employee as delete_employee_crud,
     get_all_employees,
+    get_archived_employees,
     get_employee_by_card_id,
     get_employee_by_id,
+    restore_employee as restore_employee_crud,
+    soft_delete_employee,
     update_employee as update_employee_crud,
     update_employee_photo,
 )
@@ -128,6 +129,12 @@ def get_employees(db: Session = Depends(get_db)):
     return [build_employee_response(emp) for emp in employees]
 
 
+@router.get("/employees/archived", response_model=list[EmployeeResponse])
+def get_archived_employees_list(db: Session = Depends(get_db)):
+    employees = get_archived_employees(db, DEFAULT_COMPANY_ID)
+    return [build_employee_response(emp) for emp in employees]
+
+
 @router.put("/employees/{employee_id}", response_model=EmployeeResponse)
 def update_employee(
     employee_id: int,
@@ -193,15 +200,21 @@ def delete_employee(employee_id: int, db: Session = Depends(get_db)):
     if not employee:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    try:
-        delete_employee_crud(db, employee)
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot delete employee with existing scan history",
-        )
+    employee = soft_delete_employee(db, employee)
 
-    delete_employee_photo(employee.photo_filename, DEFAULT_COMPANY_ID)
+    return {
+        "success": True,
+        "employee_id": employee_id,
+        "archived": True,
+        "status": employee.status,
+    }
 
-    return {"success": True, "employee_id": employee_id}
+
+@router.post("/employees/{employee_id}/restore", response_model=EmployeeResponse)
+def restore_employee(employee_id: int, db: Session = Depends(get_db)):
+    employee = get_employee_by_id(db, employee_id, DEFAULT_COMPANY_ID)
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    employee = restore_employee_crud(db, employee)
+    return build_employee_response(employee)
