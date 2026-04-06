@@ -10,6 +10,9 @@ from app.models.scan_log_model import ScanLog
 
 router = APIRouter()
 
+DEFAULT_COMPANY_ID = 1
+
+
 def get_db():
     db = SessionLocal()
     try:
@@ -17,16 +20,22 @@ def get_db():
     finally:
         db.close()
 
+
 @router.get("/api/dashboard")
 def dashboard_data(db: Session = Depends(get_db)):
     today = date.today()
     start_today = datetime.combine(today, time.min)
     end_today = datetime.combine(today, time.max)
 
-    total_employees = db.query(func.count(Employee.id)).scalar()
+    total_employees = (
+        db.query(func.count(Employee.id))
+        .filter(Employee.company_id == DEFAULT_COMPANY_ID)
+        .scalar()
+    )
 
     scans_today = (
         db.query(func.count(ScanLog.id))
+        .filter(ScanLog.company_id == DEFAULT_COMPANY_ID)
         .filter(ScanLog.scanned_at >= start_today)
         .filter(ScanLog.scanned_at <= end_today)
         .scalar()
@@ -35,6 +44,8 @@ def dashboard_data(db: Session = Depends(get_db)):
     recent_logs = (
         db.query(ScanLog, Employee)
         .join(Employee, Employee.id == ScanLog.employee_id)
+        .filter(ScanLog.company_id == DEFAULT_COMPANY_ID)
+        .filter(Employee.company_id == DEFAULT_COMPANY_ID)
         .order_by(ScanLog.scanned_at.desc())
         .limit(10)
         .all()
@@ -232,7 +243,6 @@ def dashboard_page():
 
                     data.recent.forEach(item => {
                         const row = document.createElement("tr");
-
                         const localTime = new Date(item.time).toLocaleString();
 
                         row.innerHTML = `

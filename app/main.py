@@ -12,6 +12,7 @@ from app.api.routes import dashboard_routes as dashboard
 from app.api.routes.employees_page_routes import router as employees_page_router
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from app.models.company_model import Company
 
 app = FastAPI()
 

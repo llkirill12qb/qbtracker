@@ -5,188 +5,550 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Terminal</title>
     <style>
+        :root {
+            --bg: #f3efe6;
+            --surface: rgba(255, 252, 247, 0.88);
+            --surface-strong: #fffdf8;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --line: rgba(148, 163, 184, 0.24);
+            --nav: #1b2a41;
+            --nav-accent: #f59e0b;
+            --blue: #2563eb;
+            --blue-dark: #1d4ed8;
+            --green-bg: #dcfce7;
+            --green-text: #166534;
+            --red-bg: #fee2e2;
+            --red-text: #991b1b;
+            --amber-bg: #fef3c7;
+            --amber-text: #92400e;
+            --shadow: 0 24px 80px rgba(27, 42, 65, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            color: #111827;
+            min-height: 100vh;
+            font-family: "Segoe UI", Arial, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(245, 158, 11, 0.14), transparent 32%),
+                radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.12), transparent 28%),
+                linear-gradient(180deg, #f7f3ea 0%, #eef4fb 100%);
         }
 
         .navbar {
-            background: #111827;
+            background: var(--nav);
             color: white;
-            padding: 16px 28px;
+            padding: 18px 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 24px;
+            box-shadow: 0 12px 40px rgba(17, 24, 39, 0.16);
         }
 
-        .navbar .title {
-            font-size: 22px;
-            font-weight: bold;
+        .brand {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
-        .navbar .links a {
+        .brand-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .brand-subtitle {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .links {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+
+        .links a {
             color: white;
             text-decoration: none;
-            margin-left: 20px;
-            font-weight: bold;
+            font-weight: 600;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 0 20px;
+        .links a:hover {
+            color: #fde68a;
         }
 
-        .terminal-box {
-            background: white;
-            border-radius: 16px;
+        .page {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 36px 20px 48px;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 24px;
+            align-items: stretch;
+        }
+
+        .panel {
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            box-shadow: var(--shadow);
+        }
+
+        .terminal-panel {
             padding: 30px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(37, 99, 235, 0.08);
+            color: var(--blue);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
         }
 
         h1 {
-            margin-top: 0;
-            margin-bottom: 20px;
+            margin: 18px 0 10px;
+            font-size: 42px;
+            line-height: 1.05;
         }
 
-        .scan-row {
+        .hero-copy {
+            margin: 0 0 28px;
+            max-width: 620px;
+            font-size: 17px;
+            line-height: 1.6;
+            color: var(--muted);
+        }
+
+        .scan-form {
             display: flex;
-            gap: 12px;
+            gap: 14px;
             flex-wrap: wrap;
+            margin-bottom: 14px;
         }
 
-        input[type="text"] {
+        .input-wrap {
             flex: 1;
-            min-width: 240px;
-            padding: 14px;
-            font-size: 18px;
-            border: 1px solid #d1d5db;
-            border-radius: 10px;
+            min-width: 260px;
+            position: relative;
+        }
+
+        .input-wrap input {
+            width: 100%;
+            padding: 18px 18px 18px 52px;
+            border-radius: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.32);
+            background: rgba(255, 255, 255, 0.92);
+            font-size: 20px;
             outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
-        button {
-            padding: 14px 22px;
-            font-size: 16px;
-            font-weight: bold;
+        .input-wrap input:focus {
+            border-color: rgba(37, 99, 235, 0.45);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: #94a3b8;
+        }
+
+        .submit-button {
+            min-width: 160px;
+            padding: 18px 24px;
             border: none;
-            border-radius: 10px;
-            background: #2563eb;
+            border-radius: 18px;
+            background: linear-gradient(135deg, var(--blue) 0%, #3b82f6 100%);
             color: white;
+            font-size: 16px;
+            font-weight: 700;
             cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+            box-shadow: 0 16px 32px rgba(37, 99, 235, 0.2);
         }
 
-        button:hover {
-            background: #1d4ed8;
+        .submit-button:hover {
+            transform: translateY(-1px);
+            background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue) 100%);
         }
 
-        .hint {
-            margin-top: 12px;
-            color: #6b7280;
+        .submit-button:disabled {
+            cursor: wait;
+            transform: none;
+            opacity: 0.7;
+            box-shadow: none;
         }
 
-        .result-card {
-            display: none;
-            margin-top: 28px;
-            padding: 24px;
-            border-radius: 16px;
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-        }
-
-        .result-content {
+        .helper-row {
             display: flex;
-            gap: 24px;
-            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
             flex-wrap: wrap;
+            color: var(--muted);
+            font-size: 14px;
         }
 
-        .photo-box {
-            width: 160px;
-            height: 160px;
-            border-radius: 16px;
-            overflow: hidden;
-            background: #e5e7eb;
+        .terminal-status {
+            padding: 26px;
             display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 100%;
+            background:
+                linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.82)),
+                radial-gradient(circle at top right, rgba(245, 158, 11, 0.16), transparent 30%);
+        }
+
+        .status-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            align-self: flex-start;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--amber-bg);
+            color: var(--amber-text);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .clock-block {
+            margin-top: 18px;
+        }
+
+        .clock-time {
+            font-size: 42px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .clock-date {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 16px;
+        }
+
+        .status-notes {
+            margin-top: 26px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .status-note {
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.76);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            color: #334155;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .feedback-card {
+            margin-top: 24px;
+            border-radius: 28px;
+            border: 1px solid var(--line);
+            background: var(--surface-strong);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .feedback-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+            background: rgba(248, 250, 252, 0.8);
+        }
+
+        .feedback-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .feedback-state {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .feedback-state.idle {
+            background: var(--amber-bg);
+            color: var(--amber-text);
+        }
+
+        .feedback-state.success {
+            background: var(--green-bg);
+            color: var(--green-text);
+        }
+
+        .feedback-state.error {
+            background: var(--red-bg);
+            color: var(--red-text);
+        }
+
+        .feedback-body {
+            padding: 26px 24px 28px;
+        }
+
+        .empty-state {
+            display: grid;
+            gap: 12px;
+            justify-items: start;
+            color: var(--muted);
+        }
+
+        .empty-icon,
+        .error-icon {
+            width: 62px;
+            height: 62px;
+            border-radius: 18px;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
         }
 
-        .photo-box img {
+        .empty-icon {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--blue);
+        }
+
+        .result-layout {
+            display: none;
+            gap: 22px;
+            align-items: center;
+            grid-template-columns: 180px 1fr;
+        }
+
+        .photo-shell {
+            width: 180px;
+            height: 180px;
+            border-radius: 24px;
+            overflow: hidden;
+            background: linear-gradient(180deg, #e2e8f0, #cbd5e1);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .photo-shell img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: none;
         }
 
-        .photo-placeholder {
-            color: #6b7280;
-            font-size: 14px;
+        .photo-fallback {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #475569;
             text-align: center;
-            padding: 10px;
+            padding: 18px;
         }
 
-        .result-info h2 {
-            margin: 0 0 12px 0;
-            font-size: 30px;
+        .photo-fallback strong {
+            font-size: 15px;
         }
 
-        .badge {
-            display: inline-block;
-            padding: 8px 14px;
+        .person-name {
+            margin: 0 0 12px;
+            font-size: 38px;
+            line-height: 1.08;
+        }
+
+        .event-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
             border-radius: 999px;
-            font-weight: bold;
-            margin-bottom: 14px;
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 18px;
         }
 
-        .badge-in {
-            background: #dcfce7;
-            color: #166534;
+        .event-pill.check-in {
+            background: var(--green-bg);
+            color: var(--green-text);
         }
 
-        .badge-out {
-            background: #fee2e2;
-            color: #991b1b;
+        .event-pill.check-out {
+            background: var(--red-bg);
+            color: var(--red-text);
         }
 
-        .meta {
-            font-size: 16px;
-            color: #374151;
-            margin: 6px 0;
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(180px, 1fr));
+            gap: 14px;
         }
 
-        .error-box {
+        .meta-card {
+            padding: 16px 18px;
+            border-radius: 18px;
+            background: #f8fafc;
+            border: 1px solid rgba(148, 163, 184, 0.14);
+        }
+
+        .meta-label {
+            margin-bottom: 6px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            font-weight: 700;
+        }
+
+        .meta-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0f172a;
+            word-break: break-word;
+        }
+
+        .error-layout {
             display: none;
-            margin-top: 20px;
-            padding: 14px 16px;
-            border-radius: 10px;
-            background: #fee2e2;
-            color: #991b1b;
-            font-weight: bold;
+            gap: 18px;
+            align-items: start;
+            grid-template-columns: 72px 1fr;
+        }
+
+        .error-icon {
+            background: var(--red-bg);
+            color: var(--red-text);
+        }
+
+        .error-title {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
+
+        .error-text {
+            margin: 0;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #475569;
+        }
+
+        .pulse {
+            position: relative;
+        }
+
+        .pulse::after {
+            content: "";
+            position: absolute;
+            inset: -6px;
+            border-radius: 24px;
+            border: 2px solid rgba(245, 158, 11, 0.2);
+            animation: pulse 1.6s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.98);
+                opacity: 0.9;
+            }
+            100% {
+                transform: scale(1.03);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 920px) {
+            .hero {
+                grid-template-columns: 1fr;
+            }
+
+            .result-layout {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 640px) {
-            .result-content {
-                flex-direction: column;
+            .navbar {
+                padding: 16px 18px;
                 align-items: flex-start;
+                flex-direction: column;
             }
 
-            .photo-box {
-                width: 130px;
-                height: 130px;
+            .page {
+                padding: 22px 14px 36px;
             }
 
-            .result-info h2 {
-                font-size: 24px;
+            .terminal-panel,
+            .terminal-status,
+            .feedback-body,
+            .feedback-head {
+                padding-left: 18px;
+                padding-right: 18px;
+            }
+
+            h1 {
+                font-size: 32px;
+            }
+
+            .person-name {
+                font-size: 30px;
+            }
+
+            .photo-shell {
+                width: 150px;
+                height: 150px;
+            }
+
+            .meta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .error-layout {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
     <div class="navbar">
-        <div class="title">Time Tracking SaaS</div>
+        <div class="brand">
+            <div class="brand-title">Time Tracking SaaS</div>
+            <div class="brand-subtitle">Employee terminal for QR and card scans</div>
+        </div>
         <div class="links">
             <a href="/dashboard">Dashboard</a>
             <a href="/employees-page">Employees</a>
@@ -194,66 +556,230 @@
         </div>
     </div>
 
-    <div class="container">
-        <div class="terminal-box">
-            <h1>Scan Terminal</h1>
+    <div class="page">
+        <div class="hero">
+            <section class="panel terminal-panel">
+                <div class="eyebrow">Live Scan Terminal</div>
+                <h1>Fast check-in and check-out with clear feedback</h1>
+                <p class="hero-copy">
+                    Scan an employee QR code or enter a card ID manually. The terminal will immediately show the employee photo,
+                    action type, and scan time.
+                </p>
 
-            <div class="scan-row">
-                <input
-                    id="cardInput"
-                    type="text"
-                    placeholder="Scan QR / Enter Card ID"
-                    autofocus
-                />
-                <button onclick="submitScan()">Submit</button>
+                <div class="scan-form">
+                    <div class="input-wrap pulse" id="inputWrap">
+                        <span class="input-icon">#</span>
+                        <input
+                            id="cardInput"
+                            type="text"
+                            placeholder="Scan QR / Enter Card ID"
+                            autocomplete="off"
+                            autofocus
+                        />
+                    </div>
+                    <button id="submitButton" class="submit-button" type="button" onclick="submitScan()">
+                        Submit Scan
+                    </button>
+                </div>
+
+                <div class="helper-row">
+                    <div>Press <strong>Enter</strong> after the scanner fills the input.</div>
+                    <div id="lastActionHint">Waiting for next scan...</div>
+                </div>
+            </section>
+
+            <aside class="panel terminal-status">
+                <div>
+                    <div id="statusLabel" class="status-label">Ready for scan</div>
+                    <div class="clock-block">
+                        <div id="liveClock" class="clock-time">--:--:--</div>
+                        <div id="liveDate" class="clock-date">Loading current date...</div>
+                    </div>
+                </div>
+
+                <div class="status-notes">
+                    <div class="status-note">
+                        Use this screen for both QR scans and manual card lookup without leaving the terminal.
+                    </div>
+                    <div class="status-note">
+                        Success and error states are displayed below so the operator can instantly see what happened.
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <section class="feedback-card">
+            <div class="feedback-head">
+                <div class="feedback-title">Scan Result</div>
+                <div id="feedbackState" class="feedback-state idle">Idle</div>
             </div>
 
-            <div class="hint">
-                Scan the employee QR code or enter card ID manually.
-            </div>
+            <div class="feedback-body">
+                <div id="emptyState" class="empty-state">
+                    <div class="empty-icon">QR</div>
+                    <strong>No scan yet</strong>
+                    <div>The next successful scan will show the employee photo, event type, and exact timestamp here.</div>
+                </div>
 
-            <div id="errorBox" class="error-box"></div>
-
-            <div id="resultCard" class="result-card">
-                <div class="result-content">
-                    <div class="photo-box">
+                <div id="resultLayout" class="result-layout">
+                    <div class="photo-shell">
                         <img id="employeePhoto" src="" alt="Employee photo" />
-                        <div id="photoPlaceholder" class="photo-placeholder">
-                            No photo
+                        <div id="photoFallback" class="photo-fallback">
+                            <strong>No Photo</strong>
+                            <span>Employee image is not uploaded</span>
                         </div>
                     </div>
 
-                    <div class="result-info">
-                        <h2 id="employeeName">Employee Name</h2>
-                        <div id="eventBadge" class="badge">check-in</div>
-                        <div id="scanTime" class="meta">Time:</div>
-                        <div id="cardValue" class="meta">Card ID:</div>
+                    <div>
+                        <h2 id="employeeName" class="person-name">Employee Name</h2>
+                        <div id="eventPill" class="event-pill check-in">check-in</div>
+
+                        <div class="meta-grid">
+                            <div class="meta-card">
+                                <div class="meta-label">Scan time</div>
+                                <div id="scanTime" class="meta-value">--</div>
+                            </div>
+                            <div class="meta-card">
+                                <div class="meta-label">Card ID</div>
+                                <div id="cardValue" class="meta-value">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="errorLayout" class="error-layout">
+                    <div class="error-icon">!</div>
+                    <div>
+                        <h2 class="error-title">Employee not found</h2>
+                        <p id="errorText" class="error-text">
+                            The scanned card was not matched to any employee in the current company.
+                        </p>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
 
     <script>
         const cardInput = document.getElementById("cardInput");
-        const resultCard = document.getElementById("resultCard");
+        const inputWrap = document.getElementById("inputWrap");
+        const submitButton = document.getElementById("submitButton");
+        const statusLabel = document.getElementById("statusLabel");
+        const feedbackState = document.getElementById("feedbackState");
+        const lastActionHint = document.getElementById("lastActionHint");
+        const emptyState = document.getElementById("emptyState");
+        const resultLayout = document.getElementById("resultLayout");
+        const errorLayout = document.getElementById("errorLayout");
         const employeePhoto = document.getElementById("employeePhoto");
-        const photoPlaceholder = document.getElementById("photoPlaceholder");
+        const photoFallback = document.getElementById("photoFallback");
         const employeeName = document.getElementById("employeeName");
-        const eventBadge = document.getElementById("eventBadge");
+        const eventPill = document.getElementById("eventPill");
         const scanTime = document.getElementById("scanTime");
         const cardValue = document.getElementById("cardValue");
-        const errorBox = document.getElementById("errorBox");
+        const errorText = document.getElementById("errorText");
+        const liveClock = document.getElementById("liveClock");
+        const liveDate = document.getElementById("liveDate");
+
+        function setFeedbackState(type, label) {
+            feedbackState.className = "feedback-state " + type;
+            feedbackState.textContent = label;
+        }
+
+        function setTerminalStatus(label, hint) {
+            statusLabel.textContent = label;
+            lastActionHint.textContent = hint;
+        }
+
+        function showIdleState() {
+            emptyState.style.display = "grid";
+            resultLayout.style.display = "none";
+            errorLayout.style.display = "none";
+            setFeedbackState("idle", "Idle");
+            setTerminalStatus("Ready for scan", "Waiting for next scan...");
+        }
+
+        function showLoadingState(cardId) {
+            setFeedbackState("idle", "Scanning...");
+            setTerminalStatus("Processing scan", "Looking up card: " + cardId);
+            submitButton.disabled = true;
+            inputWrap.classList.remove("pulse");
+        }
+
+        function showSuccessState(data, cardId) {
+            emptyState.style.display = "none";
+            errorLayout.style.display = "none";
+            resultLayout.style.display = "grid";
+
+            employeeName.textContent = data.employee_name;
+            eventPill.textContent = data.event;
+            eventPill.className = "event-pill " + data.event;
+            scanTime.textContent = formatDateTime(data.timestamp);
+            cardValue.textContent = cardId;
+
+            if (data.photo_url) {
+                employeePhoto.src = data.photo_url + "?t=" + Date.now();
+                employeePhoto.style.display = "block";
+                photoFallback.style.display = "none";
+            } else {
+                employeePhoto.removeAttribute("src");
+                employeePhoto.style.display = "none";
+                photoFallback.style.display = "flex";
+            }
+
+            setFeedbackState("success", "Success");
+            setTerminalStatus(
+                data.event === "check-in" ? "Check-in completed" : "Check-out completed",
+                data.employee_name + " • " + formatTime(data.timestamp)
+            );
+        }
+
+        function showErrorState(message, cardId) {
+            emptyState.style.display = "none";
+            resultLayout.style.display = "none";
+            errorLayout.style.display = "grid";
+            errorText.textContent = message + (cardId ? " Card ID: " + cardId : "");
+            setFeedbackState("error", "Not Found");
+            setTerminalStatus("Scan failed", cardId ? "Card not recognized: " + cardId : "Unable to recognize card");
+        }
+
+        function resetAfterRequest() {
+            submitButton.disabled = false;
+            inputWrap.classList.add("pulse");
+            cardInput.value = "";
+            cardInput.focus();
+        }
+
+        function formatDateTime(value) {
+            const date = new Date(value);
+            return date.toLocaleString([], {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
+            });
+        }
+
+        function formatTime(value) {
+            const date = new Date(value);
+            return date.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
+            });
+        }
 
         async function submitScan() {
             const cardId = cardInput.value.trim();
 
             if (!cardId) {
-                showError("Please enter or scan card ID");
+                showErrorState("Please enter or scan card ID.", "");
+                cardInput.focus();
                 return;
             }
 
-            hideError();
+            showLoadingState(cardId);
 
             try {
                 const response = await fetch(`/scan?card_id=${encodeURIComponent(cardId)}`, {
@@ -263,42 +789,16 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    showError(data.detail || "Scan failed");
+                    showErrorState(data.detail || "Scan failed.", cardId);
                     return;
                 }
 
-                employeeName.textContent = data.employee_name;
-                scanTime.textContent = "Time: " + new Date(data.timestamp).toLocaleString();
-                cardValue.textContent = "Card ID: " + cardId;
-
-                eventBadge.textContent = data.event;
-                eventBadge.className = "badge " + (data.event === "check-in" ? "badge-in" : "badge-out");
-
-                if (data.photo_url) {
-                    employeePhoto.src = data.photo_url + "?t=" + Date.now();
-                    employeePhoto.style.display = "block";
-                    photoPlaceholder.style.display = "none";
-                } else {
-                    employeePhoto.style.display = "none";
-                    photoPlaceholder.style.display = "block";
-                }
-
-                resultCard.style.display = "block";
-                cardInput.value = "";
-                cardInput.focus();
+                showSuccessState(data, cardId);
             } catch (error) {
-                showError("Server connection error");
+                showErrorState("Server connection error.", cardId);
+            } finally {
+                resetAfterRequest();
             }
-        }
-
-        function showError(message) {
-            errorBox.textContent = message;
-            errorBox.style.display = "block";
-        }
-
-        function hideError() {
-            errorBox.style.display = "none";
-            errorBox.textContent = "";
         }
 
         cardInput.addEventListener("keydown", function(event) {
@@ -307,6 +807,25 @@
                 submitScan();
             }
         });
+
+        function updateClock() {
+            const now = new Date();
+            liveClock.textContent = now.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
+            });
+            liveDate.textContent = now.toLocaleDateString([], {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric"
+            });
+        }
+
+        updateClock();
+        showIdleState();
+        setInterval(updateClock, 1000);
     </script>
 </body>
 </html>

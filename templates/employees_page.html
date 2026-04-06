@@ -17,7 +17,7 @@
         }
 
         .page-wrap {
-            max-width: 980px;
+            max-width: 1100px;
             margin: 0 auto;
         }
 
@@ -26,11 +26,18 @@
             padding: 24px;
             border-radius: 14px;
             margin-bottom: 30px;
-            max-width: 420px;
+            max-width: 520px;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
         }
 
-        input {
+        .form-box h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+
+        input,
+        select,
+        textarea {
             display: block;
             width: 100%;
             margin-bottom: 12px;
@@ -39,6 +46,12 @@
             border: 1px solid #d1d5db;
             border-radius: 10px;
             font-size: 15px;
+            background: white;
+        }
+
+        textarea {
+            min-height: 90px;
+            resize: vertical;
         }
 
         input[type="file"] {
@@ -66,7 +79,7 @@
             padding: 24px;
             border-radius: 16px;
             margin-bottom: 30px;
-            max-width: 860px;
+            max-width: 950px;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
         }
 
@@ -96,7 +109,7 @@
         }
 
         .employee-card-info {
-            min-width: 180px;
+            min-width: 220px;
         }
 
         .employee-card-name {
@@ -107,7 +120,7 @@
 
         .employee-card-line {
             margin-bottom: 6px;
-            font-size: 16px;
+            font-size: 15px;
             color: #374151;
         }
 
@@ -145,9 +158,22 @@
             align-items: center;
             gap: 15px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: 0.2s ease;
+            justify-content: space-between;
         }
 
-        .employee img {
+        .employee:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .employee.selected {
+            border: 2px solid #2563eb;
+            background: #eff6ff;
+        }
+
+        .employee-photo-small {
             width: 60px;
             height: 60px;
             object-fit: cover;
@@ -156,8 +182,23 @@
             border: 1px solid #ddd;
         }
 
+        .employee-info {
+            flex: 1;
+            min-width: 220px;
+        }
+
         .employee strong {
             font-size: 18px;
+        }
+
+        .employee-qr-small {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 6px;
+            background: white;
         }
 
         .muted {
@@ -182,6 +223,11 @@
             .employee-qr-box {
                 width: 100%;
                 justify-content: flex-start;
+            }
+
+            .employee {
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
 
@@ -218,9 +264,29 @@
     <h1>Employees</h1>
 
     <form id="employeeForm" class="form-box">
+        <h3>Add Employee</h3>
+
         <input name="full_name" placeholder="Full name" required>
         <input name="card_id" placeholder="Card ID" required>
         <input name="department" placeholder="Department">
+        <input name="position" placeholder="Position">
+        <input name="phone" placeholder="Phone">
+        <input type="email" name="email" placeholder="Email">
+
+        <select name="employee_type">
+            <option value="full_time">Full Time</option>
+            <option value="part_time">Part Time</option>
+            <option value="contractor">Contractor</option>
+        </select>
+
+        <select name="status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="on_leave">On Leave</option>
+        </select>
+
+        <textarea name="notes" placeholder="Notes"></textarea>
+
         <input type="file" name="photo">
         <button>Add Employee</button>
     </form>
@@ -236,6 +302,12 @@
                     <div id="cardName" class="employee-card-name"></div>
                     <div id="cardCardId" class="employee-card-line"></div>
                     <div id="cardDepartment" class="employee-card-line"></div>
+                    <div id="cardPosition" class="employee-card-line"></div>
+                    <div id="cardPhone" class="employee-card-line"></div>
+                    <div id="cardEmail" class="employee-card-line"></div>
+                    <div id="cardType" class="employee-card-line"></div>
+                    <div id="cardStatus" class="employee-card-line"></div>
+                    <div id="cardNotes" class="employee-card-line"></div>
                     <div class="employee-card-line muted">Ready for print</div>
                 </div>
             </div>
@@ -255,7 +327,29 @@
 </div>
 
 <script>
-async function loadEmployees() {
+function fillEmployeeCard(emp) {
+    document.getElementById("employeeCard").style.display = "block";
+
+    document.getElementById("cardName").innerText = emp.full_name;
+    document.getElementById("cardCardId").innerText = "Card ID: " + emp.card_id;
+    document.getElementById("cardDepartment").innerText = "Department: " + (emp.department ?? "");
+    document.getElementById("cardPosition").innerText = "Position: " + (emp.position ?? "");
+    document.getElementById("cardPhone").innerText = "Phone: " + (emp.phone ?? "");
+    document.getElementById("cardEmail").innerText = "Email: " + (emp.email ?? "");
+    document.getElementById("cardType").innerText = "Type: " + (emp.employee_type ?? "");
+    document.getElementById("cardStatus").innerText = "Status: " + (emp.status ?? "");
+    document.getElementById("cardNotes").innerText = "Notes: " + (emp.notes ?? "");
+
+    if (emp.photo_url) {
+        document.getElementById("cardPhoto").src = emp.photo_url + "?t=" + Date.now();
+    } else {
+        document.getElementById("cardPhoto").src = "https://via.placeholder.com/120?text=No+Photo";
+    }
+
+    document.getElementById("cardQR").src = `/employee/${emp.id}/qr?t=` + Date.now();
+}
+
+async function loadEmployees(selectedId = null) {
     const response = await fetch("/employees");
     const data = await response.json();
 
@@ -266,24 +360,45 @@ async function loadEmployees() {
         const div = document.createElement("div");
         div.className = "employee";
 
-        const img = document.createElement("img");
+        if (selectedId && emp.id === selectedId) {
+            div.classList.add("selected");
+        }
 
+        const photo = document.createElement("img");
+        photo.className = "employee-photo-small";
         if (emp.photo_url) {
-            img.src = emp.photo_url;
+            photo.src = emp.photo_url;
         } else {
-            img.src = "https://via.placeholder.com/60?text=No";
+            photo.src = "https://via.placeholder.com/60?text=No";
         }
 
         const info = document.createElement("div");
-
+        info.className = "employee-info";
         info.innerHTML = `
             <strong>${emp.full_name}</strong><br>
             Card: ${emp.card_id}<br>
-            Dept: ${emp.department ?? ""}
+            Dept: ${emp.department ?? ""}<br>
+            Position: ${emp.position ?? ""}<br>
+            Phone: ${emp.phone ?? ""}<br>
+            Email: ${emp.email ?? ""}<br>
+            Type: ${emp.employee_type ?? ""}<br>
+            Status: ${emp.status ?? ""}
         `;
 
-        div.appendChild(img);
+        const qr = document.createElement("img");
+        qr.className = "employee-qr-small";
+        qr.src = `/employee/${emp.id}/qr?t=` + Date.now();
+        qr.alt = "QR";
+
+        div.addEventListener("click", () => {
+            document.querySelectorAll(".employee").forEach(el => el.classList.remove("selected"));
+            div.classList.add("selected");
+            fillEmployeeCard(emp);
+        });
+
+        div.appendChild(photo);
         div.appendChild(info);
+        div.appendChild(qr);
 
         container.appendChild(div);
     });
@@ -304,22 +419,8 @@ document.getElementById("employeeForm").addEventListener("submit", async e => {
 
     if (response.ok) {
         form.reset();
-        loadEmployees();
-
-        document.getElementById("employeeCard").style.display = "block";
-        document.getElementById("cardName").innerText = data.full_name;
-        document.getElementById("cardCardId").innerText = "Card ID: " + data.card_id;
-        document.getElementById("cardDepartment").innerText = "Department: " + (data.department ?? "");
-
-        if (data.photo_url) {
-            document.getElementById("cardPhoto").src = data.photo_url + "?t=" + Date.now();
-        } else {
-            document.getElementById("cardPhoto").src = "https://via.placeholder.com/120?text=No+Photo";
-        }
-
-        const qrUrl = `/employee/${data.id}/qr?t=` + Date.now();
-        document.getElementById("cardQR").src = qrUrl;
-
+        fillEmployeeCard(data);
+        loadEmployees(data.id);
     } else {
         alert(data.detail || "Error creating employee");
     }
