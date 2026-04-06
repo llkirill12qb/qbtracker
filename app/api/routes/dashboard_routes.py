@@ -96,10 +96,18 @@ def dashboard_page():
             .navbar {
                 background: #111827;
                 color: white;
-                padding: 16px 28px;
+                padding: 18px 28px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                gap: 20px;
+                flex-wrap: wrap;
+            }
+
+            .navbar .brand {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
             }
 
             .navbar .title {
@@ -107,11 +115,25 @@ def dashboard_page():
                 font-weight: bold;
             }
 
+            .navbar .subtitle {
+                font-size: 13px;
+                color: rgba(255, 255, 255, 0.72);
+            }
+
+            .navbar .links {
+                display: flex;
+                gap: 18px;
+                flex-wrap: wrap;
+            }
+
             .navbar .links a {
                 color: white;
                 text-decoration: none;
-                margin-left: 20px;
                 font-weight: bold;
+            }
+
+            .navbar .links a:hover {
+                color: #bfdbfe;
             }
 
             .container {
@@ -181,10 +203,15 @@ def dashboard_page():
     </head>
     <body>
         <div class="navbar">
-            <div class="title">Time Tracking SaaS</div>
+            <div class="brand">
+                <div class="title">Time Tracking SaaS</div>
+                <div class="subtitle">Company dashboard</div>
+            </div>
             <div class="links">
                 <a href="/dashboard">Dashboard</a>
                 <a href="/employees-page">Employees</a>
+                <a href="/employees-archive">Archive</a>
+                <a href="/reports">Reports</a>
                 <a href="/terminal">Terminal</a>
             </div>
         </div>

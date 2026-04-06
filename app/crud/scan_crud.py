@@ -52,6 +52,34 @@ def get_all_logs(db: Session, company_id: int):
     )
 
 
+def get_report_logs(
+    db: Session,
+    company_id: int,
+    start_datetime=None,
+    end_datetime=None,
+    employee_id: int | None = None,
+):
+    query = (
+        db.query(ScanLog, Employee)
+        .join(Employee, Employee.id == ScanLog.employee_id)
+        .filter(
+            ScanLog.company_id == company_id,
+            Employee.company_id == company_id,
+        )
+    )
+
+    if start_datetime is not None:
+        query = query.filter(ScanLog.scanned_at >= start_datetime)
+
+    if end_datetime is not None:
+        query = query.filter(ScanLog.scanned_at <= end_datetime)
+
+    if employee_id is not None:
+        query = query.filter(ScanLog.employee_id == employee_id)
+
+    return query.order_by(ScanLog.scanned_at.desc()).all()
+
+
 def get_employee_by_id(db: Session, employee_id: int, company_id: int):
     return (
         db.query(Employee)

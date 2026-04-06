@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --line: #d1d5db;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --danger-bg: #fee2e2;
+            --danger-text: #991b1b;
+            --nav: #111827;
+            --nav-muted: rgba(255, 255, 255, 0.72);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .navbar {
+            background: var(--nav);
+            color: white;
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .nav-subtitle {
+            margin-top: 4px;
+            font-size: 13px;
+            color: var(--nav-muted);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .nav-links a:hover {
+            color: #bfdbfe;
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 36px 40px 40px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .page-copy p {
+            margin: 8px 0 0;
+            color: var(--muted);
+            line-height: 1.6;
+            max-width: 720px;
+        }
+
+        .panel {
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+
+        .filters-panel {
+            margin-bottom: 22px;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(160px, 1fr));
+            gap: 14px;
+            align-items: end;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #374151;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 11px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            background: white;
+            font-size: 15px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 11px 16px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .summary-card {
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 22px;
+        }
+
+        .summary-card h3 {
+            margin: 0;
+            font-size: 15px;
+            color: var(--muted);
+        }
+
+        .summary-value {
+            margin-top: 10px;
+            font-size: 34px;
+            font-weight: bold;
+        }
+
+        .table-panel table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #f9fafb;
+            font-size: 14px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .pill.check-in {
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+
+        .pill.check-out {
+            background: var(--danger-bg);
+            color: var(--danger-text);
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .status-note {
+            display: none;
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-weight: bold;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-note.active {
+            display: block;
+        }
+
+        .empty-state {
+            padding: 28px 0 8px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 960px) {
+            .filters-grid,
+            .summary-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .page {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .navbar {
+                padding: 16px 18px;
+            }
+
+            .filters-grid,
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-panel {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div>
+            <div class="nav-title">Time Tracking SaaS</div>
+            <div class="nav-subtitle">Reports and scan history</div>
+        </div>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/employees-page">Employees</a>
+            <a href="/employees-archive">Archive</a>
+            <a href="/reports">Reports</a>
+            <a href="/terminal">Terminal</a>
+        </div>
+    </div>
+
+    <div class="page">
+        <div class="page-header">
+            <div class="page-copy">
+                <h1>Reports</h1>
+                <p>Filter scan history by date range and employee. Reports stay scoped to the current company and can include archived employees when you need historical lookup.</p>
+            </div>
+        </div>
+
+        <div id="statusNote" class="status-note"></div>
+
+        <section class="panel filters-panel">
+            <div class="filters-grid">
+                <div>
+                    <label for="startDate">Start Date</label>
+                    <input id="startDate" type="date">
+                </div>
+                <div>
+                    <label for="endDate">End Date</label>
+                    <input id="endDate" type="date">
+                </div>
+                <div>
+                    <label for="employeeFilter">Employee</label>
+                    <select id="employeeFilter">
+                        <option value="">All employees</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Actions</label>
+                    <div class="actions">
+                        <button id="applyFilters" class="btn-primary" type="button">Apply</button>
+                        <button id="resetFilters" class="btn-secondary" type="button">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="summary-grid">
+            <div class="summary-card">
+                <h3>Total Scans</h3>
+                <div id="totalScans" class="summary-value">0</div>
+            </div>
+            <div class="summary-card">
+                <h3>Check-ins</h3>
+                <div id="checkIns" class="summary-value">0</div>
+            </div>
+            <div class="summary-card">
+                <h3>Check-outs</h3>
+                <div id="checkOuts" class="summary-value">0</div>
+            </div>
+        </section>
+
+        <section class="panel table-panel">
+            <h2>Scan History</h2>
+            <div class="muted">The table below includes company scan history for the selected filters.</div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Status</th>
+                        <th>Card ID</th>
+                        <th>Event</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="reportRows"></tbody>
+            </table>
+
+            <div id="emptyState" class="empty-state" style="display:none;">
+                No scan records found for the selected filters.
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const startDate = document.getElementById("startDate");
+        const endDate = document.getElementById("endDate");
+        const employeeFilter = document.getElementById("employeeFilter");
+        const applyFiltersButton = document.getElementById("applyFilters");
+        const resetFiltersButton = document.getElementById("resetFilters");
+        const totalScans = document.getElementById("totalScans");
+        const checkIns = document.getElementById("checkIns");
+        const checkOuts = document.getElementById("checkOuts");
+        const reportRows = document.getElementById("reportRows");
+        const emptyState = document.getElementById("emptyState");
+        const statusNote = document.getElementById("statusNote");
+
+        function setDefaultDates() {
+            const now = new Date();
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(now.getDate() - 6);
+
+            startDate.value = sevenDaysAgo.toISOString().slice(0, 10);
+            endDate.value = now.toISOString().slice(0, 10);
+        }
+
+        function showError(message) {
+            statusNote.textContent = message;
+            statusNote.classList.add("active");
+        }
+
+        function clearError() {
+            statusNote.textContent = "";
+            statusNote.classList.remove("active");
+        }
+
+        function buildQueryString() {
+            const params = new URLSearchParams();
+
+            if (startDate.value) {
+                params.set("start_date", startDate.value);
+            }
+            if (endDate.value) {
+                params.set("end_date", endDate.value);
+            }
+            if (employeeFilter.value) {
+                params.set("employee_id", employeeFilter.value);
+            }
+
+            return params.toString();
+        }
+
+        function renderEmployeeOptions(employees, selectedEmployeeId) {
+            employeeFilter.innerHTML = `<option value="">All employees</option>`;
+
+            employees.forEach(employee => {
+                const option = document.createElement("option");
+                option.value = employee.id;
+                option.textContent = employee.is_active
+                    ? employee.name
+                    : `${employee.name} (Archived)`;
+
+                if (selectedEmployeeId && String(employee.id) === String(selectedEmployeeId)) {
+                    option.selected = true;
+                }
+
+                employeeFilter.appendChild(option);
+            });
+        }
+
+        function renderRows(rows) {
+            reportRows.innerHTML = "";
+
+            if (!rows.length) {
+                emptyState.style.display = "block";
+                return;
+            }
+
+            emptyState.style.display = "none";
+
+            rows.forEach(row => {
+                const tr = document.createElement("tr");
+                const localTime = new Date(row.time).toLocaleString();
+                const employeeStatus = row.employee_status ?? "-";
+
+                tr.innerHTML = `
+                    <td>${row.employee_name}</td>
+                    <td>${employeeStatus}</td>
+                    <td>${row.card_id}</td>
+                    <td><span class="pill ${row.event}">${row.event}</span></td>
+                    <td>${localTime}</td>
+                `;
+
+                reportRows.appendChild(tr);
+            });
+        }
+
+        async function loadReports() {
+            clearError();
+
+            try {
+                const query = buildQueryString();
+                const response = await fetch(`/api/reports${query ? `?${query}` : ""}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showError(data.detail || "Error loading reports");
+                    return;
+                }
+
+                totalScans.textContent = data.summary.total_scans;
+                checkIns.textContent = data.summary.check_ins;
+                checkOuts.textContent = data.summary.check_outs;
+
+                renderEmployeeOptions(data.employees, data.filters.employee_id);
+                renderRows(data.rows);
+            } catch (error) {
+                showError("Error loading reports");
+            }
+        }
+
+        applyFiltersButton.addEventListener("click", loadReports);
+
+        resetFiltersButton.addEventListener("click", () => {
+            employeeFilter.value = "";
+            setDefaultDates();
+            loadReports();
+        });
+
+        setDefaultDates();
+        loadReports();
+    </script>
+</body>
+</html>

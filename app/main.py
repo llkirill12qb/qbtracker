@@ -8,6 +8,7 @@ from app.api.routes.employees_routes import router as employees_router
 from app.api.routes.scan_routes import router as scan_router
 from app.api.routes.terminal_routes import router as terminal_router
 from app.api.routes.qr_routes import router as qr_router
+from app.api.routes.reports_routes import router as reports_router
 from app.api.routes import dashboard_routes as dashboard
 from app.api.routes.employees_page_routes import router as employees_page_router
 from fastapi.templating import Jinja2Templates
@@ -24,6 +25,7 @@ app.include_router(employees_router)
 app.include_router(scan_router)
 app.include_router(terminal_router)
 app.include_router(qr_router)
+app.include_router(reports_router)
 app.include_router(dashboard.router)
 app.include_router(employees_page_router)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
