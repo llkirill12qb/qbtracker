@@ -62,7 +62,25 @@
             font-weight: bold;
         }
 
+        .logout-form {
+            margin: 0;
+        }
+
+        .logout-button {
+            padding: 0;
+            border: none;
+            background: transparent;
+            color: white;
+            font: inherit;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         .nav-links a:hover {
+            color: #bfdbfe;
+        }
+
+        .logout-button:hover {
             color: #bfdbfe;
         }
 
@@ -293,6 +311,9 @@
         <a href="/employees-archive">Archive</a>
         <a href="/reports">Reports</a>
         <a href="/terminal">Terminal</a>
+        <form class="logout-form" method="post" action="/logout">
+            <button class="logout-button" type="submit">Logout</button>
+        </form>
     </div>
 </div>
 

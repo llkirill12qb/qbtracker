@@ -132,7 +132,25 @@ def dashboard_page():
                 font-weight: bold;
             }
 
+            .navbar .logout-form {
+                margin: 0;
+            }
+
+            .navbar .logout-button {
+                padding: 0;
+                border: none;
+                background: transparent;
+                color: white;
+                font: inherit;
+                font-weight: bold;
+                cursor: pointer;
+            }
+
             .navbar .links a:hover {
+                color: #bfdbfe;
+            }
+
+            .navbar .logout-button:hover {
                 color: #bfdbfe;
             }
 
@@ -213,6 +231,9 @@ def dashboard_page():
                 <a href="/employees-archive">Archive</a>
                 <a href="/reports">Reports</a>
                 <a href="/terminal">Terminal</a>
+                <form class="logout-form" method="post" action="/logout">
+                    <button class="logout-button" type="submit">Logout</button>
+                </form>
             </div>
         </div>
 

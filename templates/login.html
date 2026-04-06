@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        :root {
+            --bg: #eef3f9;
+            --card: rgba(255, 255, 255, 0.9);
+            --text: #111827;
+            --muted: #6b7280;
+            --line: rgba(148, 163, 184, 0.24);
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --danger-bg: #fee2e2;
+            --danger-text: #991b1b;
+            --shadow: 0 24px 80px rgba(17, 24, 39, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            font-family: Arial, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(37, 99, 235, 0.16), transparent 34%),
+                radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.12), transparent 26%),
+                linear-gradient(180deg, #f6f8fb 0%, #e9f1fb 100%);
+        }
+
+        .shell {
+            width: 100%;
+            max-width: 980px;
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            background: white;
+        }
+
+        .hero {
+            padding: 42px;
+            color: white;
+            background:
+                linear-gradient(160deg, rgba(17, 24, 39, 0.8), rgba(30, 64, 175, 0.86)),
+                radial-gradient(circle at top right, rgba(251, 191, 36, 0.35), transparent 28%);
+        }
+
+        .hero h1 {
+            margin: 0 0 14px;
+            font-size: 40px;
+            line-height: 1.06;
+        }
+
+        .hero p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.7;
+            max-width: 420px;
+        }
+
+        .hero-notes {
+            margin-top: 28px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .hero-note {
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: rgba(255, 255, 255, 0.88);
+            line-height: 1.6;
+        }
+
+        .login-panel {
+            padding: 42px 34px;
+            background: var(--card);
+            backdrop-filter: blur(12px);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .login-panel h2 {
+            margin: 18px 0 10px;
+            font-size: 32px;
+        }
+
+        .login-panel p {
+            margin: 0 0 24px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .error-box {
+            margin-bottom: 16px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: var(--danger-bg);
+            color: var(--danger-text);
+            font-weight: bold;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #374151;
+        }
+
+        input {
+            width: 100%;
+            margin-bottom: 16px;
+            padding: 14px 15px;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            font-size: 16px;
+            background: white;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+        }
+
+        .login-hint {
+            margin-top: 16px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 860px) {
+            .shell {
+                grid-template-columns: 1fr;
+            }
+
+            .hero,
+            .login-panel {
+                padding: 28px 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <section class="hero">
+            <h1>QB Tracker</h1>
+            <p>employee-tracker</p>
+
+            <div class="hero-notes">
+                <div class="hero-note">Sign in to open the employee tracking workspace and continue with terminal, dashboard, reports, and employee management.</div>
+                <div class="hero-note">The current session keeps access to all existing pages until you log out.</div>
+            </div>
+        </section>
+
+        <section class="login-panel">
+            <div class="eyebrow">QB Tracker</div>
+            <h2>Login</h2>
+            <p>Enter your credentials to open the application.</p>
+
+            {% if error %}
+            <div class="error-box">{{ error }}</div>
+            {% endif %}
+
+            <form method="post" action="/login">
+                <label for="username">Username</label>
+                <input id="username" name="username" type="text" required autofocus>
+
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" required>
+
+                <button type="submit">Enter System</button>
+            </form>
+
+            <div class="login-hint">
+                Protected login for the employee-tracker workspace.
+            </div>
+        </section>
+    </div>
+</body>
+</html>
