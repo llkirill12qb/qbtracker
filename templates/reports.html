@@ -374,6 +374,8 @@
                         <th>Card ID</th>
                         <th>Event</th>
                         <th>Time</th>
+                        <th>TZ</th>
+                        <th>Source</th>
                     </tr>
                 </thead>
                 <tbody id="reportRows"></tbody>
@@ -463,7 +465,7 @@
 
             rows.forEach(row => {
                 const tr = document.createElement("tr");
-                const localTime = new Date(row.time).toLocaleString();
+                const localTime = row.time_display || new Date(row.time).toLocaleString();
                 const employeeStatus = row.employee_status ?? "-";
 
                 tr.innerHTML = `
@@ -472,6 +474,8 @@
                     <td>${row.card_id}</td>
                     <td><span class="pill ${row.event}">${row.event}</span></td>
                     <td>${localTime}</td>
+                    <td>${row.timezone_abbr || "-"}</td>
+                    <td>${row.scan_source || "-"}</td>
                 `;
 
                 reportRows.appendChild(tr);

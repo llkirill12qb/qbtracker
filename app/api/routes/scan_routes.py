@@ -16,8 +16,30 @@ def get_db():
 
 
 @router.post("/scan")
-def scan_card(card_id: str, db: Session = Depends(get_db)):
-    result, error = process_scan(db, card_id)
+def scan_card(
+    card_id: str,
+    scan_source: str = "terminal_web",
+    device_timezone: str | None = None,
+    timezone_abbr: str | None = None,
+    terminal_id: int | None = None,
+    location_id: int | None = None,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    accuracy_meters: float | None = None,
+    db: Session = Depends(get_db),
+):
+    result, error = process_scan(
+        db=db,
+        card_id=card_id,
+        scan_source=scan_source,
+        device_timezone=device_timezone,
+        timezone_abbr=timezone_abbr,
+        terminal_id=terminal_id,
+        location_id=location_id,
+        latitude=latitude,
+        longitude=longitude,
+        accuracy_meters=accuracy_meters,
+    )
 
     if error:
         raise HTTPException(status_code=404, detail=error)

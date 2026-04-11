@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import text
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -54,6 +55,50 @@ app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
 templates = Jinja2Templates(directory="templates")
 
 Base.metadata.create_all(bind=engine)
+
+with engine.begin() as connection:
+    connection.execute(
+        text(
+            "ALTER TABLE companies "
+            "ADD COLUMN IF NOT EXISTS timezone VARCHAR NOT NULL DEFAULT 'America/New_York'"
+        )
+    )
+    connection.execute(
+        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS device_timezone VARCHAR")
+    )
+    connection.execute(
+        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS timezone_abbr VARCHAR")
+    )
+    connection.execute(
+        text(
+            "ALTER TABLE scan_logs "
+            "ADD COLUMN IF NOT EXISTS scan_source VARCHAR NOT NULL DEFAULT 'terminal'"
+        )
+    )
+    connection.execute(
+        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS timezone_used VARCHAR")
+    )
+    connection.execute(
+        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS timezone_source VARCHAR")
+    )
+    connection.execute(
+        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS terminal_id INTEGER")
+    )
+    connection.execute(
+        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS location_id INTEGER")
+    )
+    connection.execute(
+        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION")
+    )
+    connection.execute(
+        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION")
+    )
+    connection.execute(
+        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS accuracy_meters DOUBLE PRECISION")
+    )
+    connection.execute(
+        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS geo_status VARCHAR")
+    )
 
 app.include_router(auth_router)
 app.include_router(employees_router)

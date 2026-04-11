@@ -29,13 +29,35 @@ def create_scan_log(
     employee_id: int,
     company_id: int,
     card_id: str,
-    event_type: str
+    event_type: str,
+    scan_source: str = "terminal",
+    timezone_used: str | None = None,
+    timezone_source: str | None = None,
+    device_timezone: str | None = None,
+    timezone_abbr: str | None = None,
+    terminal_id: int | None = None,
+    location_id: int | None = None,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    accuracy_meters: float | None = None,
+    geo_status: str | None = None,
 ):
     new_log = ScanLog(
         employee_id=employee_id,
         company_id=company_id,
         card_id=card_id,
-        event_type=event_type
+        event_type=event_type,
+        scan_source=scan_source,
+        timezone_used=timezone_used,
+        timezone_source=timezone_source,
+        device_timezone=device_timezone,
+        timezone_abbr=timezone_abbr,
+        terminal_id=terminal_id,
+        location_id=location_id,
+        latitude=latitude,
+        longitude=longitude,
+        accuracy_meters=accuracy_meters,
+        geo_status=geo_status,
     )
     db.add(new_log)
     db.commit()

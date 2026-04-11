@@ -1,4 +1,4 @@
-from datetime import date, datetime, time
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
@@ -8,6 +8,14 @@ from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.crud.employee_crud import get_archived_employees, get_all_employees
 from app.crud.scan_crud import get_report_logs
+from app.services.company_time_service import (
+    format_scan_time,
+    format_scan_time_display,
+    get_company_timezone,
+    get_scan_local_date,
+    get_scan_timezone,
+    get_timezone_abbr,
+)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -35,14 +43,15 @@ def reports_data(
     employee_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
 ):
-    start_datetime = None
-    end_datetime = None
+    start_local_date = None
+    end_local_date = None
+    timezone_name, _ = get_company_timezone(db, DEFAULT_COMPANY_ID)
 
     try:
         if start_date:
-            start_datetime = datetime.combine(date.fromisoformat(start_date), time.min)
+            start_local_date = date.fromisoformat(start_date)
         if end_date:
-            end_datetime = datetime.combine(date.fromisoformat(end_date), time.max)
+            end_local_date = date.fromisoformat(end_date)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
 
@@ -61,8 +70,6 @@ def reports_data(
     rows = get_report_logs(
         db=db,
         company_id=DEFAULT_COMPANY_ID,
-        start_datetime=start_datetime,
-        end_datetime=end_datetime,
         employee_id=employee_id,
     )
 
@@ -71,6 +78,14 @@ def reports_data(
     check_out_count = 0
 
     for log, employee in rows:
+        scan_local_date = get_scan_local_date(log, timezone_name)
+        if start_local_date and scan_local_date < start_local_date:
+            continue
+        if end_local_date and scan_local_date > end_local_date:
+            continue
+
+        _, scan_timezone = get_scan_timezone(log, timezone_name)
+
         if log.event_type == "check-in":
             check_in_count += 1
         elif log.event_type == "check-out":
@@ -82,7 +97,11 @@ def reports_data(
             "employee_status": employee.status,
             "card_id": log.card_id,
             "event": log.event_type,
-            "time": log.scanned_at.isoformat(),
+            "scan_source": log.scan_source,
+            "time": format_scan_time(log.scanned_at, scan_timezone),
+            "time_display": format_scan_time_display(log.scanned_at, scan_timezone),
+            "timezone_abbr": log.timezone_abbr or get_timezone_abbr(log.scanned_at, scan_timezone),
+            "geo_status": log.geo_status,
         })
 
     employee_options = [
@@ -100,6 +119,7 @@ def reports_data(
             "start_date": start_date,
             "end_date": end_date,
             "employee_id": employee_id,
+            "timezone": timezone_name,
         },
         "employees": employee_options,
         "summary": {

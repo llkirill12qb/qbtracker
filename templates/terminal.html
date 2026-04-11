@@ -664,6 +664,10 @@
                                 <div id="scanTime" class="meta-value">--</div>
                             </div>
                             <div class="meta-card">
+                                <div class="meta-label">Time zone</div>
+                                <div id="scanTimezone" class="meta-value">--</div>
+                            </div>
+                            <div class="meta-card">
                                 <div class="meta-label">Card ID</div>
                                 <div id="cardValue" class="meta-value">--</div>
                             </div>
@@ -699,6 +703,7 @@
         const employeeName = document.getElementById("employeeName");
         const eventPill = document.getElementById("eventPill");
         const scanTime = document.getElementById("scanTime");
+        const scanTimezone = document.getElementById("scanTimezone");
         const cardValue = document.getElementById("cardValue");
         const errorText = document.getElementById("errorText");
         const liveClock = document.getElementById("liveClock");
@@ -737,7 +742,8 @@
             employeeName.textContent = data.employee_name;
             eventPill.textContent = data.event;
             eventPill.className = "event-pill " + data.event;
-            scanTime.textContent = formatDateTime(data.timestamp);
+            scanTime.textContent = data.time_display || formatDateTime(data.timestamp);
+            scanTimezone.textContent = data.timezone_abbr || getDeviceTimezoneAbbr();
             cardValue.textContent = cardId;
 
             if (data.photo_url) {
@@ -794,8 +800,26 @@
             });
         }
 
+        function getDeviceTimezone() {
+            return Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+        }
+
+        function getDeviceTimezoneAbbr() {
+            const parts = new Intl.DateTimeFormat("en-US", {
+                timeZoneName: "short"
+            }).formatToParts(new Date());
+            const timeZonePart = parts.find(part => part.type === "timeZoneName");
+            return timeZonePart ? timeZonePart.value : "";
+        }
+
         async function submitScan() {
             const cardId = cardInput.value.trim();
+            const params = new URLSearchParams({
+                card_id: cardId,
+                scan_source: "terminal_web",
+                device_timezone: getDeviceTimezone(),
+                timezone_abbr: getDeviceTimezoneAbbr()
+            });
 
             if (!cardId) {
                 showErrorState("Please enter or scan card ID.", "");
@@ -806,7 +830,7 @@
             showLoadingState(cardId);
 
             try {
-                const response = await fetch(`/scan?card_id=${encodeURIComponent(cardId)}`, {
+                const response = await fetch(`/scan?${params.toString()}`, {
                     method: "POST"
                 });
 
