@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Companies</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --nav: #111827;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .navbar {
+            background: var(--nav);
+            color: white;
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .brand-title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .brand-subtitle {
+            margin-top: 4px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .links {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .links a,
+        .logout-button {
+            color: white;
+            text-decoration: none;
+            font: inherit;
+            font-weight: bold;
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        .logout-button {
+            padding: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .links a:hover,
+        .logout-button:hover {
+            color: #bfdbfe;
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 34px 20px 48px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 34px;
+        }
+
+        .page-copy {
+            margin: 8px 0 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-flex;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--success-bg);
+            color: var(--success-text);
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .panel {
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 13px 12px;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+        }
+
+        th {
+            background: #f9fafb;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .open-button {
+            padding: 9px 14px;
+            border: none;
+            border-radius: 10px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .open-button:hover {
+            background: var(--primary-dark);
+        }
+
+        .selected-label {
+            display: inline-flex;
+            margin-left: 8px;
+            padding: 5px 8px;
+            border-radius: 999px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .empty {
+            color: var(--muted);
+            padding: 20px 0 0;
+        }
+
+        @media (max-width: 760px) {
+            .panel {
+                overflow-x: auto;
+            }
+
+            .navbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div>
+            <div class="brand-title">QB Tracker Platform</div>
+            <div class="brand-subtitle">Super Admin company management</div>
+        </div>
+        <div class="links">
+            <a href="/platform/companies">Companies</a>
+            <a href="/dashboard">Selected Company Dashboard</a>
+            <form class="logout-form" method="post" action="/logout">
+                <button class="logout-button" type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <main class="page">
+        <div class="page-header">
+            <div>
+                <h1>Companies</h1>
+                <p class="page-copy">
+                    Choose a client company to open its dashboard, employees, reports, terminal, and settings context.
+                </p>
+            </div>
+            <div class="badge">{{ user.role }}</div>
+        </div>
+
+        <section class="panel">
+            {% if companies %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Company</th>
+                        <th>Status</th>
+                        <th>Timezone</th>
+                        <th>Contact</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for company in companies %}
+                    <tr>
+                        <td>{{ company.id }}</td>
+                        <td>
+                            <strong>{{ company.name }}</strong>
+                            {% if selected_company_id and selected_company_id|int == company.id %}
+                            <span class="selected-label">Selected</span>
+                            {% endif %}
+                            {% if company.legal_name %}
+                            <div class="muted">{{ company.legal_name }}</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ company.status or "active" }}</td>
+                        <td>{{ company.timezone or "Not set" }}</td>
+                        <td>
+                            {% if company.email %}
+                            <div>{{ company.email }}</div>
+                            {% endif %}
+                            {% if company.phone %}
+                            <div class="muted">{{ company.phone }}</div>
+                            {% endif %}
+                            {% if not company.email and not company.phone %}
+                            <span class="muted">No contact yet</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="post" action="/platform/companies/{{ company.id }}/open">
+                                <button class="open-button" type="submit">Open Company</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty">No companies yet.</div>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

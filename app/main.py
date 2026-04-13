@@ -2,23 +2,31 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import text
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.api.routes import dashboard_routes as dashboard
 from app.api.routes.auth_routes import router as auth_router
+from app.api.routes.company_context_routes import router as company_context_router
 from app.api.routes.employees_page_routes import router as employees_page_router
 from app.api.routes.employees_routes import router as employees_router
+from app.api.routes.platform_routes import router as platform_router
 from app.api.routes.qr_routes import router as qr_router
 from app.api.routes.reports_routes import router as reports_router
 from app.api.routes.scan_routes import router as scan_router
 from app.api.routes.terminal_routes import router as terminal_router
 from app.core.auth import is_authenticated, SESSION_SECRET
-from app.core.database import Base, engine
+from app.core.database import Base, SessionLocal, engine
+from app.models.company_contact_model import CompanyContact
 from app.models.company_model import Company
 from app.models.employee_model import Employee
+from app.models.location_model import Location
 from app.models.scan_log_model import ScanLog
+from app.models.terminal_model import Terminal
+from app.models.user_model import User
+from app.services.employee_bootstrap_service import ensure_employee_qr_tokens
+from app.services.schema_upgrade_service import ensure_schema_upgrades
+from app.services.user_bootstrap_service import ensure_superadmin_user
 
 
 PUBLIC_PATHS = {"/", "/login", "/favicon.ico"}
@@ -56,51 +64,15 @@ templates = Jinja2Templates(directory="templates")
 
 Base.metadata.create_all(bind=engine)
 
-with engine.begin() as connection:
-    connection.execute(
-        text(
-            "ALTER TABLE companies "
-            "ADD COLUMN IF NOT EXISTS timezone VARCHAR NOT NULL DEFAULT 'America/New_York'"
-        )
-    )
-    connection.execute(
-        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS device_timezone VARCHAR")
-    )
-    connection.execute(
-        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS timezone_abbr VARCHAR")
-    )
-    connection.execute(
-        text(
-            "ALTER TABLE scan_logs "
-            "ADD COLUMN IF NOT EXISTS scan_source VARCHAR NOT NULL DEFAULT 'terminal'"
-        )
-    )
-    connection.execute(
-        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS timezone_used VARCHAR")
-    )
-    connection.execute(
-        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS timezone_source VARCHAR")
-    )
-    connection.execute(
-        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS terminal_id INTEGER")
-    )
-    connection.execute(
-        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS location_id INTEGER")
-    )
-    connection.execute(
-        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION")
-    )
-    connection.execute(
-        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION")
-    )
-    connection.execute(
-        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS accuracy_meters DOUBLE PRECISION")
-    )
-    connection.execute(
-        text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS geo_status VARCHAR")
-    )
+ensure_schema_upgrades()
+
+with SessionLocal() as db:
+    ensure_superadmin_user(db)
+    ensure_employee_qr_tokens(db)
 
 app.include_router(auth_router)
+app.include_router(company_context_router)
+app.include_router(platform_router)
 app.include_router(employees_router)
 app.include_router(scan_router)
 app.include_router(terminal_router)

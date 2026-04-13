@@ -1,6 +1,37 @@
+import secrets
+
 from sqlalchemy.orm import Session
 
 from app.models.employee_model import Employee
+
+
+QR_PAYLOAD_PREFIX = "QBT:v1"
+
+
+def generate_qr_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def build_qr_payload(employee: Employee) -> str:
+    return f"{QR_PAYLOAD_PREFIX}:{employee.company_id}:{employee.id}:{employee.qr_token}"
+
+
+def parse_qr_payload(value: str):
+    parts = value.split(":")
+    if len(parts) != 5 or ":".join(parts[:2]) != QR_PAYLOAD_PREFIX:
+        return None
+
+    try:
+        company_id = int(parts[2])
+        employee_id = int(parts[3])
+    except ValueError:
+        return None
+
+    return {
+        "company_id": company_id,
+        "employee_id": employee_id,
+        "qr_token": parts[4],
+    }
 
 
 def get_employee_by_card_id(db: Session, card_id: str, company_id: int | None = None):
@@ -15,6 +46,39 @@ def get_employee_by_id(db: Session, employee_id: int, company_id: int | None = N
     if company_id is not None:
         query = query.filter(Employee.company_id == company_id)
     return query.first()
+
+
+def get_employee_by_qr_token(
+    db: Session,
+    employee_id: int,
+    qr_token: str,
+    company_id: int,
+):
+    return (
+        db.query(Employee)
+        .filter(
+            Employee.id == employee_id,
+            Employee.qr_token == qr_token,
+            Employee.company_id == company_id,
+        )
+        .first()
+    )
+
+
+def ensure_employee_qr_token(db: Session, employee: Employee):
+    if employee.qr_token:
+        return employee
+
+    while True:
+        token = generate_qr_token()
+        existing_employee = db.query(Employee).filter(Employee.qr_token == token).first()
+        if not existing_employee:
+            break
+
+    employee.qr_token = token
+    db.commit()
+    db.refresh(employee)
+    return employee
 
 
 def get_all_employees(db: Session, company_id: int):
@@ -47,6 +111,7 @@ def create_employee(
     company_id: int | None = None,
     photo_filename: str | None = None,
 ):
+    qr_token = generate_qr_token()
     new_employee = Employee(
         full_name=full_name,
         card_id=card_id,
@@ -59,6 +124,7 @@ def create_employee(
         notes=notes,
         company_id=company_id,
         photo_filename=photo_filename,
+        qr_token=qr_token,
     )
     db.add(new_employee)
     db.commit()

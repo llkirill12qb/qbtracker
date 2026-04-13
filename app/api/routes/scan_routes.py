@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.services.scan_service import process_scan, get_logs
+from app.core.company_context import get_current_company_id
 from app.core.database import SessionLocal
-from app.services.scan_service import process_scan
 
 router = APIRouter()
 
@@ -17,6 +17,7 @@ def get_db():
 
 @router.post("/scan")
 def scan_card(
+    request: Request,
     card_id: str,
     scan_source: str = "terminal_web",
     device_timezone: str | None = None,
@@ -28,9 +29,11 @@ def scan_card(
     accuracy_meters: float | None = None,
     db: Session = Depends(get_db),
 ):
+    company_id = get_current_company_id(request)
     result, error = process_scan(
         db=db,
         card_id=card_id,
+        company_id=company_id,
         scan_source=scan_source,
         device_timezone=device_timezone,
         timezone_abbr=timezone_abbr,
@@ -47,5 +50,6 @@ def scan_card(
     return result
 
 @router.get("/logs")
-def logs(db: Session = Depends(get_db)):
-    return get_logs(db)
+def logs(request: Request, db: Session = Depends(get_db)):
+    company_id = get_current_company_id(request)
+    return get_logs(db, company_id)

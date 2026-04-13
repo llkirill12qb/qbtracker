@@ -1,8 +1,9 @@
 import os
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
 
+from app.core.company_context import get_current_company_id
 from app.core.database import SessionLocal
 from app.crud.employee_crud import (
     create_employee as create_employee_crud,
@@ -19,10 +20,6 @@ from app.schemas.employee_schema import EmployeeResponse
 from app.services.photo_service import delete_employee_photo, save_employee_photo
 
 router = APIRouter()
-
-# TEMP:
-# until company auth is implemented, use company_1
-DEFAULT_COMPANY_ID = 1
 
 
 def get_db():
@@ -49,7 +46,7 @@ def build_employee_response(employee) -> EmployeeResponse:
     photo_url = None
     if employee.photo_filename:
         photo_url = (
-            f"/uploads/companies/company_{DEFAULT_COMPANY_ID}/employees/"
+            f"/uploads/companies/company_{employee.company_id}/employees/"
             f"{employee.photo_filename}"
         )
 
@@ -72,6 +69,7 @@ def build_employee_response(employee) -> EmployeeResponse:
 
 @router.post("/employees", response_model=EmployeeResponse)
 def create_employee(
+    request: Request,
     full_name: str = Form(...),
     card_id: str = Form(...),
     department: str = Form(""),
@@ -84,7 +82,8 @@ def create_employee(
     photo: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
-    existing_employee = get_employee_by_card_id(db, card_id, DEFAULT_COMPANY_ID)
+    company_id = get_current_company_id(request)
+    existing_employee = get_employee_by_card_id(db, card_id, company_id)
     if existing_employee:
         raise HTTPException(
             status_code=400,
@@ -104,13 +103,13 @@ def create_employee(
         employee_type=employee_type,
         status=status,
         notes=notes or None,
-        company_id=DEFAULT_COMPANY_ID,
+        company_id=company_id,
     )
 
     if photo and photo.filename:
         saved_path = save_employee_photo(
             upload_file=photo,
-            company_id=DEFAULT_COMPANY_ID,
+            company_id=company_id,
             employee_id=new_employee.id,
         )
         photo_filename = os.path.basename(saved_path)
@@ -124,19 +123,22 @@ def create_employee(
 
 
 @router.get("/employees", response_model=list[EmployeeResponse])
-def get_employees(db: Session = Depends(get_db)):
-    employees = get_all_employees(db, DEFAULT_COMPANY_ID)
+def get_employees(request: Request, db: Session = Depends(get_db)):
+    company_id = get_current_company_id(request)
+    employees = get_all_employees(db, company_id)
     return [build_employee_response(emp) for emp in employees]
 
 
 @router.get("/employees/archived", response_model=list[EmployeeResponse])
-def get_archived_employees_list(db: Session = Depends(get_db)):
-    employees = get_archived_employees(db, DEFAULT_COMPANY_ID)
+def get_archived_employees_list(request: Request, db: Session = Depends(get_db)):
+    company_id = get_current_company_id(request)
+    employees = get_archived_employees(db, company_id)
     return [build_employee_response(emp) for emp in employees]
 
 
 @router.put("/employees/{employee_id}", response_model=EmployeeResponse)
 def update_employee(
+    request: Request,
     employee_id: int,
     full_name: str = Form(...),
     card_id: str = Form(...),
@@ -150,11 +152,12 @@ def update_employee(
     photo: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
-    employee = get_employee_by_id(db, employee_id, DEFAULT_COMPANY_ID)
+    company_id = get_current_company_id(request)
+    employee = get_employee_by_id(db, employee_id, company_id)
     if not employee:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    existing_employee = get_employee_by_card_id(db, card_id, DEFAULT_COMPANY_ID)
+    existing_employee = get_employee_by_card_id(db, card_id, company_id)
     if existing_employee and existing_employee.id != employee_id:
         raise HTTPException(
             status_code=400,
@@ -178,10 +181,10 @@ def update_employee(
     )
 
     if photo and photo.filename:
-        delete_employee_photo(employee.photo_filename, DEFAULT_COMPANY_ID)
+        delete_employee_photo(employee.photo_filename, company_id)
         saved_path = save_employee_photo(
             upload_file=photo,
-            company_id=DEFAULT_COMPANY_ID,
+            company_id=company_id,
             employee_id=employee.id,
         )
         photo_filename = os.path.basename(saved_path)
@@ -195,8 +198,9 @@ def update_employee(
 
 
 @router.delete("/employees/{employee_id}")
-def delete_employee(employee_id: int, db: Session = Depends(get_db)):
-    employee = get_employee_by_id(db, employee_id, DEFAULT_COMPANY_ID)
+def delete_employee(request: Request, employee_id: int, db: Session = Depends(get_db)):
+    company_id = get_current_company_id(request)
+    employee = get_employee_by_id(db, employee_id, company_id)
     if not employee:
         raise HTTPException(status_code=404, detail="Employee not found")
 
@@ -211,8 +215,9 @@ def delete_employee(employee_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/employees/{employee_id}/restore", response_model=EmployeeResponse)
-def restore_employee(employee_id: int, db: Session = Depends(get_db)):
-    employee = get_employee_by_id(db, employee_id, DEFAULT_COMPANY_ID)
+def restore_employee(request: Request, employee_id: int, db: Session = Depends(get_db)):
+    company_id = get_current_company_id(request)
+    employee = get_employee_by_id(db, employee_id, company_id)
     if not employee:
         raise HTTPException(status_code=404, detail="Employee not found")
 

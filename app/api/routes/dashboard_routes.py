@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 
+from app.core.company_context import get_current_company_id
 from app.core.database import SessionLocal
 from app.models.employee_model import Employee
 from app.models.scan_log_model import ScanLog
@@ -16,9 +17,6 @@ from app.services.company_time_service import (
 )
 
 router = APIRouter()
-
-DEFAULT_COMPANY_ID = 1
-
 
 def get_db():
     db = SessionLocal()
@@ -43,26 +41,27 @@ def build_scan_row(log: ScanLog, employee: Employee, fallback_timezone_name: str
 
 
 @router.get("/api/dashboard")
-def dashboard_data(db: Session = Depends(get_db)):
-    timezone_name, _ = get_company_timezone(db, DEFAULT_COMPANY_ID)
+def dashboard_data(request: Request, db: Session = Depends(get_db)):
+    company_id = get_current_company_id(request)
+    timezone_name, _ = get_company_timezone(db, company_id)
 
     active_employees = (
         db.query(func.count(Employee.id))
-        .filter(Employee.company_id == DEFAULT_COMPANY_ID)
+        .filter(Employee.company_id == company_id)
         .filter(Employee.is_active.is_(True))
         .scalar()
     )
 
     archived_employees = (
         db.query(func.count(Employee.id))
-        .filter(Employee.company_id == DEFAULT_COMPANY_ID)
+        .filter(Employee.company_id == company_id)
         .filter(Employee.is_active.is_(False))
         .scalar()
     )
 
     company_logs = (
         db.query(ScanLog)
-        .filter(ScanLog.company_id == DEFAULT_COMPANY_ID)
+        .filter(ScanLog.company_id == company_id)
         .all()
     )
     scans_today = sum(
@@ -76,7 +75,7 @@ def dashboard_data(db: Session = Depends(get_db)):
             ScanLog.employee_id.label("employee_id"),
             func.max(ScanLog.scanned_at).label("last_scanned_at"),
         )
-        .filter(ScanLog.company_id == DEFAULT_COMPANY_ID)
+        .filter(ScanLog.company_id == company_id)
         .group_by(ScanLog.employee_id)
         .subquery()
     )
@@ -91,8 +90,8 @@ def dashboard_data(db: Session = Depends(get_db)):
             ),
         )
         .join(Employee, Employee.id == ScanLog.employee_id)
-        .filter(ScanLog.company_id == DEFAULT_COMPANY_ID)
-        .filter(Employee.company_id == DEFAULT_COMPANY_ID)
+        .filter(ScanLog.company_id == company_id)
+        .filter(Employee.company_id == company_id)
         .filter(Employee.is_active.is_(True))
         .order_by(ScanLog.scanned_at.desc())
         .all()
@@ -102,8 +101,8 @@ def dashboard_data(db: Session = Depends(get_db)):
     recent_logs = (
         db.query(ScanLog, Employee)
         .join(Employee, Employee.id == ScanLog.employee_id)
-        .filter(ScanLog.company_id == DEFAULT_COMPANY_ID)
-        .filter(Employee.company_id == DEFAULT_COMPANY_ID)
+        .filter(ScanLog.company_id == company_id)
+        .filter(Employee.company_id == company_id)
         .order_by(ScanLog.scanned_at.desc())
         .limit(10)
         .all()
@@ -127,6 +126,7 @@ def dashboard_data(db: Session = Depends(get_db)):
         "archived_employees": archived_employees or 0,
         "scans_today": scans_today or 0,
         "currently_inside": currently_inside or 0,
+        "company_id": company_id,
         "timezone": timezone_name,
         "recent": recent,
         "inside_employees": inside_employees,
@@ -346,6 +346,7 @@ def dashboard_page():
                 <div class="subtitle">Company dashboard</div>
             </div>
             <div class="links">
+                <a href="/platform/companies">Companies</a>
                 <a href="/dashboard">Dashboard</a>
                 <a href="/employees-page">Employees</a>
                 <a href="/employees-archive">Archive</a>

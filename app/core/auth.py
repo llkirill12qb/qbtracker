@@ -1,6 +1,11 @@
 import os
+import hashlib
+import hmac
+import secrets
 
 from dotenv import load_dotenv
+
+from app.crud.user_crud import get_user_by_username
 
 load_dotenv()
 
@@ -29,5 +34,58 @@ def verify_superadmin(username: str, password: str) -> bool:
     return username == SUPERADMIN_USERNAME and password == SUPERADMIN_PASSWORD
 
 
+def hash_password(password: str) -> str:
+    salt = secrets.token_hex(16)
+    password_hash = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        260000,
+    ).hex()
+
+    return f"pbkdf2_sha256$260000${salt}${password_hash}"
+
+
+def verify_password(password: str, stored_hash: str) -> bool:
+    try:
+        algorithm, iterations, salt, password_hash = stored_hash.split("$", 3)
+    except ValueError:
+        return False
+
+    if algorithm != "pbkdf2_sha256":
+        return False
+
+    calculated_hash = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        int(iterations),
+    ).hex()
+
+    return hmac.compare_digest(calculated_hash, password_hash)
+
+
+def authenticate_user(db, username: str, password: str):
+    user = get_user_by_username(db, username)
+
+    if user and user.is_active and verify_password(password, user.password_hash):
+        return user
+
+    return None
+
+
 def is_authenticated(session: dict) -> bool:
     return bool(session.get("authenticated"))
+
+
+def get_session_user(session: dict):
+    if not is_authenticated(session):
+        return None
+
+    return {
+        "user_id": session.get("user_id"),
+        "username": session.get("username"),
+        "role": session.get("role"),
+        "company_id": session.get("company_id"),
+        "auth_source": session.get("auth_source"),
+    }

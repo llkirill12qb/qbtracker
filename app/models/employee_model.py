@@ -23,6 +23,7 @@ class Employee(Base):
     is_active = Column(Boolean, default=True)
 
     photo_filename = Column(String, nullable=True)
+    qr_token = Column(String, unique=True, nullable=True, index=True)
 
     notes = Column(String, nullable=True)
 
