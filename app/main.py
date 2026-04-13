@@ -8,6 +8,8 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.api.routes import dashboard_routes as dashboard
 from app.api.routes.auth_routes import router as auth_router
 from app.api.routes.company_context_routes import router as company_context_router
+from app.api.routes.company_settings_routes import router as company_settings_router
+from app.api.routes.company_users_routes import router as company_users_router
 from app.api.routes.employees_page_routes import router as employees_page_router
 from app.api.routes.employees_routes import router as employees_router
 from app.api.routes.platform_routes import router as platform_router
@@ -72,6 +74,8 @@ with SessionLocal() as db:
 
 app.include_router(auth_router)
 app.include_router(company_context_router)
+app.include_router(company_settings_router)
+app.include_router(company_users_router)
 app.include_router(platform_router)
 app.include_router(employees_router)
 app.include_router(scan_router)

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.services.scan_service import process_scan, get_logs
 from app.core.company_context import get_current_company_id
 from app.core.database import SessionLocal
+from app.core.security import require_terminal_access
 
 router = APIRouter()
 
@@ -29,6 +30,7 @@ def scan_card(
     accuracy_meters: float | None = None,
     db: Session = Depends(get_db),
 ):
+    require_terminal_access(request)
     company_id = get_current_company_id(request)
     result, error = process_scan(
         db=db,
@@ -51,5 +53,6 @@ def scan_card(
 
 @router.get("/logs")
 def logs(request: Request, db: Session = Depends(get_db)):
+    require_terminal_access(request)
     company_id = get_current_company_id(request)
     return get_logs(db, company_id)

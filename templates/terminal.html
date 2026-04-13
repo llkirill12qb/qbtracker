@@ -569,12 +569,18 @@
             <div class="brand-subtitle">Employee terminal for QR and card scans</div>
         </div>
         <div class="links">
+            {% if request.session.get("role") != "terminal_user" %}
             <a href="/platform/companies">Companies</a>
             <a href="/dashboard">Dashboard</a>
             <a href="/employees-page">Employees</a>
             <a href="/employees-archive">Archive</a>
             <a href="/reports">Reports</a>
+            {% endif %}
             <a href="/terminal">Terminal</a>
+            {% if request.session.get("role") != "terminal_user" %}
+            <a href="/company/users">Users</a>
+            <a href="/company/settings">Settings</a>
+            {% endif %}
             <form class="logout-form" method="post" action="/logout">
                 <button class="logout-button" type="submit">Logout</button>
             </form>

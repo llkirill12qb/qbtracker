@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -27,10 +27,16 @@ def require_platform_user(request: Request):
 @router.get("/platform/companies", response_class=HTMLResponse)
 def platform_companies_page(
     request: Request,
+    q: str = Query(default=""),
+    sort: str = Query(default="id"),
+    direction: str = Query(default="asc"),
     db: Session = Depends(get_db),
 ):
     user = require_platform_user(request)
-    companies = get_all_companies(db)
+    sort = sort if sort in {"id", "name"} else "id"
+    direction = direction if direction in {"asc", "desc"} else "asc"
+    search = q.strip()
+    companies = get_all_companies(db, search=search, sort_by=sort, direction=direction)
 
     return templates.TemplateResponse(
         "platform_companies.html",
@@ -38,6 +44,9 @@ def platform_companies_page(
             "request": request,
             "user": user,
             "companies": companies,
+            "q": search,
+            "sort": sort,
+            "direction": direction,
             "selected_company_id": request.session.get("selected_company_id"),
         },
     )

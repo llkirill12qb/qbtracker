@@ -126,6 +126,70 @@
             padding: 24px;
         }
 
+        .toolbar {
+            display: grid;
+            grid-template-columns: 1fr auto auto auto auto;
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 18px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field label {
+            color: #374151;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .field input,
+        .field select {
+            min-height: 42px;
+            padding: 9px 11px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: white;
+            color: var(--text);
+            font: inherit;
+        }
+
+        .toolbar-button,
+        .clear-link {
+            min-height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 9px 14px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .toolbar-button {
+            border: none;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+        }
+
+        .toolbar-button:hover {
+            background: var(--primary-dark);
+        }
+
+        .clear-link {
+            border: 1px solid var(--line);
+            color: #374151;
+            background: #f9fafb;
+        }
+
+        .clear-link:hover {
+            background: #f3f4f6;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -179,6 +243,10 @@
         }
 
         @media (max-width: 760px) {
+            .toolbar {
+                grid-template-columns: 1fr;
+            }
+
             .panel {
                 overflow-x: auto;
             }
@@ -198,7 +266,6 @@
         </div>
         <div class="links">
             <a href="/platform/companies">Companies</a>
-            <a href="/dashboard">Selected Company Dashboard</a>
             <form class="logout-form" method="post" action="/logout">
                 <button class="logout-button" type="submit">Logout</button>
             </form>
@@ -217,6 +284,29 @@
         </div>
 
         <section class="panel">
+            <form class="toolbar" method="get" action="/platform/companies">
+                <div class="field">
+                    <label for="q">Search by company name</label>
+                    <input id="q" name="q" type="search" value="{{ q }}" placeholder="Type company name">
+                </div>
+                <div class="field">
+                    <label for="sort">Sort by</label>
+                    <select id="sort" name="sort">
+                        <option value="id" {% if sort == "id" %}selected{% endif %}>ID number</option>
+                        <option value="name" {% if sort == "name" %}selected{% endif %}>Company name</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="direction">Direction</label>
+                    <select id="direction" name="direction">
+                        <option value="asc" {% if direction == "asc" %}selected{% endif %}>Ascending</option>
+                        <option value="desc" {% if direction == "desc" %}selected{% endif %}>Descending</option>
+                    </select>
+                </div>
+                <button class="toolbar-button" type="submit">Apply</button>
+                <a class="clear-link" href="/platform/companies">Reset</a>
+            </form>
+
             {% if companies %}
             <table>
                 <thead>

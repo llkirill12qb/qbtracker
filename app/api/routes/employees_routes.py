@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import get_current_company_id
 from app.core.database import SessionLocal
+from app.core.security import require_company_workspace_access
 from app.crud.employee_crud import (
     create_employee as create_employee_crud,
     get_all_employees,
@@ -82,6 +83,7 @@ def create_employee(
     photo: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
+    require_company_workspace_access(request)
     company_id = get_current_company_id(request)
     existing_employee = get_employee_by_card_id(db, card_id, company_id)
     if existing_employee:
@@ -124,6 +126,7 @@ def create_employee(
 
 @router.get("/employees", response_model=list[EmployeeResponse])
 def get_employees(request: Request, db: Session = Depends(get_db)):
+    require_company_workspace_access(request)
     company_id = get_current_company_id(request)
     employees = get_all_employees(db, company_id)
     return [build_employee_response(emp) for emp in employees]
@@ -131,6 +134,7 @@ def get_employees(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/employees/archived", response_model=list[EmployeeResponse])
 def get_archived_employees_list(request: Request, db: Session = Depends(get_db)):
+    require_company_workspace_access(request)
     company_id = get_current_company_id(request)
     employees = get_archived_employees(db, company_id)
     return [build_employee_response(emp) for emp in employees]
@@ -152,6 +156,7 @@ def update_employee(
     photo: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
+    require_company_workspace_access(request)
     company_id = get_current_company_id(request)
     employee = get_employee_by_id(db, employee_id, company_id)
     if not employee:
@@ -199,6 +204,7 @@ def update_employee(
 
 @router.delete("/employees/{employee_id}")
 def delete_employee(request: Request, employee_id: int, db: Session = Depends(get_db)):
+    require_company_workspace_access(request)
     company_id = get_current_company_id(request)
     employee = get_employee_by_id(db, employee_id, company_id)
     if not employee:
@@ -216,6 +222,7 @@ def delete_employee(request: Request, employee_id: int, db: Session = Depends(ge
 
 @router.post("/employees/{employee_id}/restore", response_model=EmployeeResponse)
 def restore_employee(request: Request, employee_id: int, db: Session = Depends(get_db)):
+    require_company_workspace_access(request)
     company_id = get_current_company_id(request)
     employee = get_employee_by_id(db, employee_id, company_id)
     if not employee:

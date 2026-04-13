@@ -5,6 +5,7 @@ from sqlalchemy import and_, func
 
 from app.core.company_context import get_current_company_id
 from app.core.database import SessionLocal
+from app.core.security import require_company_workspace_access
 from app.models.employee_model import Employee
 from app.models.scan_log_model import ScanLog
 from app.services.company_time_service import (
@@ -42,6 +43,7 @@ def build_scan_row(log: ScanLog, employee: Employee, fallback_timezone_name: str
 
 @router.get("/api/dashboard")
 def dashboard_data(request: Request, db: Session = Depends(get_db)):
+    require_company_workspace_access(request)
     company_id = get_current_company_id(request)
     timezone_name, _ = get_company_timezone(db, company_id)
 
@@ -135,7 +137,8 @@ def dashboard_data(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/dashboard", response_class=HTMLResponse)
-def dashboard_page():
+def dashboard_page(request: Request):
+    require_company_workspace_access(request)
     return """
     <!DOCTYPE html>
     <html lang="en">
@@ -352,6 +355,8 @@ def dashboard_page():
                 <a href="/employees-archive">Archive</a>
                 <a href="/reports">Reports</a>
                 <a href="/terminal">Terminal</a>
+                <a href="/company/users">Users</a>
+                <a href="/company/settings">Settings</a>
                 <form class="logout-form" method="post" action="/logout">
                     <button class="logout-button" type="submit">Logout</button>
                 </form>

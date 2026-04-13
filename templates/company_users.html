@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Users</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --nav: #111827;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --error-bg: #fee2e2;
+            --error-text: #991b1b;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .navbar {
+            background: var(--nav);
+            color: white;
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .brand-title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .brand-subtitle {
+            margin-top: 4px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .links {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .links a,
+        .logout-button {
+            color: white;
+            text-decoration: none;
+            font: inherit;
+            font-weight: bold;
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        .logout-button {
+            padding: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .links a:hover,
+        .logout-button:hover {
+            color: #bfdbfe;
+        }
+
+        .page {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 34px 20px 48px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        h1,
+        h2 {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 34px;
+        }
+
+        h2 {
+            font-size: 22px;
+        }
+
+        .page-copy {
+            margin: 8px 0 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .badge,
+        .message {
+            display: inline-flex;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--success-bg);
+            color: var(--success-text);
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .message.error {
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(320px, 0.9fr) minmax(520px, 1.4fr);
+            gap: 22px;
+            align-items: start;
+        }
+
+        .panel {
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        .checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 41px;
+        }
+
+        label {
+            color: #374151;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 41px;
+            padding: 9px 11px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: white;
+            color: var(--text);
+            font: inherit;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary);
+            outline: 3px solid rgba(37, 99, 235, 0.16);
+        }
+
+        .checkbox-label input {
+            width: auto;
+            min-height: auto;
+        }
+
+        .button {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 10px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background: var(--primary-dark);
+        }
+
+        .button.secondary {
+            border: 1px solid var(--line);
+            background: #f9fafb;
+            color: #374151;
+        }
+
+        .button.secondary:hover {
+            background: #f3f4f6;
+        }
+
+        .users-list {
+            display: grid;
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .user-card {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 16px;
+            background: #fbfdff;
+        }
+
+        .user-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .username {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            padding: 5px 8px;
+            border-radius: 999px;
+            background: var(--success-bg);
+            color: var(--success-text);
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-pill.inactive {
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+
+        .inline-actions {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: end;
+            margin-top: 12px;
+        }
+
+        .empty {
+            color: var(--muted);
+            margin-top: 18px;
+        }
+
+        @media (max-width: 980px) {
+            .grid,
+            .form-grid,
+            .inline-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .navbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div>
+            <div class="brand-title">QB Tracker</div>
+            <div class="brand-subtitle">Company users</div>
+        </div>
+        <div class="links">
+            <a href="/platform/companies">Companies</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/terminal">Terminal</a>
+            <a href="/employees-page">Employees</a>
+            <a href="/employees-archive">Archive</a>
+            <a href="/reports">Reports</a>
+            <a href="/company/users">Users</a>
+            <a href="/company/settings">Settings</a>
+            <form class="logout-form" method="post" action="/logout">
+                <button class="logout-button" type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <main class="page">
+        <div class="page-header">
+            <div>
+                <h1>Users</h1>
+                <p class="page-copy">
+                    Manage logins and roles for {{ company.name }}.
+                </p>
+            </div>
+            <div class="badge">Company #{{ company.id }}</div>
+        </div>
+
+        {% if message %}
+        <p class="message">{{ message }}</p>
+        {% endif %}
+        {% if error %}
+        <p class="message error">{{ error }}</p>
+        {% endif %}
+
+        <div class="grid">
+            <section class="panel">
+                <h2>Add User</h2>
+                <form method="post" action="/company/users">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="username">Username</label>
+                            <input id="username" name="username" required>
+                        </div>
+                        <div class="field">
+                            <label for="password">Temporary password</label>
+                            <input id="password" name="password" type="password" required>
+                        </div>
+                        <div class="field">
+                            <label for="first_name">First name</label>
+                            <input id="first_name" name="first_name">
+                        </div>
+                        <div class="field">
+                            <label for="last_name">Last name</label>
+                            <input id="last_name" name="last_name">
+                        </div>
+                        <div class="field">
+                            <label for="email">Email</label>
+                            <input id="email" name="email" type="email">
+                        </div>
+                        <div class="field">
+                            <label for="phone">Phone</label>
+                            <input id="phone" name="phone">
+                        </div>
+                        <div class="field">
+                            <label for="role">Role</label>
+                            <select id="role" name="role">
+                                {% for role in roles %}
+                                <option value="{{ role }}">{{ role }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="language">Language</label>
+                            <select id="language" name="language">
+                                <option value="en">English</option>
+                                <option value="es">Español</option>
+                                <option value="ru">Русский</option>
+                                <option value="be">Беларуская</option>
+                                <option value="uk">Українська</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="inline-actions">
+                        <span class="muted">Created users are assigned to the selected company automatically.</span>
+                        <button class="button" type="submit">Create User</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="panel">
+                <h2>Company Users</h2>
+                {% if users %}
+                <div class="users-list">
+                    {% for user in users %}
+                    <article class="user-card">
+                        <div class="user-card-header">
+                            <div>
+                                <div class="username">{{ user.username }}</div>
+                                <div class="muted">
+                                    {{ user.first_name or "" }} {{ user.last_name or "" }}
+                                    {% if user.email %} · {{ user.email }}{% endif %}
+                                </div>
+                            </div>
+                            <span class="status-pill {% if not user.is_active %}inactive{% endif %}">
+                                {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </div>
+
+                        <form method="post" action="/company/users/{{ user.id }}/update">
+                            <div class="form-grid">
+                                <div class="field">
+                                    <label for="first_name_{{ user.id }}">First name</label>
+                                    <input id="first_name_{{ user.id }}" name="first_name" value="{{ user.first_name or '' }}">
+                                </div>
+                                <div class="field">
+                                    <label for="last_name_{{ user.id }}">Last name</label>
+                                    <input id="last_name_{{ user.id }}" name="last_name" value="{{ user.last_name or '' }}">
+                                </div>
+                                <div class="field">
+                                    <label for="email_{{ user.id }}">Email</label>
+                                    <input id="email_{{ user.id }}" name="email" type="email" value="{{ user.email or '' }}">
+                                </div>
+                                <div class="field">
+                                    <label for="phone_{{ user.id }}">Phone</label>
+                                    <input id="phone_{{ user.id }}" name="phone" value="{{ user.phone or '' }}">
+                                </div>
+                                <div class="field">
+                                    <label for="role_{{ user.id }}">Role</label>
+                                    <select id="role_{{ user.id }}" name="role">
+                                        {% for role in roles %}
+                                        <option value="{{ role }}" {% if user.role == role %}selected{% endif %}>{{ role }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="language_{{ user.id }}">Language</label>
+                                    <select id="language_{{ user.id }}" name="language">
+                                        <option value="en" {% if user.language == "en" %}selected{% endif %}>English</option>
+                                        <option value="es" {% if user.language == "es" %}selected{% endif %}>Español</option>
+                                        <option value="ru" {% if user.language == "ru" %}selected{% endif %}>Русский</option>
+                                        <option value="be" {% if user.language == "be" %}selected{% endif %}>Беларуская</option>
+                                        <option value="uk" {% if user.language == "uk" %}selected{% endif %}>Українська</option>
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="is_active" {% if user.is_active %}checked{% endif %}>
+                                        Active
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="inline-actions">
+                                <span class="muted">Last login: {{ user.last_login_at or "Never" }}</span>
+                                <button class="button" type="submit">Save</button>
+                            </div>
+                        </form>
+
+                        <form class="inline-actions" method="post" action="/company/users/{{ user.id }}/password">
+                            <div class="field">
+                                <label for="password_{{ user.id }}">New password</label>
+                                <input id="password_{{ user.id }}" name="password" type="password" placeholder="Set new password">
+                            </div>
+                            <button class="button secondary" type="submit">Reset Password</button>
+                        </form>
+                    </article>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="empty">No users for this company yet.</p>
+                {% endif %}
+            </section>
+        </div>
+    </main>
+</body>
+</html>

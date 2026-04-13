@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Settings</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --nav: #111827;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .navbar {
+            background: var(--nav);
+            color: white;
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .brand-title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .brand-subtitle {
+            margin-top: 4px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .links {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .links a,
+        .logout-button {
+            color: white;
+            text-decoration: none;
+            font: inherit;
+            font-weight: bold;
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        .logout-button {
+            padding: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .links a:hover,
+        .logout-button:hover {
+            color: #bfdbfe;
+        }
+
+        .page {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 34px 20px 48px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 34px;
+        }
+
+        .page-copy {
+            margin: 8px 0 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .badge,
+        .success-message {
+            display: inline-flex;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--success-bg);
+            color: var(--success-text);
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .panel {
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            color: #374151;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 43px;
+            padding: 10px 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: white;
+            color: var(--text);
+            font: inherit;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary);
+            outline: 3px solid rgba(37, 99, 235, 0.16);
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        .save-button {
+            padding: 11px 18px;
+            border: none;
+            border-radius: 10px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .save-button:hover {
+            background: var(--primary-dark);
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        @media (max-width: 760px) {
+            .navbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div>
+            <div class="brand-title">QB Tracker</div>
+            <div class="brand-subtitle">Company settings</div>
+        </div>
+        <div class="links">
+            <a href="/platform/companies">Companies</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/terminal">Terminal</a>
+            <a href="/employees-page">Employees</a>
+            <a href="/employees-archive">Archive</a>
+            <a href="/reports">Reports</a>
+            <a href="/company/users">Users</a>
+            <a href="/company/settings">Settings</a>
+            <form class="logout-form" method="post" action="/logout">
+                <button class="logout-button" type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <main class="page">
+        <div class="page-header">
+            <div>
+                <h1>Company Settings</h1>
+                <p class="page-copy">
+                    Manage the selected company profile, contact details, address, status, and default timezone.
+                </p>
+            </div>
+            <div class="badge">Company #{{ company.id }}</div>
+        </div>
+
+        <section class="panel">
+            <form method="post" action="/company/settings">
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="name">Company name</label>
+                        <input id="name" name="name" value="{{ company.name or '' }}" required>
+                    </div>
+                    <div class="field">
+                        <label for="legal_name">Legal name</label>
+                        <input id="legal_name" name="legal_name" value="{{ company.legal_name or '' }}">
+                    </div>
+                    <div class="field">
+                        <label for="email">Email</label>
+                        <input id="email" name="email" type="email" value="{{ company.email or '' }}">
+                    </div>
+                    <div class="field">
+                        <label for="phone">Phone</label>
+                        <input id="phone" name="phone" value="{{ company.phone or '' }}">
+                    </div>
+                    <div class="field">
+                        <label for="website">Website</label>
+                        <input id="website" name="website" value="{{ company.website or '' }}">
+                    </div>
+                    <div class="field">
+                        <label for="timezone">Default timezone</label>
+                        <select id="timezone" name="timezone">
+                            {% for timezone_name in timezone_options %}
+                            <option value="{{ timezone_name }}" {% if timezone_name == (company.timezone or 'America/New_York') %}selected{% endif %}>
+                                {{ timezone_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="status">Status</label>
+                        <select id="status" name="status">
+                            <option value="active" {% if company.status == "active" %}selected{% endif %}>Active</option>
+                            <option value="test" {% if company.status == "test" %}selected{% endif %}>Test</option>
+                            <option value="inactive" {% if company.status == "inactive" %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="country">Country</label>
+                        <input id="country" name="country" value="{{ company.country or '' }}">
+                    </div>
+                    <div class="field">
+                        <label for="state">State / Region</label>
+                        <input id="state" name="state" value="{{ company.state or '' }}">
+                    </div>
+                    <div class="field">
+                        <label for="city">City</label>
+                        <input id="city" name="city" value="{{ company.city or '' }}">
+                    </div>
+                    <div class="field full">
+                        <label for="address_line1">Address line 1</label>
+                        <input id="address_line1" name="address_line1" value="{{ company.address_line1 or '' }}">
+                    </div>
+                    <div class="field full">
+                        <label for="address_line2">Address line 2</label>
+                        <input id="address_line2" name="address_line2" value="{{ company.address_line2 or '' }}">
+                    </div>
+                    <div class="field">
+                        <label for="postal_code">Postal code</label>
+                        <input id="postal_code" name="postal_code" value="{{ company.postal_code or '' }}">
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="save-button" type="submit">Save Settings</button>
+                    {% if saved %}
+                    <span class="success-message">Settings saved</span>
+                    {% else %}
+                    <span class="muted">Timezone example: America/New_York, Europe/Madrid, Europe/Minsk.</span>
+                    {% endif %}
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
