@@ -163,6 +163,29 @@
             margin-bottom: 14px;
         }
 
+        .terminal-selector {
+            display: grid;
+            gap: 7px;
+            margin-bottom: 16px;
+        }
+
+        .terminal-selector label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #475569;
+        }
+
+        .terminal-selector select {
+            width: 100%;
+            min-height: 46px;
+            padding: 10px 12px;
+            border: 1px solid rgba(148, 163, 184, 0.32);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.92);
+            color: var(--text);
+            font: inherit;
+        }
+
         .input-wrap {
             flex: 1;
             min-width: 260px;
@@ -579,6 +602,8 @@
             <a href="/terminal">Terminal</a>
             {% if request.session.get("role") != "terminal_user" %}
             <a href="/company/users">Users</a>
+            <a href="/company/locations">Locations</a>
+            <a href="/company/terminals">Terminals</a>
             <a href="/company/settings">Settings</a>
             {% endif %}
             <form class="logout-form" method="post" action="/logout">
@@ -596,6 +621,21 @@
                     Scan an employee QR code or enter a card ID manually. The terminal will immediately show the employee photo,
                     action type, and scan time.
                 </p>
+
+                {% if request.session.get("role") != "terminal_user" %}
+                <div class="terminal-selector">
+                    <label for="terminalSelect">Terminal device for this scan</label>
+                    <select id="terminalSelect">
+                        {% if terminals %}
+                        {% for terminal in terminals %}
+                        <option value="{{ terminal.id }}">{{ terminal.name }}</option>
+                        {% endfor %}
+                        {% else %}
+                        <option value="">No active terminals configured</option>
+                        {% endif %}
+                    </select>
+                </div>
+                {% endif %}
 
                 <div class="scan-form">
                     <div class="input-wrap pulse" id="inputWrap">
@@ -678,6 +718,14 @@
                                 <div class="meta-label">Card ID</div>
                                 <div id="cardValue" class="meta-value">--</div>
                             </div>
+                            <div class="meta-card">
+                                <div class="meta-label">Location</div>
+                                <div id="locationValue" class="meta-value">--</div>
+                            </div>
+                            <div class="meta-card">
+                                <div class="meta-label">Terminal</div>
+                                <div id="terminalValue" class="meta-value">--</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -712,6 +760,9 @@
         const scanTime = document.getElementById("scanTime");
         const scanTimezone = document.getElementById("scanTimezone");
         const cardValue = document.getElementById("cardValue");
+        const locationValue = document.getElementById("locationValue");
+        const terminalValue = document.getElementById("terminalValue");
+        const terminalSelect = document.getElementById("terminalSelect");
         const errorText = document.getElementById("errorText");
         const liveClock = document.getElementById("liveClock");
         const liveDate = document.getElementById("liveDate");
@@ -752,6 +803,8 @@
             scanTime.textContent = data.time_display || formatDateTime(data.timestamp);
             scanTimezone.textContent = data.timezone_abbr || getDeviceTimezoneAbbr();
             cardValue.textContent = cardId;
+            locationValue.textContent = data.location_name || "Not assigned";
+            terminalValue.textContent = data.terminal_name || "Not assigned";
 
             if (data.photo_url) {
                 employeePhoto.src = data.photo_url + "?t=" + Date.now();
@@ -827,6 +880,10 @@
                 device_timezone: getDeviceTimezone(),
                 timezone_abbr: getDeviceTimezoneAbbr()
             });
+
+            if (terminalSelect && terminalSelect.value) {
+                params.set("terminal_id", terminalSelect.value);
+            }
 
             if (!cardId) {
                 showErrorState("Please enter or scan card ID.", "");

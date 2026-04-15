@@ -49,6 +49,8 @@ def login_submit(
         request.session["username"] = user.username
         request.session["role"] = user.role
         request.session["company_id"] = user.company_id
+        request.session["location_id"] = user.location_id
+        request.session["terminal_id"] = user.terminal_id
         request.session["auth_source"] = "database"
         return RedirectResponse(url=get_post_login_redirect(user.role), status_code=303)
 
@@ -67,6 +69,8 @@ def login_submit(
     request.session["username"] = username
     request.session["role"] = ROLE_SUPER_ADMIN
     request.session["company_id"] = None
+    request.session["location_id"] = None
+    request.session["terminal_id"] = None
     request.session["auth_source"] = "env"
     return RedirectResponse(url=get_post_login_redirect(ROLE_SUPER_ADMIN), status_code=303)
 

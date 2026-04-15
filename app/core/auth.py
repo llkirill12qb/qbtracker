@@ -87,5 +87,7 @@ def get_session_user(session: dict):
         "username": session.get("username"),
         "role": session.get("role"),
         "company_id": session.get("company_id"),
+        "location_id": session.get("location_id"),
+        "terminal_id": session.get("terminal_id"),
         "auth_source": session.get("auth_source"),
     }

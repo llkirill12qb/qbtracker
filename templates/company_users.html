@@ -313,6 +313,8 @@
             <a href="/employees-archive">Archive</a>
             <a href="/reports">Reports</a>
             <a href="/company/users">Users</a>
+            <a href="/company/locations">Locations</a>
+            <a href="/company/terminals">Terminals</a>
             <a href="/company/settings">Settings</a>
             <form class="logout-form" method="post" action="/logout">
                 <button class="logout-button" type="submit">Logout</button>
@@ -376,6 +378,24 @@
                             </select>
                         </div>
                         <div class="field">
+                            <label for="location_id">Location for terminal user</label>
+                            <select id="location_id" name="location_id">
+                                <option value="">No location</option>
+                                {% for location in locations %}
+                                <option value="{{ location.id }}">{{ location.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="terminal_id">Terminal device</label>
+                            <select id="terminal_id" name="terminal_id">
+                                <option value="">No terminal</option>
+                                {% for terminal in terminals %}
+                                <option value="{{ terminal.id }}">{{ terminal.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="field">
                             <label for="language">Language</label>
                             <select id="language" name="language">
                                 <option value="en">English</option>
@@ -402,8 +422,17 @@
                         <div class="user-card-header">
                             <div>
                                 <div class="username">{{ user.username }}</div>
+                                {% if user.location_id and location_names_by_id.get(user.location_id) %}
+                                <div class="muted">Location: {{ location_names_by_id.get(user.location_id) }}</div>
+                                {% endif %}
+                                {% if user.terminal_id and terminal_names_by_id.get(user.terminal_id) %}
+                                <div class="muted">Terminal: {{ terminal_names_by_id.get(user.terminal_id) }}</div>
+                                {% endif %}
                                 <div class="muted">
                                     {{ user.first_name or "" }} {{ user.last_name or "" }}
+                                    {% if user.location_id and location_names_by_id.get(user.location_id) %}
+                                    - {{ location_names_by_id.get(user.location_id) }}
+                                    {% endif %}
                                     {% if user.email %} · {{ user.email }}{% endif %}
                                 </div>
                             </div>
@@ -435,6 +464,24 @@
                                     <select id="role_{{ user.id }}" name="role">
                                         {% for role in roles %}
                                         <option value="{{ role }}" {% if user.role == role %}selected{% endif %}>{{ role }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="location_id_{{ user.id }}">Location for terminal user</label>
+                                    <select id="location_id_{{ user.id }}" name="location_id">
+                                        <option value="">No location</option>
+                                        {% for location in locations %}
+                                        <option value="{{ location.id }}" {% if user.location_id == location.id %}selected{% endif %}>{{ location.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="terminal_id_{{ user.id }}">Terminal device</label>
+                                    <select id="terminal_id_{{ user.id }}" name="terminal_id">
+                                        <option value="">No terminal</option>
+                                        {% for terminal in terminals %}
+                                        <option value="{{ terminal.id }}" {% if user.terminal_id == terminal.id %}selected{% endif %}>{{ terminal.name }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>

@@ -16,6 +16,8 @@ from app.core.roles import (
 )
 from app.core.security import get_current_session_user
 from app.crud.company_crud import get_company_by_id
+from app.crud.location_crud import get_location_by_id, get_locations
+from app.crud.terminal_crud import get_terminal_by_id, get_terminals
 from app.crud.user_crud import (
     create_user,
     get_user_by_email,
@@ -57,6 +59,40 @@ def normalize_optional(value: str | None):
     return clean_value or None
 
 
+def normalize_location_id(db: Session, company_id: int, location_id: str | None):
+    clean_value = normalize_optional(location_id)
+    if clean_value is None:
+        return None
+
+    try:
+        parsed_location_id = int(clean_value)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid location")
+
+    location = get_location_by_id(db, parsed_location_id, company_id)
+    if not location:
+        raise HTTPException(status_code=404, detail="Location not found")
+
+    return parsed_location_id
+
+
+def normalize_terminal_id(db: Session, company_id: int, terminal_id: str | None):
+    clean_value = normalize_optional(terminal_id)
+    if clean_value is None:
+        return None
+
+    try:
+        parsed_terminal_id = int(clean_value)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid terminal")
+
+    terminal = get_terminal_by_id(db, parsed_terminal_id, company_id)
+    if not terminal:
+        raise HTTPException(status_code=404, detail="Terminal not found")
+
+    return terminal
+
+
 def redirect_with_query(**params):
     return RedirectResponse(url=f"/company/users?{urlencode(params)}", status_code=303)
 
@@ -75,6 +111,10 @@ def company_users_page(request: Request, db: Session = Depends(get_db)):
     current_user = require_company_user_manager(request)
     company_id, company = get_company_context_or_404(request, db)
     users = get_users_by_company(db, company_id)
+    locations = get_locations(db, company_id, include_inactive=True)
+    terminals = get_terminals(db, company_id, include_inactive=True)
+    location_names_by_id = {location.id: location.name for location in locations}
+    terminal_names_by_id = {terminal.id: terminal.name for terminal in terminals}
 
     return templates.TemplateResponse(
         "company_users.html",
@@ -82,6 +122,10 @@ def company_users_page(request: Request, db: Session = Depends(get_db)):
             "request": request,
             "company": company,
             "users": users,
+            "locations": locations,
+            "terminals": terminals,
+            "location_names_by_id": location_names_by_id,
+            "terminal_names_by_id": terminal_names_by_id,
             "roles": COMPANY_USER_ROLES,
             "current_user": current_user,
             "message": request.query_params.get("message"),
@@ -100,6 +144,8 @@ def create_company_user(
     first_name: str = Form(default=""),
     last_name: str = Form(default=""),
     phone: str = Form(default=""),
+    location_id: str = Form(default=""),
+    terminal_id: str = Form(default=""),
     language: str = Form(default="en"),
     db: Session = Depends(get_db),
 ):
@@ -118,6 +164,15 @@ def create_company_user(
     if email_value and get_user_by_email(db, email_value):
         return redirect_with_query(error="Email already exists")
 
+    parsed_location_id = normalize_location_id(db, company_id, location_id)
+    terminal = normalize_terminal_id(db, company_id, terminal_id)
+    parsed_terminal_id = terminal.id if terminal else None
+    if terminal and terminal.location_id:
+        parsed_location_id = terminal.location_id
+    if role != ROLE_TERMINAL_USER:
+        parsed_location_id = None
+        parsed_terminal_id = None
+
     create_user(
         db=db,
         username=username,
@@ -128,6 +183,8 @@ def create_company_user(
         last_name=normalize_optional(last_name),
         phone=normalize_optional(phone),
         company_id=company_id,
+        location_id=parsed_location_id,
+        terminal_id=parsed_terminal_id,
         language=language.strip() or "en",
         is_active=True,
     )
@@ -144,6 +201,8 @@ def update_company_user(
     first_name: str = Form(default=""),
     last_name: str = Form(default=""),
     phone: str = Form(default=""),
+    location_id: str = Form(default=""),
+    terminal_id: str = Form(default=""),
     language: str = Form(default="en"),
     is_active: str = Form(default="off"),
     db: Session = Depends(get_db),
@@ -162,6 +221,15 @@ def update_company_user(
     if existing_email_user and existing_email_user.id != user.id:
         return redirect_with_query(error="Email already exists")
 
+    parsed_location_id = normalize_location_id(db, company_id, location_id)
+    terminal = normalize_terminal_id(db, company_id, terminal_id)
+    parsed_terminal_id = terminal.id if terminal else None
+    if terminal and terminal.location_id:
+        parsed_location_id = terminal.location_id
+    if role != ROLE_TERMINAL_USER:
+        parsed_location_id = None
+        parsed_terminal_id = None
+
     update_user_profile(
         db=db,
         user=user,
@@ -170,6 +238,8 @@ def update_company_user(
         last_name=normalize_optional(last_name),
         phone=normalize_optional(phone),
         role=role,
+        location_id=parsed_location_id,
+        terminal_id=parsed_terminal_id,
         language=language.strip() or "en",
         is_active=is_active == "on",
     )

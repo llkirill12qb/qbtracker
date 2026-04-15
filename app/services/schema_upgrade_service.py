@@ -180,6 +180,12 @@ def ensure_schema_upgrades():
             text("ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id INTEGER")
         )
         connection.execute(
+            text("ALTER TABLE users ADD COLUMN IF NOT EXISTS location_id INTEGER")
+        )
+        connection.execute(
+            text("ALTER TABLE users ADD COLUMN IF NOT EXISTS terminal_id INTEGER")
+        )
+        connection.execute(
             text("ALTER TABLE users ADD COLUMN IF NOT EXISTS language VARCHAR NOT NULL DEFAULT 'en'")
         )
         connection.execute(

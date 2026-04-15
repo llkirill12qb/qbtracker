@@ -25,6 +25,14 @@ def get_terminal_by_id(db: Session, terminal_id: int, company_id: int):
     )
 
 
+def get_terminal_name_by_id(db: Session, terminal_id: int | None, company_id: int):
+    if terminal_id is None:
+        return None
+
+    terminal = get_terminal_by_id(db, terminal_id, company_id)
+    return terminal.name if terminal else None
+
+
 def create_terminal(
     db: Session,
     company_id: int,

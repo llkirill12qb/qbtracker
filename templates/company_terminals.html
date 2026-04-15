@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Terminals</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --nav: #111827;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --error-bg: #fee2e2;
+            --error-text: #991b1b;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .navbar {
+            background: var(--nav);
+            color: white;
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .brand-title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .brand-subtitle {
+            margin-top: 4px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .links {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .links a,
+        .logout-button {
+            color: white;
+            text-decoration: none;
+            font: inherit;
+            font-weight: bold;
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        .logout-button {
+            padding: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .links a:hover,
+        .logout-button:hover {
+            color: #bfdbfe;
+        }
+
+        .page {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 34px 20px 48px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 34px;
+        }
+
+        h2 {
+            font-size: 22px;
+        }
+
+        h3 {
+            font-size: 18px;
+        }
+
+        .page-copy {
+            margin: 8px 0 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .badge,
+        .message {
+            display: inline-flex;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--success-bg);
+            color: var(--success-text);
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .message.error {
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+
+        .panel,
+        .terminal-card {
+            background: var(--card);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        label {
+            color: #374151;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 41px;
+            padding: 9px 11px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: white;
+            color: var(--text);
+            font: inherit;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary);
+            outline: 3px solid rgba(37, 99, 235, 0.16);
+        }
+
+        .checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 41px;
+        }
+
+        .checkbox-label input {
+            width: auto;
+            min-height: auto;
+        }
+
+        .button {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background: var(--primary-dark);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .terminals-list {
+            display: grid;
+            gap: 18px;
+            margin-top: 22px;
+        }
+
+        .terminal-card {
+            box-shadow: none;
+            border: 1px solid var(--line);
+        }
+
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            padding: 5px 8px;
+            border-radius: 999px;
+            background: var(--success-bg);
+            color: var(--success-text);
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-pill.inactive {
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+
+        .muted,
+        .empty {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .empty {
+            margin-top: 18px;
+        }
+
+        @media (max-width: 980px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .navbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div>
+            <div class="brand-title">QB Tracker</div>
+            <div class="brand-subtitle">Company terminals</div>
+        </div>
+        <div class="links">
+            <a href="/platform/companies">Companies</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/terminal">Terminal</a>
+            <a href="/employees-page">Employees</a>
+            <a href="/employees-archive">Archive</a>
+            <a href="/reports">Reports</a>
+            <a href="/company/users">Users</a>
+            <a href="/company/locations">Locations</a>
+            <a href="/company/terminals">Terminals</a>
+            <a href="/company/settings">Settings</a>
+            <form class="logout-form" method="post" action="/logout">
+                <button class="logout-button" type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <main class="page">
+        <div class="page-header">
+            <div>
+                <h1>Terminals</h1>
+                <p class="page-copy">
+                    Manage scan devices for {{ company.name }}. Terminals belong to locations and can later be paired with terminal users.
+                </p>
+            </div>
+            <div class="badge">Company #{{ company.id }}</div>
+        </div>
+
+        {% if message %}
+        <p class="message">{{ message }}</p>
+        {% endif %}
+        {% if error %}
+        <p class="message error">{{ error }}</p>
+        {% endif %}
+
+        <section class="panel">
+            <h2>Add Terminal</h2>
+            <form method="post" action="/company/terminals">
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="name">Terminal name</label>
+                        <input id="name" name="name" placeholder="Main Entrance Tablet" required>
+                    </div>
+                    <div class="field">
+                        <label for="device_name">Device name</label>
+                        <input id="device_name" name="device_name" placeholder="iPad Front Desk">
+                    </div>
+                    <div class="field">
+                        <label for="location_id">Location</label>
+                        <select id="location_id" name="location_id">
+                            <option value="">No location</option>
+                            {% for location in locations %}
+                            <option value="{{ location.id }}">{{ location.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="timezone">Timezone override</label>
+                        <select id="timezone" name="timezone">
+                            <option value="">Use location/company timezone</option>
+                            {% for timezone_name in timezone_options %}
+                            <option value="{{ timezone_name }}">{{ timezone_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="status">Status</label>
+                        <select id="status" name="status">
+                            <option value="active">Active</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="is_active" checked>
+                            Active
+                        </label>
+                    </div>
+                </div>
+                <div class="actions">
+                    <span class="muted">Timezone override is optional. Most terminals should inherit the location timezone.</span>
+                    <button class="button" type="submit">Create Terminal</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="panel" style="margin-top: 22px;">
+            <h2>Company Terminals</h2>
+            {% if terminals %}
+            <div class="terminals-list">
+                {% for terminal in terminals %}
+                <article class="terminal-card">
+                    <div class="terminal-header">
+                        <div>
+                            <h3>{{ terminal.name }}</h3>
+                            <div class="muted">
+                                {{ terminal.device_name or "No device name" }} -
+                                {{ location_names_by_id.get(terminal.location_id, "No location") }}
+                                {% if terminal.timezone %} - {{ terminal.timezone }}{% endif %}
+                            </div>
+                        </div>
+                        <span class="status-pill {% if not terminal.is_active %}inactive{% endif %}">
+                            {% if terminal.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </div>
+
+                    <form method="post" action="/company/terminals/{{ terminal.id }}/update">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="name_{{ terminal.id }}">Terminal name</label>
+                                <input id="name_{{ terminal.id }}" name="name" value="{{ terminal.name or '' }}" required>
+                            </div>
+                            <div class="field">
+                                <label for="device_name_{{ terminal.id }}">Device name</label>
+                                <input id="device_name_{{ terminal.id }}" name="device_name" value="{{ terminal.device_name or '' }}">
+                            </div>
+                            <div class="field">
+                                <label for="location_id_{{ terminal.id }}">Location</label>
+                                <select id="location_id_{{ terminal.id }}" name="location_id">
+                                    <option value="">No location</option>
+                                    {% for location in locations %}
+                                    <option value="{{ location.id }}" {% if terminal.location_id == location.id %}selected{% endif %}>{{ location.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="timezone_{{ terminal.id }}">Timezone override</label>
+                                <select id="timezone_{{ terminal.id }}" name="timezone">
+                                    <option value="">Use location/company timezone</option>
+                                    {% for timezone_name in timezone_options %}
+                                    <option value="{{ timezone_name }}" {% if terminal.timezone == timezone_name %}selected{% endif %}>{{ timezone_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label for="status_{{ terminal.id }}">Status</label>
+                                <select id="status_{{ terminal.id }}" name="status">
+                                    <option value="active" {% if terminal.status == "active" %}selected{% endif %}>Active</option>
+                                    <option value="maintenance" {% if terminal.status == "maintenance" %}selected{% endif %}>Maintenance</option>
+                                    <option value="inactive" {% if terminal.status == "inactive" %}selected{% endif %}>Inactive</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="is_active" {% if terminal.is_active %}checked{% endif %}>
+                                    Active
+                                </label>
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <span class="muted">Terminal ID: {{ terminal.id }} · Last seen: {{ terminal.last_seen_at or "Never" }}</span>
+                            <button class="button" type="submit">Save Terminal</button>
+                        </div>
+                    </form>
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty">No terminals yet.</p>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

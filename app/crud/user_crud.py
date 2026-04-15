@@ -39,6 +39,8 @@ def create_user(
     last_name: str | None = None,
     phone: str | None = None,
     company_id: int | None = None,
+    location_id: int | None = None,
+    terminal_id: int | None = None,
     language: str = "en",
     is_active: bool = True,
 ):
@@ -51,6 +53,8 @@ def create_user(
         phone=phone,
         role=role,
         company_id=company_id,
+        location_id=location_id,
+        terminal_id=terminal_id,
         language=language,
         is_active=is_active,
     )
@@ -68,6 +72,8 @@ def update_user_profile(
     last_name: str | None = None,
     phone: str | None = None,
     role: str | None = None,
+    location_id: int | None = None,
+    terminal_id: int | None = None,
     language: str | None = None,
     is_active: bool | None = None,
 ):
@@ -78,6 +84,8 @@ def update_user_profile(
 
     if role is not None:
         user.role = role
+    user.location_id = location_id
+    user.terminal_id = terminal_id
     if language is not None:
         user.language = language
     if is_active is not None:

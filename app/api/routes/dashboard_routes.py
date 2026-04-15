@@ -6,6 +6,8 @@ from sqlalchemy import and_, func
 from app.core.company_context import get_current_company_id
 from app.core.database import SessionLocal
 from app.core.security import require_company_workspace_access
+from app.crud.location_crud import get_location_name_by_id
+from app.crud.terminal_crud import get_terminal_name_by_id
 from app.models.employee_model import Employee
 from app.models.scan_log_model import ScanLog
 from app.services.company_time_service import (
@@ -27,7 +29,7 @@ def get_db():
         db.close()
 
 
-def build_scan_row(log: ScanLog, employee: Employee, fallback_timezone_name: str):
+def build_scan_row(db: Session, log: ScanLog, employee: Employee, fallback_timezone_name: str):
     _, scan_timezone = get_scan_timezone(log, fallback_timezone_name)
 
     return {
@@ -38,6 +40,8 @@ def build_scan_row(log: ScanLog, employee: Employee, fallback_timezone_name: str
         "time": format_scan_time(log.scanned_at, scan_timezone),
         "time_display": format_scan_time_display(log.scanned_at, scan_timezone),
         "timezone_abbr": log.timezone_abbr or get_timezone_abbr(log.scanned_at, scan_timezone),
+        "location_name": get_location_name_by_id(db, log.location_id, log.company_id),
+        "terminal_name": get_terminal_name_by_id(db, log.terminal_id, log.company_id),
     }
 
 
@@ -112,12 +116,12 @@ def dashboard_data(request: Request, db: Session = Depends(get_db)):
 
     recent = []
     for log, emp in recent_logs:
-        recent.append(build_scan_row(log, emp, timezone_name))
+        recent.append(build_scan_row(db, log, emp, timezone_name))
 
     inside_employees = []
     checked_out_employees = []
     for log, emp in latest_scan_rows:
-        row = build_scan_row(log, emp, timezone_name)
+        row = build_scan_row(db, log, emp, timezone_name)
         if log.event_type == "check-in":
             inside_employees.append(row)
         elif log.event_type == "check-out":
@@ -356,6 +360,8 @@ def dashboard_page(request: Request):
                 <a href="/reports">Reports</a>
                 <a href="/terminal">Terminal</a>
                 <a href="/company/users">Users</a>
+                <a href="/company/locations">Locations</a>
+                <a href="/company/terminals">Terminals</a>
                 <a href="/company/settings">Settings</a>
                 <form class="logout-form" method="post" action="/logout">
                     <button class="logout-button" type="submit">Logout</button>
@@ -409,6 +415,8 @@ def dashboard_page(request: Request):
                             <th>Event</th>
                             <th>Time</th>
                             <th>TZ</th>
+                            <th>Location</th>
+                            <th>Terminal</th>
                             <th>Source</th>
                         </tr>
                     </thead>
@@ -483,6 +491,8 @@ def dashboard_page(request: Request):
                         <td><span class="event-badge ${eventClass}">${item.event}</span></td>
                         <td>${localTime}</td>
                         <td>${item.timezone_abbr || "-"}</td>
+                        <td>${item.location_name || "-"}</td>
+                        <td>${item.terminal_name || "-"}</td>
                         <td>${item.scan_source || "-"}</td>
                     `;
 

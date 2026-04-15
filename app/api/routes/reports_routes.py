@@ -9,7 +9,9 @@ from app.core.company_context import get_current_company_id
 from app.core.database import SessionLocal
 from app.core.security import require_company_workspace_access
 from app.crud.employee_crud import get_archived_employees, get_all_employees
+from app.crud.location_crud import get_location_name_by_id
 from app.crud.scan_crud import get_report_logs
+from app.crud.terminal_crud import get_terminal_name_by_id
 from app.services.company_time_service import (
     format_scan_time,
     format_scan_time_display,
@@ -104,6 +106,8 @@ def reports_data(
             "time": format_scan_time(log.scanned_at, scan_timezone),
             "time_display": format_scan_time_display(log.scanned_at, scan_timezone),
             "timezone_abbr": log.timezone_abbr or get_timezone_abbr(log.scanned_at, scan_timezone),
+            "location_name": get_location_name_by_id(db, log.location_id, company_id),
+            "terminal_name": get_terminal_name_by_id(db, log.terminal_id, company_id),
             "geo_status": log.geo_status,
         })
 

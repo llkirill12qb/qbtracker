@@ -16,6 +16,8 @@ class User(Base):
     phone = Column(String, nullable=True)
     role = Column(String, nullable=False)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)
+    location_id = Column(Integer, ForeignKey("locations.id"), nullable=True)
+    terminal_id = Column(Integer, ForeignKey("terminals.id"), nullable=True)
     language = Column(String, nullable=False, default="en")
     is_active = Column(Boolean, nullable=False, default=True)
     last_login_at = Column(DateTime(timezone=True), nullable=True)

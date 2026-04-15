@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Locations</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --nav: #111827;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --error-bg: #fee2e2;
+            --error-text: #991b1b;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .navbar {
+            background: var(--nav);
+            color: white;
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .brand-title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .brand-subtitle {
+            margin-top: 4px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .links {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .links a,
+        .logout-button {
+            color: white;
+            text-decoration: none;
+            font: inherit;
+            font-weight: bold;
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        .logout-button {
+            padding: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .links a:hover,
+        .logout-button:hover {
+            color: #bfdbfe;
+        }
+
+        .page {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 34px 20px 48px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 34px;
+        }
+
+        h2 {
+            font-size: 22px;
+        }
+
+        h3 {
+            font-size: 18px;
+        }
+
+        .page-copy {
+            margin: 8px 0 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .badge,
+        .message {
+            display: inline-flex;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--success-bg);
+            color: var(--success-text);
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .message.error {
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+
+        .panel,
+        .location-card {
+            background: var(--card);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            color: #374151;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 41px;
+            padding: 9px 11px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: white;
+            color: var(--text);
+            font: inherit;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary);
+            outline: 3px solid rgba(37, 99, 235, 0.16);
+        }
+
+        .checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 41px;
+        }
+
+        .checkbox-label input {
+            width: auto;
+            min-height: auto;
+        }
+
+        .button {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background: var(--primary-dark);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .locations-list {
+            display: grid;
+            gap: 18px;
+            margin-top: 22px;
+        }
+
+        .location-card {
+            box-shadow: none;
+            border: 1px solid var(--line);
+        }
+
+        .location-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            padding: 5px 8px;
+            border-radius: 999px;
+            background: var(--success-bg);
+            color: var(--success-text);
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-pill.inactive {
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+
+        .muted,
+        .empty {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .empty {
+            margin-top: 18px;
+        }
+
+        @media (max-width: 980px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .navbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div>
+            <div class="brand-title">QB Tracker</div>
+            <div class="brand-subtitle">Company locations</div>
+        </div>
+        <div class="links">
+            <a href="/platform/companies">Companies</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/terminal">Terminal</a>
+            <a href="/employees-page">Employees</a>
+            <a href="/employees-archive">Archive</a>
+            <a href="/reports">Reports</a>
+            <a href="/company/users">Users</a>
+            <a href="/company/locations">Locations</a>
+            <a href="/company/terminals">Terminals</a>
+            <a href="/company/settings">Settings</a>
+            <form class="logout-form" method="post" action="/logout">
+                <button class="logout-button" type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <main class="page">
+        <div class="page-header">
+            <div>
+                <h1>Locations</h1>
+                <p class="page-copy">
+                    Manage work sites for {{ company.name }}. Locations will be used by terminals, scans, reports, and future mobile check-ins.
+                </p>
+            </div>
+            <div class="badge">Company #{{ company.id }}</div>
+        </div>
+
+        {% if message %}
+        <p class="message">{{ message }}</p>
+        {% endif %}
+        {% if error %}
+        <p class="message error">{{ error }}</p>
+        {% endif %}
+
+        <section class="panel">
+            <h2>Add Location</h2>
+            <form method="post" action="/company/locations">
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="name">Location name</label>
+                        <input id="name" name="name" placeholder="Main Office" required>
+                    </div>
+                    <div class="field">
+                        <label for="timezone">Timezone</label>
+                        <select id="timezone" name="timezone">
+                            {% for timezone_name in timezone_options %}
+                            <option value="{{ timezone_name }}" {% if timezone_name == (company.timezone or 'America/New_York') %}selected{% endif %}>
+                                {{ timezone_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="is_active" checked>
+                            Active
+                        </label>
+                    </div>
+                    <div class="field">
+                        <label for="country">Country</label>
+                        <input id="country" name="country">
+                    </div>
+                    <div class="field">
+                        <label for="state">State / Region</label>
+                        <input id="state" name="state">
+                    </div>
+                    <div class="field">
+                        <label for="city">City</label>
+                        <input id="city" name="city">
+                    </div>
+                    <div class="field full">
+                        <label for="address_line1">Address line 1</label>
+                        <input id="address_line1" name="address_line1">
+                    </div>
+                    <div class="field full">
+                        <label for="address_line2">Address line 2</label>
+                        <input id="address_line2" name="address_line2">
+                    </div>
+                    <div class="field">
+                        <label for="postal_code">Postal code</label>
+                        <input id="postal_code" name="postal_code">
+                    </div>
+                    <div class="field">
+                        <label for="latitude">Latitude</label>
+                        <input id="latitude" name="latitude" inputmode="decimal" placeholder="40.7128">
+                    </div>
+                    <div class="field">
+                        <label for="longitude">Longitude</label>
+                        <input id="longitude" name="longitude" inputmode="decimal" placeholder="-74.0060">
+                    </div>
+                    <div class="field">
+                        <label for="geo_radius_meters">Geo radius, meters</label>
+                        <input id="geo_radius_meters" name="geo_radius_meters" inputmode="decimal" placeholder="150">
+                    </div>
+                </div>
+                <div class="actions">
+                    <span class="muted">Coordinates are optional now and will become important for mobile geolocation.</span>
+                    <button class="button" type="submit">Create Location</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="panel" style="margin-top: 22px;">
+            <h2>Company Locations</h2>
+            {% if locations %}
+            <div class="locations-list">
+                {% for location in locations %}
+                <article class="location-card">
+                    <div class="location-header">
+                        <div>
+                            <h3>{{ location.name }}</h3>
+                            <div class="muted">
+                                {{ location.city or "No city" }}{% if location.state %}, {{ location.state }}{% endif %} · {{ location.timezone }}
+                            </div>
+                        </div>
+                        <span class="status-pill {% if not location.is_active %}inactive{% endif %}">
+                            {% if location.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </div>
+
+                    <form method="post" action="/company/locations/{{ location.id }}/update">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="name_{{ location.id }}">Location name</label>
+                                <input id="name_{{ location.id }}" name="name" value="{{ location.name or '' }}" required>
+                            </div>
+                            <div class="field">
+                                <label for="timezone_{{ location.id }}">Timezone</label>
+                                <select id="timezone_{{ location.id }}" name="timezone">
+                                    {% for timezone_name in timezone_options %}
+                                    <option value="{{ timezone_name }}" {% if timezone_name == (location.timezone or company.timezone or 'America/New_York') %}selected{% endif %}>
+                                        {{ timezone_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="is_active" {% if location.is_active %}checked{% endif %}>
+                                    Active
+                                </label>
+                            </div>
+                            <div class="field">
+                                <label for="country_{{ location.id }}">Country</label>
+                                <input id="country_{{ location.id }}" name="country" value="{{ location.country or '' }}">
+                            </div>
+                            <div class="field">
+                                <label for="state_{{ location.id }}">State / Region</label>
+                                <input id="state_{{ location.id }}" name="state" value="{{ location.state or '' }}">
+                            </div>
+                            <div class="field">
+                                <label for="city_{{ location.id }}">City</label>
+                                <input id="city_{{ location.id }}" name="city" value="{{ location.city or '' }}">
+                            </div>
+                            <div class="field full">
+                                <label for="address_line1_{{ location.id }}">Address line 1</label>
+                                <input id="address_line1_{{ location.id }}" name="address_line1" value="{{ location.address_line1 or '' }}">
+                            </div>
+                            <div class="field full">
+                                <label for="address_line2_{{ location.id }}">Address line 2</label>
+                                <input id="address_line2_{{ location.id }}" name="address_line2" value="{{ location.address_line2 or '' }}">
+                            </div>
+                            <div class="field">
+                                <label for="postal_code_{{ location.id }}">Postal code</label>
+                                <input id="postal_code_{{ location.id }}" name="postal_code" value="{{ location.postal_code or '' }}">
+                            </div>
+                            <div class="field">
+                                <label for="latitude_{{ location.id }}">Latitude</label>
+                                <input id="latitude_{{ location.id }}" name="latitude" inputmode="decimal" value="{{ location.latitude if location.latitude is not none else '' }}">
+                            </div>
+                            <div class="field">
+                                <label for="longitude_{{ location.id }}">Longitude</label>
+                                <input id="longitude_{{ location.id }}" name="longitude" inputmode="decimal" value="{{ location.longitude if location.longitude is not none else '' }}">
+                            </div>
+                            <div class="field">
+                                <label for="geo_radius_meters_{{ location.id }}">Geo radius, meters</label>
+                                <input id="geo_radius_meters_{{ location.id }}" name="geo_radius_meters" inputmode="decimal" value="{{ location.geo_radius_meters if location.geo_radius_meters is not none else '' }}">
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <span class="muted">Location ID: {{ location.id }}</span>
+                            <button class="button" type="submit">Save Location</button>
+                        </div>
+                    </form>
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty">No locations yet.</p>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

@@ -23,6 +23,14 @@ def get_location_by_id(db: Session, location_id: int, company_id: int):
     )
 
 
+def get_location_name_by_id(db: Session, location_id: int | None, company_id: int):
+    if location_id is None:
+        return None
+
+    location = get_location_by_id(db, location_id, company_id)
+    return location.name if location else None
+
+
 def create_location(
     db: Session,
     company_id: int,

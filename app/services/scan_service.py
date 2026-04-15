@@ -7,6 +7,8 @@ from app.crud.scan_crud import (
     get_all_logs,
     get_last_scan_log,
 )
+from app.crud.location_crud import get_location_name_by_id
+from app.crud.terminal_crud import get_terminal_name_by_id
 from app.crud.employee_crud import get_employee_by_qr_token, parse_qr_payload
 from app.services.company_time_service import (
     format_scan_time,
@@ -96,6 +98,8 @@ def process_scan(
         "timezone": scan_timezone_name,
         "timezone_abbr": new_log.timezone_abbr,
         "timezone_source": new_log.timezone_source,
+        "location_name": get_location_name_by_id(db, new_log.location_id, company_id),
+        "terminal_name": get_terminal_name_by_id(db, new_log.terminal_id, company_id),
         "geo_status": new_log.geo_status,
         "photo_url": (
             f"/uploads/companies/company_{company_id}/employees/{employee.photo_filename}"
@@ -124,6 +128,8 @@ def get_logs(db: Session, company_id: int):
             "timezone": scan_timezone_name,
             "timezone_abbr": log.timezone_abbr or get_timezone_abbr(log.scanned_at, scan_timezone),
             "timezone_source": log.timezone_source,
+            "location_name": get_location_name_by_id(db, log.location_id, company_id),
+            "terminal_name": get_terminal_name_by_id(db, log.terminal_id, company_id),
             "geo_status": log.geo_status,
             "photo_url": (
                 f"/uploads/companies/company_{company_id}/employees/{employee.photo_filename}"
