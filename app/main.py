@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -28,6 +30,8 @@ from app.models.location_model import Location
 from app.models.scan_log_model import ScanLog
 from app.models.terminal_model import Terminal
 from app.models.user_model import User
+from app.services.demo_company_seed_service import ensure_demo_company_seed
+from app.services.demo_events_service import run_demo_events_scheduler
 from app.services.employee_bootstrap_service import ensure_employee_qr_tokens
 from app.services.schema_upgrade_service import ensure_schema_upgrades
 from app.services.user_bootstrap_service import ensure_superadmin_user
@@ -72,6 +76,7 @@ ensure_schema_upgrades()
 
 with SessionLocal() as db:
     ensure_superadmin_user(db)
+    ensure_demo_company_seed(db)
     ensure_employee_qr_tokens(db)
 
 app.include_router(auth_router)
@@ -90,6 +95,11 @@ app.include_router(dashboard.router)
 app.include_router(employees_page_router)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+@app.on_event("startup")
+async def start_demo_events_scheduler():
+    asyncio.create_task(run_demo_events_scheduler())
 
 
 @app.get("/")
