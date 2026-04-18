@@ -93,7 +93,10 @@ def normalize_terminal_id(db: Session, company_id: int, terminal_id: str | None)
     return terminal
 
 
-def redirect_with_query(**params):
+def redirect_with_query(request: Request, **params):
+    if request.session.get("role") in PLATFORM_ROLES:
+        params["zone"] = "platform"
+
     return RedirectResponse(url=f"/company/users?{urlencode(params)}", status_code=303)
 
 
@@ -156,13 +159,13 @@ def create_company_user(
     email_value = normalize_optional(email)
 
     if role not in COMPANY_USER_ROLES:
-        return redirect_with_query(error="Invalid role")
+        return redirect_with_query(request, error="Invalid role")
     if not username or not password:
-        return redirect_with_query(error="Username and password are required")
+        return redirect_with_query(request, error="Username and password are required")
     if get_user_by_username(db, username):
-        return redirect_with_query(error="Username already exists")
+        return redirect_with_query(request, error="Username already exists")
     if email_value and get_user_by_email(db, email_value):
-        return redirect_with_query(error="Email already exists")
+        return redirect_with_query(request, error="Email already exists")
 
     parsed_location_id = normalize_location_id(db, company_id, location_id)
     terminal = normalize_terminal_id(db, company_id, terminal_id)
@@ -189,7 +192,7 @@ def create_company_user(
         is_active=True,
     )
 
-    return redirect_with_query(message="User created")
+    return redirect_with_query(request, message="User created")
 
 
 @router.post("/company/users/{user_id}/update")
@@ -214,12 +217,12 @@ def update_company_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if role not in COMPANY_USER_ROLES:
-        return redirect_with_query(error="Invalid role")
+        return redirect_with_query(request, error="Invalid role")
 
     email_value = normalize_optional(email)
     existing_email_user = get_user_by_email(db, email_value) if email_value else None
     if existing_email_user and existing_email_user.id != user.id:
-        return redirect_with_query(error="Email already exists")
+        return redirect_with_query(request, error="Email already exists")
 
     parsed_location_id = normalize_location_id(db, company_id, location_id)
     terminal = normalize_terminal_id(db, company_id, terminal_id)
@@ -244,7 +247,7 @@ def update_company_user(
         is_active=is_active == "on",
     )
 
-    return redirect_with_query(message="User updated")
+    return redirect_with_query(request, message="User updated")
 
 
 @router.post("/company/users/{user_id}/password")
@@ -261,7 +264,7 @@ def reset_company_user_password(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if not password.strip():
-        return redirect_with_query(error="Password is required")
+        return redirect_with_query(request, error="Password is required")
 
     update_user_password(db, user, hash_password(password))
-    return redirect_with_query(message="Password updated")
+    return redirect_with_query(request, message="Password updated")

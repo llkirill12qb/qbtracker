@@ -21,6 +21,10 @@
             box-sizing: border-box;
         }
 
+        html {
+            scrollbar-gutter: stable;
+        }
+
         body {
             margin: 0;
             font-family: Arial, sans-serif;
@@ -52,6 +56,7 @@
 
         .nav-links {
             display: flex;
+            align-items: center;
             gap: 18px;
             flex-wrap: wrap;
         }
@@ -63,6 +68,8 @@
         }
 
         .logout-form {
+            display: flex;
+            align-items: center;
             margin: 0;
         }
 
@@ -300,22 +307,26 @@
     </style>
 </head>
 <body>
-<div class="navbar">
+    {% set zone_query = '?zone=platform' if request.session.get("role") in ["super_admin", "site_admin"] else '' %}
+    <div class="navbar">
     <div>
         <div class="nav-title">Time Tracking SaaS</div>
         <div class="nav-subtitle">Archived employees</div>
     </div>
     <div class="nav-links">
+            {% if request.session.get("role") in ["super_admin", "site_admin"] %}
             <a href="/platform/companies">Companies</a>
-            <a href="/dashboard">Dashboard</a>
-        <a href="/employees-page">Employees</a>
-        <a href="/employees-archive">Archive</a>
-        <a href="/reports">Reports</a>
-        <a href="/terminal">Terminal</a>
-        <a href="/company/users">Users</a>
-        <a href="/company/locations">Locations</a>
-        <a href="/company/terminals">Terminals</a>
-        <a href="/company/settings">Settings</a>
+            {% endif %}
+            <a href="/dashboard{{ zone_query }}">Dashboard</a>
+        <a href="/employees-page{{ zone_query }}">Employees</a>
+        <a href="/employees-archive{{ zone_query }}">Archive</a>
+        <a href="/reports{{ zone_query }}">Reports</a>
+        <a href="/terminal?zone={{ 'platform' if zone_query else 'admin' }}">Terminal</a>
+        <a href="/company/users{{ zone_query }}">Users</a>
+        <a href="/company/locations{{ zone_query }}">Locations</a>
+        <a href="/company/terminals{{ zone_query }}">Terminals</a>
+        <a href="/company/settings{{ zone_query }}">Settings</a>
+        {% include "session_badge.html" %}
         <form class="logout-form" method="post" action="/logout">
             <button class="logout-button" type="submit">Logout</button>
         </form>
@@ -377,6 +388,15 @@
 </div>
 
 <script>
+const workspaceQuery = "{{ 'zone=platform' if request.session.get('role') in ['super_admin', 'site_admin'] else '' }}";
+
+function withWorkspaceQuery(url) {
+    if (!workspaceQuery) {
+        return url;
+    }
+    return url + (url.includes("?") ? "&" : "?") + workspaceQuery;
+}
+
 const archiveList = document.getElementById("archiveList");
 const archiveCount = document.getElementById("archiveCount");
 const statusMessage = document.getElementById("statusMessage");
@@ -504,7 +524,7 @@ function renderArchiveList() {
 }
 
 async function loadArchivedEmployees(selectedId = null) {
-    const response = await fetch("/employees/archived");
+    const response = await fetch(withWorkspaceQuery("/employees/archived"));
     const data = await response.json();
 
     if (!response.ok) {
@@ -532,7 +552,7 @@ async function loadArchivedEmployees(selectedId = null) {
 }
 
 async function restoreEmployee(employeeId) {
-    const response = await fetch(`/employees/${employeeId}/restore`, {
+    const response = await fetch(withWorkspaceQuery(`/employees/${employeeId}/restore`), {
         method: "POST"
     });
     const data = await response.json();

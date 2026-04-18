@@ -2,10 +2,23 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from urllib.parse import parse_qs, urlparse
 
 from app.core.auth import authenticate_user, verify_superadmin
 from app.core.database import get_db
 from app.core.roles import PLATFORM_ROLES, ROLE_SUPER_ADMIN, ROLE_TERMINAL_USER
+from app.core.zoned_sessions import (
+    build_session_payload,
+    clear_all_zone_sessions,
+    clear_zone_session,
+    get_zone_for_role,
+    get_zone_for_path,
+    read_zone_session,
+    write_zone_session,
+    ZONE_COMPANY,
+    ZONE_PLATFORM,
+    ZONE_TERMINAL,
+)
 from app.crud.user_crud import update_last_login
 
 router = APIRouter()
@@ -20,6 +33,34 @@ def get_post_login_redirect(role: str) -> str:
         return "/terminal"
 
     return "/dashboard"
+
+
+def clear_legacy_session(request: Request):
+    request.session.clear()
+
+
+def get_logout_zone(request: Request):
+    referrer = request.headers.get("referer", "")
+    parsed_referrer = urlparse(referrer) if referrer else None
+    path = parsed_referrer.path if parsed_referrer else ""
+    requested_zone = parse_qs(parsed_referrer.query).get("zone", [None])[0] if parsed_referrer else None
+    zone = get_zone_for_path(path)
+
+    if requested_zone in {"platform", "admin"} and zone in {ZONE_COMPANY, ZONE_TERMINAL}:
+        return ZONE_PLATFORM if read_zone_session(request, ZONE_PLATFORM) else zone
+
+    if zone == ZONE_COMPANY and not read_zone_session(request, ZONE_COMPANY):
+        return ZONE_PLATFORM if read_zone_session(request, ZONE_PLATFORM) else ZONE_COMPANY
+
+    if zone == ZONE_TERMINAL:
+        if read_zone_session(request, ZONE_TERMINAL):
+            return ZONE_TERMINAL
+        if read_zone_session(request, ZONE_COMPANY):
+            return ZONE_COMPANY
+        if read_zone_session(request, ZONE_PLATFORM):
+            return ZONE_PLATFORM
+
+    return zone
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -44,15 +85,19 @@ def login_submit(
 
     if user:
         update_last_login(db, user)
-        request.session["authenticated"] = True
-        request.session["user_id"] = user.id
-        request.session["username"] = user.username
-        request.session["role"] = user.role
-        request.session["company_id"] = user.company_id
-        request.session["location_id"] = user.location_id
-        request.session["terminal_id"] = user.terminal_id
-        request.session["auth_source"] = "database"
-        return RedirectResponse(url=get_post_login_redirect(user.role), status_code=303)
+        session_payload = build_session_payload(
+            user_id=user.id,
+            username=user.username,
+            role=user.role,
+            company_id=user.company_id,
+            location_id=user.location_id,
+            terminal_id=user.terminal_id,
+            auth_source="database",
+        )
+        clear_legacy_session(request)
+        response = RedirectResponse(url=get_post_login_redirect(user.role), status_code=303)
+        write_zone_session(response, get_zone_for_role(user.role), session_payload)
+        return response
 
     if not verify_superadmin(username, password):
         return templates.TemplateResponse(
@@ -64,18 +109,28 @@ def login_submit(
             status_code=401,
         )
 
-    request.session["authenticated"] = True
-    request.session["user_id"] = None
-    request.session["username"] = username
-    request.session["role"] = ROLE_SUPER_ADMIN
-    request.session["company_id"] = None
-    request.session["location_id"] = None
-    request.session["terminal_id"] = None
-    request.session["auth_source"] = "env"
-    return RedirectResponse(url=get_post_login_redirect(ROLE_SUPER_ADMIN), status_code=303)
+    session_payload = build_session_payload(
+        user_id=None,
+        username=username,
+        role=ROLE_SUPER_ADMIN,
+        company_id=None,
+        location_id=None,
+        terminal_id=None,
+        auth_source="env",
+    )
+    clear_legacy_session(request)
+    response = RedirectResponse(url=get_post_login_redirect(ROLE_SUPER_ADMIN), status_code=303)
+    write_zone_session(response, get_zone_for_role(ROLE_SUPER_ADMIN), session_payload)
+    return response
 
 
 @router.post("/logout")
 def logout(request: Request):
+    logout_zone = get_logout_zone(request)
     request.session.clear()
-    return RedirectResponse(url="/login", status_code=303)
+    response = RedirectResponse(url="/login", status_code=303)
+    if logout_zone:
+        clear_zone_session(response, logout_zone)
+    else:
+        clear_all_zone_sessions(response)
+    return response

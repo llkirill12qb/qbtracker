@@ -23,6 +23,10 @@
             box-sizing: border-box;
         }
 
+        html {
+            scrollbar-gutter: stable;
+        }
+
         body {
             margin: 0;
             font-family: Arial, sans-serif;
@@ -68,6 +72,8 @@
         }
 
         .logout-form {
+            display: flex;
+            align-items: center;
             margin: 0;
         }
 
@@ -208,22 +214,26 @@
     </style>
 </head>
 <body>
+    {% set zone_query = '?zone=platform' if request.session.get("role") in ["super_admin", "site_admin"] else '' %}
     <div class="navbar">
         <div>
             <div class="brand-title">QB Tracker</div>
             <div class="brand-subtitle">Company settings</div>
         </div>
         <div class="links">
+            {% if request.session.get("role") in ["super_admin", "site_admin"] %}
             <a href="/platform/companies">Companies</a>
-            <a href="/dashboard">Dashboard</a>
-            <a href="/terminal">Terminal</a>
-            <a href="/employees-page">Employees</a>
-            <a href="/employees-archive">Archive</a>
-            <a href="/reports">Reports</a>
-            <a href="/company/users">Users</a>
-            <a href="/company/locations">Locations</a>
-            <a href="/company/terminals">Terminals</a>
-            <a href="/company/settings">Settings</a>
+            {% endif %}
+            <a href="/dashboard{{ zone_query }}">Dashboard</a>
+            <a href="/employees-page{{ zone_query }}">Employees</a>
+            <a href="/employees-archive{{ zone_query }}">Archive</a>
+            <a href="/reports{{ zone_query }}">Reports</a>
+            <a href="/terminal?zone={{ 'platform' if zone_query else 'admin' }}">Terminal</a>
+            <a href="/company/users{{ zone_query }}">Users</a>
+            <a href="/company/locations{{ zone_query }}">Locations</a>
+            <a href="/company/terminals{{ zone_query }}">Terminals</a>
+            <a href="/company/settings{{ zone_query }}">Settings</a>
+            {% include "session_badge.html" %}
             <form class="logout-form" method="post" action="/logout">
                 <button class="logout-button" type="submit">Logout</button>
             </form>
@@ -242,7 +252,7 @@
         </div>
 
         <section class="panel">
-            <form method="post" action="/company/settings">
+            <form method="post" action="/company/settings{{ zone_query }}">
                 <div class="form-grid">
                     <div class="field">
                         <label for="name">Company name</label>

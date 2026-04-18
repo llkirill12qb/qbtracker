@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.company_context import get_current_company_id
 from app.core.database import SessionLocal
 from app.core.security import require_company_workspace_access
+from app.crud.company_crud import get_company_by_id
 from app.crud.employee_crud import get_archived_employees, get_all_employees
 from app.crud.location_crud import get_location_name_by_id
 from app.crud.scan_crud import get_report_logs
@@ -33,9 +34,10 @@ def get_db():
 
 
 @router.get("/reports", response_class=HTMLResponse)
-def reports_page(request: Request):
+def reports_page(request: Request, db: Session = Depends(get_db)):
     require_company_workspace_access(request)
-    return templates.TemplateResponse("reports.html", {"request": request})
+    company = get_company_by_id(db, get_current_company_id(request))
+    return templates.TemplateResponse("reports.html", {"request": request, "company": company})
 
 
 @router.get("/api/reports")

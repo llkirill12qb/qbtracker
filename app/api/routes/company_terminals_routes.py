@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import get_current_company_id
 from app.core.database import get_db
+from app.core.roles import PLATFORM_ROLES
 from app.core.security import require_company_workspace_access
 from app.crud.company_crud import get_company_by_id
 from app.crud.location_crud import get_location_by_id, get_locations
@@ -22,7 +23,10 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 
-def redirect_with_query(**params):
+def redirect_with_query(request: Request, **params):
+    if request.session.get("role") in PLATFORM_ROLES:
+        params["zone"] = "platform"
+
     return RedirectResponse(url=f"/company/terminals?{urlencode(params)}", status_code=303)
 
 
@@ -99,7 +103,7 @@ def create_company_terminal(
     name = name.strip()
 
     if not name:
-        return redirect_with_query(error="Terminal name is required")
+        return redirect_with_query(request, error="Terminal name is required")
 
     create_terminal(
         db=db,
@@ -112,7 +116,7 @@ def create_company_terminal(
         is_active=is_active == "on",
     )
 
-    return redirect_with_query(message="Terminal created")
+    return redirect_with_query(request, message="Terminal created")
 
 
 @router.post("/company/terminals/{terminal_id}/update")
@@ -136,7 +140,7 @@ def update_company_terminal(
 
     name = name.strip()
     if not name:
-        return redirect_with_query(error="Terminal name is required")
+        return redirect_with_query(request, error="Terminal name is required")
 
     update_terminal(
         db,
@@ -149,4 +153,4 @@ def update_company_terminal(
         is_active=is_active == "on",
     )
 
-    return redirect_with_query(message="Terminal updated")
+    return redirect_with_query(request, message="Terminal updated")

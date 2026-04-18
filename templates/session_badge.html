@@ -1,0 +1,22 @@
+{% set role = request.session.get("role") %}
+{% set role_label = {
+    "super_admin": "Super Admin",
+    "site_admin": "Site Admin",
+    "company_owner": "Company Owner",
+    "company_admin": "Company Admin",
+    "terminal_user": "Terminal User",
+    "employee": "Employee"
+}.get(role, role or "User") %}
+{% set current_company = company if company is defined else active_company if active_company is defined else none %}
+<div
+    class="session-badge"
+    style="display:flex;align-self:center;flex-direction:column;justify-content:center;gap:2px;min-height:40px;padding:6px 12px;border-radius:14px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.16);line-height:1.15;"
+>
+    <span style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.72);">{{ role_label }}</span>
+    <strong style="font-size:13px;color:#fff;">{{ request.session.get("username") or "Current user" }}</strong>
+    {% if current_company %}
+    <small style="font-size:12px;color:rgba(255,255,255,.72);">{{ current_company.name }}</small>
+    {% elif role in ["super_admin", "site_admin"] %}
+    <small style="font-size:12px;color:rgba(255,255,255,.72);">Platform access</small>
+    {% endif %}
+</div>

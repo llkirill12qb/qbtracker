@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.core.company_context import (
@@ -7,6 +8,7 @@ from app.core.company_context import (
     set_selected_company_id,
 )
 from app.core.database import get_db
+from app.core.zoned_sessions import ZONE_PLATFORM, write_zone_session
 from app.crud.company_crud import get_company_by_id
 
 router = APIRouter()
@@ -32,7 +34,11 @@ def select_company_context(
 
     set_selected_company_id(request, company_id)
 
-    return {
-        "selected_company_id": company_id,
-        "company_name": company.name,
-    }
+    response = JSONResponse(
+        {
+            "selected_company_id": company_id,
+            "company_name": company.name,
+        }
+    )
+    write_zone_session(response, ZONE_PLATFORM, request.session)
+    return response

@@ -6,14 +6,14 @@
     <title>Terminal</title>
     <style>
         :root {
-            --bg: #f3efe6;
-            --surface: rgba(255, 252, 247, 0.88);
-            --surface-strong: #fffdf8;
-            --text: #1f2937;
+            --bg: #f4f6f8;
+            --surface: #ffffff;
+            --surface-strong: #ffffff;
+            --text: #111827;
             --muted: #6b7280;
-            --line: rgba(148, 163, 184, 0.24);
-            --nav: #1b2a41;
-            --nav-accent: #f59e0b;
+            --line: #e5e7eb;
+            --nav: #111827;
+            --nav-accent: #2563eb;
             --blue: #2563eb;
             --blue-dark: #1d4ed8;
             --green-bg: #dcfce7;
@@ -22,22 +22,23 @@
             --red-text: #991b1b;
             --amber-bg: #fef3c7;
             --amber-text: #92400e;
-            --shadow: 0 24px 80px rgba(27, 42, 65, 0.12);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         }
 
         * {
             box-sizing: border-box;
         }
 
+        html {
+            scrollbar-gutter: stable;
+        }
+
         body {
             margin: 0;
             min-height: 100vh;
-            font-family: "Segoe UI", Arial, sans-serif;
+            font-family: Arial, sans-serif;
             color: var(--text);
-            background:
-                radial-gradient(circle at top left, rgba(245, 158, 11, 0.14), transparent 32%),
-                radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.12), transparent 28%),
-                linear-gradient(180deg, #f7f3ea 0%, #eef4fb 100%);
+            background: var(--bg);
         }
 
         .navbar {
@@ -47,8 +48,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 24px;
-            box-shadow: 0 12px 40px rgba(17, 24, 39, 0.16);
+            gap: 20px;
+            flex-wrap: wrap;
         }
 
         .brand {
@@ -58,9 +59,8 @@
         }
 
         .brand-title {
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: 0.02em;
+            font-size: 22px;
+            font-weight: bold;
         }
 
         .brand-subtitle {
@@ -78,10 +78,12 @@
         .links a {
             color: white;
             text-decoration: none;
-            font-weight: 600;
+            font-weight: bold;
         }
 
         .logout-form {
+            display: flex;
+            align-items: center;
             margin: 0;
         }
 
@@ -91,16 +93,16 @@
             background: transparent;
             color: white;
             font: inherit;
-            font-weight: 600;
+            font-weight: bold;
             cursor: pointer;
         }
 
         .links a:hover {
-            color: #fde68a;
+            color: #bfdbfe;
         }
 
         .logout-button:hover {
-            color: #fde68a;
+            color: #bfdbfe;
         }
 
         .page {
@@ -184,6 +186,37 @@
             background: rgba(255, 255, 255, 0.92);
             color: var(--text);
             font: inherit;
+        }
+
+        .scan-context {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin: 0 0 18px;
+        }
+
+        .context-chip {
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.05);
+        }
+
+        .context-label {
+            margin-bottom: 5px;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .context-value {
+            color: var(--ink);
+            font-size: 15px;
+            font-weight: 800;
+            word-break: break-word;
         }
 
         .input-wrap {
@@ -566,6 +599,10 @@
                 font-size: 32px;
             }
 
+            .scan-context {
+                grid-template-columns: 1fr;
+            }
+
             .person-name {
                 font-size: 30px;
             }
@@ -586,6 +623,7 @@
     </style>
 </head>
 <body>
+    {% set zone_query = '?zone=platform' if request.session.get("role") in ["super_admin", "site_admin"] else '' %}
     <div class="navbar">
         <div class="brand">
             <div class="brand-title">Time Tracking SaaS</div>
@@ -593,19 +631,26 @@
         </div>
         <div class="links">
             {% if request.session.get("role") != "terminal_user" %}
+            {% if request.session.get("role") in ["super_admin", "site_admin"] %}
             <a href="/platform/companies">Companies</a>
-            <a href="/dashboard">Dashboard</a>
-            <a href="/employees-page">Employees</a>
-            <a href="/employees-archive">Archive</a>
-            <a href="/reports">Reports</a>
             {% endif %}
+            <a href="/dashboard{{ zone_query }}">Dashboard</a>
+            <a href="/employees-page{{ zone_query }}">Employees</a>
+            <a href="/employees-archive{{ zone_query }}">Archive</a>
+            <a href="/reports{{ zone_query }}">Reports</a>
+            {% endif %}
+            {% if request.session.get("role") == "terminal_user" %}
             <a href="/terminal">Terminal</a>
-            {% if request.session.get("role") != "terminal_user" %}
-            <a href="/company/users">Users</a>
-            <a href="/company/locations">Locations</a>
-            <a href="/company/terminals">Terminals</a>
-            <a href="/company/settings">Settings</a>
+            {% else %}
+            <a href="/terminal?zone={{ 'platform' if zone_query else 'admin' }}">Terminal</a>
             {% endif %}
+            {% if request.session.get("role") != "terminal_user" %}
+            <a href="/company/users{{ zone_query }}">Users</a>
+            <a href="/company/locations{{ zone_query }}">Locations</a>
+            <a href="/company/terminals{{ zone_query }}">Terminals</a>
+            <a href="/company/settings{{ zone_query }}">Settings</a>
+            {% endif %}
+            {% include "session_badge.html" %}
             <form class="logout-form" method="post" action="/logout">
                 <button class="logout-button" type="submit">Logout</button>
             </form>
@@ -622,13 +667,40 @@
                     action type, and scan time.
                 </p>
 
+                <div class="scan-context" aria-label="Current scan context">
+                    <div class="context-chip">
+                        <div class="context-label">Company</div>
+                        <div class="context-value">
+                            {{ active_company.name if active_company else "No company selected" }}
+                        </div>
+                    </div>
+                    <div class="context-chip">
+                        <div class="context-label">Terminal</div>
+                        <div id="contextTerminal" class="context-value">
+                            {{ active_terminal.name if active_terminal else "Not assigned" }}
+                        </div>
+                    </div>
+                    <div class="context-chip">
+                        <div class="context-label">Time zone</div>
+                        <div id="contextTimezone" class="context-value">
+                            {{ active_terminal.timezone if active_terminal and active_terminal.timezone else company_timezone }}
+                        </div>
+                    </div>
+                </div>
+
                 {% if request.session.get("role") != "terminal_user" %}
                 <div class="terminal-selector">
                     <label for="terminalSelect">Terminal device for this scan</label>
                     <select id="terminalSelect">
                         {% if terminals %}
                         {% for terminal in terminals %}
-                        <option value="{{ terminal.id }}">{{ terminal.name }}</option>
+                        <option
+                            value="{{ terminal.id }}"
+                            data-name="{{ terminal.name }}"
+                            data-timezone="{{ terminal.timezone or company_timezone }}"
+                        >
+                            {{ terminal.name }}
+                        </option>
                         {% endfor %}
                         {% else %}
                         <option value="">No active terminals configured</option>
@@ -766,6 +838,9 @@
         const errorText = document.getElementById("errorText");
         const liveClock = document.getElementById("liveClock");
         const liveDate = document.getElementById("liveDate");
+        const contextTerminal = document.getElementById("contextTerminal");
+        const contextTimezone = document.getElementById("contextTimezone");
+        const scanRequestZone = "{{ 'platform' if request.session.get('role') in ['super_admin', 'site_admin'] else ('admin' if request.session.get('role') != 'terminal_user' else '') }}";
 
         function setFeedbackState(type, label) {
             feedbackState.className = "feedback-state " + type;
@@ -872,6 +947,19 @@
             return timeZonePart ? timeZonePart.value : "";
         }
 
+        function updateScanContext() {
+            if (terminalSelect && terminalSelect.selectedOptions.length) {
+                const selectedTerminal = terminalSelect.selectedOptions[0];
+                contextTerminal.textContent = selectedTerminal.dataset.name || selectedTerminal.textContent.trim() || "Not assigned";
+            }
+
+            const deviceTimezone = getDeviceTimezone();
+            const deviceTimezoneAbbr = getDeviceTimezoneAbbr();
+            if (deviceTimezone) {
+                contextTimezone.textContent = deviceTimezone + (deviceTimezoneAbbr ? " (" + deviceTimezoneAbbr + ")" : "");
+            }
+        }
+
         async function submitScan() {
             const cardId = cardInput.value.trim();
             const params = new URLSearchParams({
@@ -883,6 +971,10 @@
 
             if (terminalSelect && terminalSelect.value) {
                 params.set("terminal_id", terminalSelect.value);
+            }
+
+            if (scanRequestZone) {
+                params.set("zone", scanRequestZone);
             }
 
             if (!cardId) {
@@ -920,6 +1012,10 @@
             }
         });
 
+        if (terminalSelect) {
+            terminalSelect.addEventListener("change", updateScanContext);
+        }
+
         function updateClock() {
             const now = new Date();
             liveClock.textContent = now.toLocaleTimeString([], {
@@ -936,6 +1032,7 @@
         }
 
         updateClock();
+        updateScanContext();
         showIdleState();
         setInterval(updateClock, 1000);
     </script>

@@ -1,3 +1,5 @@
+from html import escape
+
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
@@ -5,7 +7,9 @@ from sqlalchemy import and_, func
 
 from app.core.company_context import get_current_company_id
 from app.core.database import SessionLocal
+from app.core.roles import PLATFORM_ROLES
 from app.core.security import require_company_workspace_access
+from app.crud.company_crud import get_company_by_id
 from app.crud.location_crud import get_location_name_by_id
 from app.crud.terminal_crud import get_terminal_name_by_id
 from app.models.employee_model import Employee
@@ -141,8 +145,22 @@ def dashboard_data(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/dashboard", response_class=HTMLResponse)
-def dashboard_page(request: Request):
+def dashboard_page(request: Request, db: Session = Depends(get_db)):
     require_company_workspace_access(request)
+    company = get_company_by_id(db, get_current_company_id(request))
+    zone_query = "?zone=platform" if request.session.get("role") in PLATFORM_ROLES else ""
+    role = request.session.get("role")
+    role_label = {
+        "super_admin": "Super Admin",
+        "site_admin": "Site Admin",
+        "company_owner": "Company Owner",
+        "company_admin": "Company Admin",
+        "terminal_user": "Terminal User",
+        "employee": "Employee",
+    }.get(role, role or "User")
+    username = escape(request.session.get("username") or "Current user")
+    company_label = escape(company.name if company else ("Platform access" if role in PLATFORM_ROLES else ""))
+    companies_link = '<a href="/platform/companies">Companies</a>' if role in PLATFORM_ROLES else ""
     return """
     <!DOCTYPE html>
     <html lang="en">
@@ -151,6 +169,10 @@ def dashboard_page(request: Request):
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Dashboard</title>
         <style>
+            html {
+                scrollbar-gutter: stable;
+            }
+
             body {
                 margin: 0;
                 font-family: Arial, sans-serif;
@@ -187,6 +209,7 @@ def dashboard_page(request: Request):
 
             .navbar .links {
                 display: flex;
+                align-items: center;
                 gap: 18px;
                 flex-wrap: wrap;
             }
@@ -198,6 +221,8 @@ def dashboard_page(request: Request):
             }
 
             .navbar .logout-form {
+                display: flex;
+                align-items: center;
                 margin: 0;
             }
 
@@ -217,6 +242,38 @@ def dashboard_page(request: Request):
 
             .navbar .logout-button:hover {
                 color: #bfdbfe;
+            }
+
+            .session-badge {
+                display: flex;
+                align-self: center;
+                flex-direction: column;
+                justify-content: center;
+                gap: 2px;
+                min-height: 40px;
+                padding: 6px 12px;
+                border-radius: 14px;
+                background: rgba(255, 255, 255, 0.12);
+                border: 1px solid rgba(255, 255, 255, 0.16);
+                line-height: 1.15;
+            }
+
+            .session-badge span {
+                color: rgba(255, 255, 255, 0.72);
+                font-size: 11px;
+                font-weight: 800;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .session-badge strong {
+                color: white;
+                font-size: 13px;
+            }
+
+            .session-badge small {
+                color: rgba(255, 255, 255, 0.72);
+                font-size: 12px;
             }
 
             .container {
@@ -353,16 +410,21 @@ def dashboard_page(request: Request):
                 <div class="subtitle">Company dashboard</div>
             </div>
             <div class="links">
-                <a href="/platform/companies">Companies</a>
-                <a href="/dashboard">Dashboard</a>
-                <a href="/employees-page">Employees</a>
-                <a href="/employees-archive">Archive</a>
-                <a href="/reports">Reports</a>
-                <a href="/terminal">Terminal</a>
-                <a href="/company/users">Users</a>
-                <a href="/company/locations">Locations</a>
-                <a href="/company/terminals">Terminals</a>
-                <a href="/company/settings">Settings</a>
+                __COMPANIES_LINK__
+                <a href="/dashboard__ZONE_QUERY__">Dashboard</a>
+                <a href="/employees-page__ZONE_QUERY__">Employees</a>
+                <a href="/employees-archive__ZONE_QUERY__">Archive</a>
+                <a href="/reports__ZONE_QUERY__">Reports</a>
+                <a href="/terminal?zone=__TERMINAL_ZONE__">Terminal</a>
+                <a href="/company/users__ZONE_QUERY__">Users</a>
+                <a href="/company/locations__ZONE_QUERY__">Locations</a>
+                <a href="/company/terminals__ZONE_QUERY__">Terminals</a>
+                <a href="/company/settings__ZONE_QUERY__">Settings</a>
+                <div class="session-badge">
+                    <span>__ROLE_LABEL__</span>
+                    <strong>__USERNAME__</strong>
+                    <small>__COMPANY_LABEL__</small>
+                </div>
                 <form class="logout-form" method="post" action="/logout">
                     <button class="logout-button" type="submit">Logout</button>
                 </form>
@@ -502,7 +564,7 @@ def dashboard_page(request: Request):
 
             async function loadDashboard() {
                 try {
-                    const response = await fetch("/api/dashboard");
+                    const response = await fetch("/api/dashboard__ZONE_QUERY__");
                     const data = await response.json();
                     dashboardData = data;
 
@@ -533,4 +595,10 @@ def dashboard_page(request: Request):
         </script>
     </body>
     </html>
-    """
+    """.replace("__ZONE_QUERY__", zone_query).replace(
+        "__TERMINAL_ZONE__",
+        "platform" if request.session.get("role") in PLATFORM_ROLES else "admin",
+    ).replace("__ROLE_LABEL__", role_label).replace("__USERNAME__", username).replace(
+        "__COMPANY_LABEL__",
+        company_label,
+    ).replace("__COMPANIES_LINK__", companies_link)

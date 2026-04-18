@@ -4,9 +4,6 @@ from app.core.auth import get_session_user
 from app.core.roles import PLATFORM_ROLES
 
 
-DEFAULT_SELECTED_COMPANY_ID = 1
-
-
 def get_current_session_user_or_401(request: Request):
     user = get_session_user(request.session)
     if not user:
@@ -42,7 +39,14 @@ def get_current_company_id(request: Request) -> int:
     user = get_current_session_user_or_401(request)
 
     if is_platform_user(user):
-        return get_selected_company_id(request) or DEFAULT_SELECTED_COMPANY_ID
+        selected_company_id = get_selected_company_id(request)
+        if selected_company_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No company selected for platform context",
+            )
+
+        return selected_company_id
 
     company_id = user.get("company_id")
     if company_id is None:

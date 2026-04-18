@@ -23,6 +23,13 @@ from app.api.routes.scan_routes import router as scan_router
 from app.api.routes.terminal_routes import router as terminal_router
 from app.core.auth import is_authenticated, SESSION_SECRET
 from app.core.database import Base, SessionLocal, engine
+from app.core.zoned_sessions import (
+    ZONE_COMPANY,
+    ZONE_PLATFORM,
+    ZONE_TERMINAL,
+    get_zone_for_path,
+    read_zone_session,
+)
 from app.models.company_contact_model import CompanyContact
 from app.models.company_model import Company
 from app.models.employee_model import Employee
@@ -46,9 +53,43 @@ DIRECT_API_PATHS = {"/scan", "/logs"}
 class AuthRequiredMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
-
         is_public = path in PUBLIC_PATHS or any(path.startswith(prefix) for prefix in PUBLIC_PREFIXES)
-        if is_public or is_authenticated(request.session):
+        if is_public:
+            return await call_next(request)
+
+        zone = get_zone_for_path(path)
+        requested_zone = request.query_params.get("zone")
+        zone_session = None
+        session_source_zone = zone
+
+        if zone == ZONE_COMPANY and requested_zone in {"platform", "admin"}:
+            zone_session = read_zone_session(request, ZONE_PLATFORM)
+            session_source_zone = ZONE_PLATFORM
+        elif zone == ZONE_TERMINAL and requested_zone == "platform":
+            zone_session = read_zone_session(request, ZONE_PLATFORM)
+            session_source_zone = ZONE_PLATFORM
+        elif zone == ZONE_TERMINAL and requested_zone == "admin":
+            zone_session = read_zone_session(request, ZONE_COMPANY)
+            session_source_zone = ZONE_COMPANY
+        else:
+            zone_session = read_zone_session(request, zone)
+
+        if zone_session:
+            request.scope["session"] = zone_session
+            request.state.session_zone = session_source_zone
+
+        if zone and not zone_session:
+            is_api_request = (
+                path in DIRECT_API_PATHS
+                or path.startswith("/employee/")
+                or (path.startswith("/employees") and path not in {"/employees-page", "/employees-archive"})
+                or any(path.startswith(prefix) for prefix in API_PREFIXES)
+            )
+            if is_api_request:
+                return JSONResponse(status_code=401, content={"detail": "Authentication required"})
+            return RedirectResponse(url="/login", status_code=303)
+
+        if is_authenticated(request.session):
             return await call_next(request)
 
         is_api_request = (

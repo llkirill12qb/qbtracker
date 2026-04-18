@@ -23,6 +23,10 @@
             box-sizing: border-box;
         }
 
+        html {
+            scrollbar-gutter: stable;
+        }
+
         body {
             margin: 0;
             font-family: Arial, sans-serif;
@@ -68,6 +72,8 @@
         }
 
         .logout-form {
+            display: flex;
+            align-items: center;
             margin: 0;
         }
 
@@ -266,6 +272,7 @@
         </div>
         <div class="links">
             <a href="/platform/companies">Companies</a>
+            {% include "session_badge.html" %}
             <form class="logout-form" method="post" action="/logout">
                 <button class="logout-button" type="submit">Logout</button>
             </form>

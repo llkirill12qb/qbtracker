@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import get_current_company_id
 from app.core.database import get_db
+from app.core.roles import PLATFORM_ROLES
 from app.core.security import require_company_workspace_access
 from app.crud.company_crud import get_company_by_id, update_company_profile
 from app.services.timezone_options_service import get_timezone_options
@@ -80,4 +81,5 @@ def update_company_settings(
         status=status.strip() or "active",
     )
 
-    return RedirectResponse(url="/company/settings?saved=1", status_code=303)
+    zone_query = "&zone=platform" if request.session.get("role") in PLATFORM_ROLES else ""
+    return RedirectResponse(url=f"/company/settings?saved=1{zone_query}", status_code=303)
