@@ -12,7 +12,6 @@ from app.core.roles import (
     PLATFORM_ROLES,
     ROLE_COMPANY_ADMIN,
     ROLE_COMPANY_OWNER,
-    ROLE_EMPLOYEE,
     ROLE_TERMINAL_USER,
 )
 from app.core.security import require_permission
@@ -37,7 +36,6 @@ COMPANY_USER_ROLES = (
     ROLE_COMPANY_OWNER,
     ROLE_COMPANY_ADMIN,
     ROLE_TERMINAL_USER,
-    ROLE_EMPLOYEE,
 )
 
 
@@ -136,6 +134,7 @@ def create_company_user(
     request: Request,
     username: str = Form(...),
     password: str = Form(...),
+    password_confirm: str = Form(...),
     role: str = Form(...),
     email: str = Form(default=""),
     first_name: str = Form(default=""),
@@ -156,6 +155,8 @@ def create_company_user(
         return redirect_with_query(request, error="Invalid role")
     if not username or not password:
         return redirect_with_query(request, error="Username and password are required")
+    if password != password_confirm:
+        return redirect_with_query(request, error="Passwords do not match")
     if get_user_by_username(db, username):
         return redirect_with_query(request, error="Username already exists")
     if email_value and get_user_by_email(db, email_value):
@@ -249,6 +250,7 @@ def reset_company_user_password(
     user_id: int,
     request: Request,
     password: str = Form(...),
+    password_confirm: str = Form(...),
     db: Session = Depends(get_db),
 ):
     require_company_user_manager(request)
@@ -259,6 +261,8 @@ def reset_company_user_password(
         raise HTTPException(status_code=404, detail="User not found")
     if not password.strip():
         return redirect_with_query(request, error="Password is required")
+    if password != password_confirm:
+        return redirect_with_query(request, error="Passwords do not match")
 
     update_user_password(db, user, hash_password(password))
     return redirect_with_query(request, message="Password updated")

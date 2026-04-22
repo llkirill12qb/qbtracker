@@ -360,7 +360,7 @@
         <div class="grid">
             <section class="panel">
                 <h2>Add User</h2>
-                <form method="post" action="/company/users{{ zone_query }}">
+                <form id="createUserForm" method="post" action="/company/users{{ zone_query }}">
                     <div class="form-grid">
                         <div class="field">
                             <label for="username">Username</label>
@@ -373,6 +373,10 @@
                         <div class="field">
                             <label for="first_name">First name</label>
                             <input id="first_name" name="first_name">
+                        </div>
+                        <div class="field">
+                            <label for="password_confirm">Repeat password</label>
+                            <input id="password_confirm" name="password_confirm" type="password" required>
                         </div>
                         <div class="field">
                             <label for="last_name">Last name</label>
@@ -525,10 +529,14 @@
                             </div>
                         </form>
 
-                        <form class="inline-actions" method="post" action="/company/users/{{ user.id }}/password{{ zone_query }}">
+                        <form class="inline-actions password-reset-form" method="post" action="/company/users/{{ user.id }}/password{{ zone_query }}">
                             <div class="field">
                                 <label for="password_{{ user.id }}">New password</label>
                                 <input id="password_{{ user.id }}" name="password" type="password" placeholder="Set new password">
+                            </div>
+                            <div class="field">
+                                <label for="password_confirm_{{ user.id }}">Repeat password</label>
+                                <input id="password_confirm_{{ user.id }}" name="password_confirm" type="password" placeholder="Repeat new password">
                             </div>
                             <button class="button secondary" type="submit">Reset Password</button>
                         </form>
@@ -541,5 +549,36 @@
             </section>
         </div>
     </main>
+    <script>
+        function passwordsMatch(form) {
+            const password = form.querySelector('input[name="password"]');
+            const confirmation = form.querySelector('input[name="password_confirm"]');
+            if (!password || !confirmation || password.value === confirmation.value) {
+                return true;
+            }
+
+            confirmation.setCustomValidity("Passwords do not match");
+            confirmation.reportValidity();
+            confirmation.addEventListener("input", () => confirmation.setCustomValidity(""), { once: true });
+            return false;
+        }
+
+        const createUserForm = document.getElementById("createUserForm");
+        if (createUserForm) {
+            createUserForm.addEventListener("submit", (event) => {
+                if (!passwordsMatch(createUserForm)) {
+                    event.preventDefault();
+                }
+            });
+        }
+
+        document.querySelectorAll(".password-reset-form").forEach((form) => {
+            form.addEventListener("submit", (event) => {
+                if (!passwordsMatch(form)) {
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
 </body>
 </html>

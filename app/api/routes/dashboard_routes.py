@@ -496,6 +496,7 @@ def dashboard_page(request: Request, db: Session = Depends(get_db)):
                 <table>
                     <thead>
                         <tr>
+                            <th>#</th>
                             <th>Employee</th>
                             <th>Card ID</th>
                             <th>Event</th>
@@ -573,12 +574,13 @@ def dashboard_page(request: Request, db: Session = Depends(get_db)):
 
                 emptyMsg.style.display = "none";
 
-                rows.forEach(item => {
+                rows.forEach((item, index) => {
                     const row = document.createElement("tr");
                     const localTime = item.time_display || new Date(item.time).toLocaleString();
                     const eventClass = item.event === "check-in" ? "check-in" : "check-out";
 
                     row.innerHTML = `
+                        <td>${index + 1}</td>
                         <td>${item.employee_name}</td>
                         <td>${item.card_id}</td>
                         <td><span class="event-badge ${eventClass}">${item.event}</span></td>
