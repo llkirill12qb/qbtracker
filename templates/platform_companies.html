@@ -265,15 +265,17 @@
     </style>
 </head>
 <body>
+    {% set current_role = request.session.get("role") %}
+    {% set platform_query = '?role_context=' ~ current_role if current_role else '' %}
     <div class="navbar">
         <div>
             <div class="brand-title">QB Tracker Platform</div>
             <div class="brand-subtitle">Super Admin company management</div>
         </div>
         <div class="links">
-            <a href="/platform/companies">Companies</a>
+            <a href="/platform/companies{{ platform_query }}">Companies</a>
             {% include "session_badge.html" %}
-            <form class="logout-form" method="post" action="/logout">
+            <form class="logout-form" method="post" action="/logout{{ platform_query }}">
                 <button class="logout-button" type="submit">Logout</button>
             </form>
         </div>
@@ -292,6 +294,7 @@
 
         <section class="panel">
             <form class="toolbar" method="get" action="/platform/companies">
+                <input name="role_context" type="hidden" value="{{ current_role }}">
                 <div class="field">
                     <label for="q">Search by company name</label>
                     <input id="q" name="q" type="search" value="{{ q }}" placeholder="Type company name">
@@ -311,7 +314,7 @@
                     </select>
                 </div>
                 <button class="toolbar-button" type="submit">Apply</button>
-                <a class="clear-link" href="/platform/companies">Reset</a>
+                <a class="clear-link" href="/platform/companies{{ platform_query }}">Reset</a>
             </form>
 
             {% if companies %}
@@ -353,7 +356,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <form method="post" action="/platform/companies/{{ company.id }}/open">
+                            <form method="post" action="/platform/companies/{{ company.id }}/open{{ platform_query }}">
                                 <button class="open-button" type="submit">Open Company</button>
                             </form>
                         </td>

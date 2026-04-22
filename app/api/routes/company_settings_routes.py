@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from app.core.company_context import get_current_company_id
 from app.core.database import get_db
 from app.core.roles import PLATFORM_ROLES
-from app.core.security import require_company_workspace_access
+from app.core.roles import PERM_MANAGE_COMPANY_SETTINGS
+from app.core.security import require_permission
 from app.crud.company_crud import get_company_by_id, update_company_profile
 from app.services.timezone_options_service import get_timezone_options
 
@@ -28,7 +29,7 @@ def get_current_company_or_404(request: Request, db: Session):
 
 @router.get("/company/settings", response_class=HTMLResponse)
 def company_settings_page(request: Request, db: Session = Depends(get_db)):
-    require_company_workspace_access(request)
+    require_permission(request, PERM_MANAGE_COMPANY_SETTINGS)
     company = get_current_company_or_404(request, db)
 
     return templates.TemplateResponse(
@@ -60,7 +61,7 @@ def update_company_settings(
     status: str = Form(default="active"),
     db: Session = Depends(get_db),
 ):
-    require_company_workspace_access(request)
+    require_permission(request, PERM_MANAGE_COMPANY_SETTINGS)
     company = get_current_company_or_404(request, db)
 
     update_company_profile(

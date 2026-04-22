@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 from app.core.company_context import get_current_company_id
 from app.core.database import get_db
 from app.core.roles import PLATFORM_ROLES
-from app.core.security import require_company_workspace_access
+from app.core.roles import PERM_MANAGE_LOCATIONS
+from app.core.security import require_permission
 from app.crud.company_crud import get_company_by_id
 from app.crud.location_crud import (
     create_location,
@@ -62,7 +63,7 @@ def get_company_context_or_404(request: Request, db: Session):
 
 @router.get("/company/locations", response_class=HTMLResponse)
 def company_locations_page(request: Request, db: Session = Depends(get_db)):
-    require_company_workspace_access(request)
+    require_permission(request, PERM_MANAGE_LOCATIONS)
     company_id, company = get_company_context_or_404(request, db)
     locations = get_locations(db, company_id, include_inactive=True)
 
@@ -96,7 +97,7 @@ def create_company_location(
     is_active: str = Form(default="off"),
     db: Session = Depends(get_db),
 ):
-    require_company_workspace_access(request)
+    require_permission(request, PERM_MANAGE_LOCATIONS)
     company_id, _ = get_company_context_or_404(request, db)
     name = name.strip()
 
@@ -141,7 +142,7 @@ def update_company_location(
     is_active: str = Form(default="off"),
     db: Session = Depends(get_db),
 ):
-    require_company_workspace_access(request)
+    require_permission(request, PERM_MANAGE_LOCATIONS)
     company_id, _ = get_company_context_or_404(request, db)
     location = get_location_by_id(db, location_id, company_id)
 

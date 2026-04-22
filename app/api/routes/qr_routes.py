@@ -6,7 +6,8 @@ from fastapi.responses import Response
 
 from app.core.company_context import get_current_company_id
 from app.core.database import SessionLocal
-from app.core.security import require_company_workspace_access
+from app.core.roles import PERM_MANAGE_EMPLOYEES
+from app.core.security import require_permission
 from app.crud.employee_crud import build_qr_payload, ensure_employee_qr_token
 from app.models.employee_model import Employee
 
@@ -15,7 +16,7 @@ router = APIRouter()
 
 @router.get("/employee/{employee_id}/qr")
 def generate_qr(employee_id: int, request: Request):
-    require_company_workspace_access(request)
+    require_permission(request, PERM_MANAGE_EMPLOYEES)
     company_id = get_current_company_id(request)
     db = SessionLocal()
     try:

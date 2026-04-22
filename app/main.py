@@ -27,6 +27,7 @@ from app.core.zoned_sessions import (
     ZONE_COMPANY,
     ZONE_PLATFORM,
     ZONE_TERMINAL,
+    get_requested_role_context,
     get_zone_for_path,
     read_zone_session,
 )
@@ -44,7 +45,7 @@ from app.services.schema_upgrade_service import ensure_schema_upgrades
 from app.services.user_bootstrap_service import ensure_superadmin_user
 
 
-PUBLIC_PATHS = {"/", "/login", "/favicon.ico"}
+PUBLIC_PATHS = {"/", "/login", "/logout", "/favicon.ico"}
 PUBLIC_PREFIXES = ("/static",)
 API_PREFIXES = ("/api",)
 DIRECT_API_PATHS = {"/scan", "/logs"}
@@ -59,20 +60,21 @@ class AuthRequiredMiddleware(BaseHTTPMiddleware):
 
         zone = get_zone_for_path(path)
         requested_zone = request.query_params.get("zone")
+        role_context = get_requested_role_context(request)
         zone_session = None
         session_source_zone = zone
 
         if zone == ZONE_COMPANY and requested_zone in {"platform", "admin"}:
-            zone_session = read_zone_session(request, ZONE_PLATFORM)
+            zone_session = read_zone_session(request, ZONE_PLATFORM, role_context)
             session_source_zone = ZONE_PLATFORM
         elif zone == ZONE_TERMINAL and requested_zone == "platform":
-            zone_session = read_zone_session(request, ZONE_PLATFORM)
+            zone_session = read_zone_session(request, ZONE_PLATFORM, role_context)
             session_source_zone = ZONE_PLATFORM
         elif zone == ZONE_TERMINAL and requested_zone == "admin":
-            zone_session = read_zone_session(request, ZONE_COMPANY)
+            zone_session = read_zone_session(request, ZONE_COMPANY, role_context)
             session_source_zone = ZONE_COMPANY
         else:
-            zone_session = read_zone_session(request, zone)
+            zone_session = read_zone_session(request, zone, role_context)
 
         if zone_session:
             request.scope["session"] = zone_session

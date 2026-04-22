@@ -5,8 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import set_selected_company_id
 from app.core.database import get_db
-from app.core.roles import PLATFORM_ROLES
-from app.core.security import get_current_session_user
+from app.core.security import require_platform_access
 from app.core.zoned_sessions import ZONE_PLATFORM, write_zone_session
 from app.crud.company_crud import get_all_companies, get_company_by_id
 
@@ -15,14 +14,7 @@ templates = Jinja2Templates(directory="templates")
 
 
 def require_platform_user(request: Request):
-    user = get_current_session_user(request)
-    if user.get("role") not in PLATFORM_ROLES:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Platform access required",
-        )
-
-    return user
+    return require_platform_access(request)
 
 
 @router.get("/platform/companies", response_class=HTMLResponse)
@@ -66,6 +58,9 @@ def open_company_context(
         raise HTTPException(status_code=404, detail="Company not found")
 
     set_selected_company_id(request, company_id)
-    response = RedirectResponse(url="/dashboard?zone=platform", status_code=303)
+    response = RedirectResponse(
+        url=f"/dashboard?zone=platform&role_context={request.session.get('role')}",
+        status_code=303,
+    )
     write_zone_session(response, ZONE_PLATFORM, request.session)
     return response

@@ -108,28 +108,35 @@ def dashboard_data(request: Request, db: Session = Depends(get_db)):
     )
     currently_inside = sum(1 for log, _ in latest_scan_rows if log.event_type == "check-in")
 
-    recent_logs = (
+    today_scan_rows = (
         db.query(ScanLog, Employee)
         .join(Employee, Employee.id == ScanLog.employee_id)
         .filter(ScanLog.company_id == company_id)
         .filter(Employee.company_id == company_id)
         .order_by(ScanLog.scanned_at.desc())
-        .limit(10)
         .all()
     )
+    today_scan_rows = [
+        (log, employee)
+        for log, employee in today_scan_rows
+        if is_scan_today_in_own_timezone(log, timezone_name)
+    ]
 
-    recent = []
-    for log, emp in recent_logs:
-        recent.append(build_scan_row(db, log, emp, timezone_name))
-
-    inside_employees = []
-    checked_out_employees = []
+    currently_inside_employees = []
     for log, emp in latest_scan_rows:
-        row = build_scan_row(db, log, emp, timezone_name)
         if log.event_type == "check-in":
-            inside_employees.append(row)
+            currently_inside_employees.append(build_scan_row(db, log, emp, timezone_name))
+
+    today_events = []
+    today_check_ins = []
+    today_check_outs = []
+    for log, emp in today_scan_rows:
+        row = build_scan_row(db, log, emp, timezone_name)
+        today_events.append(row)
+        if log.event_type == "check-in":
+            today_check_ins.append(row)
         elif log.event_type == "check-out":
-            checked_out_employees.append(row)
+            today_check_outs.append(row)
 
     return {
         "employees": active_employees or 0,
@@ -138,9 +145,10 @@ def dashboard_data(request: Request, db: Session = Depends(get_db)):
         "currently_inside": currently_inside or 0,
         "company_id": company_id,
         "timezone": timezone_name,
-        "recent": recent,
-        "inside_employees": inside_employees,
-        "checked_out_employees": checked_out_employees
+        "recent": today_events,
+        "inside_employees": today_check_ins,
+        "checked_out_employees": today_check_outs,
+        "currently_inside_employees": currently_inside_employees
     }
 
 
@@ -148,8 +156,12 @@ def dashboard_data(request: Request, db: Session = Depends(get_db)):
 def dashboard_page(request: Request, db: Session = Depends(get_db)):
     require_company_workspace_access(request)
     company = get_company_by_id(db, get_current_company_id(request))
-    zone_query = "?zone=platform" if request.session.get("role") in PLATFORM_ROLES else ""
     role = request.session.get("role")
+    zone_query = (
+        f"?zone=platform&role_context={role}"
+        if role in PLATFORM_ROLES
+        else f"?role_context={role}"
+    )
     role_label = {
         "super_admin": "Super Admin",
         "site_admin": "Site Admin",
@@ -160,7 +172,21 @@ def dashboard_page(request: Request, db: Session = Depends(get_db)):
     }.get(role, role or "User")
     username = escape(request.session.get("username") or "Current user")
     company_label = escape(company.name if company else ("Platform access" if role in PLATFORM_ROLES else ""))
-    companies_link = '<a href="/platform/companies">Companies</a>' if role in PLATFORM_ROLES else ""
+    companies_link = (
+        f'<a href="/platform/companies?role_context={role}">Companies</a>'
+        if role in PLATFORM_ROLES
+        else ""
+    )
+    company_admin_links = (
+        f"""
+                {'<a href="/company/users' + zone_query + '">Users</a>' if role in PLATFORM_ROLES or role == "company_owner" else ''}
+                <a href="/company/locations{zone_query}">Locations</a>
+                <a href="/company/terminals{zone_query}">Terminals</a>
+                <a href="/company/settings{zone_query}">Settings</a>
+        """
+        if role in PLATFORM_ROLES or role in {"company_owner", "company_admin"}
+        else ""
+    )
     return """
     <!DOCTYPE html>
     <html lang="en">
@@ -415,17 +441,14 @@ def dashboard_page(request: Request, db: Session = Depends(get_db)):
                 <a href="/employees-page__ZONE_QUERY__">Employees</a>
                 <a href="/employees-archive__ZONE_QUERY__">Archive</a>
                 <a href="/reports__ZONE_QUERY__">Reports</a>
-                <a href="/terminal?zone=__TERMINAL_ZONE__">Terminal</a>
-                <a href="/company/users__ZONE_QUERY__">Users</a>
-                <a href="/company/locations__ZONE_QUERY__">Locations</a>
-                <a href="/company/terminals__ZONE_QUERY__">Terminals</a>
-                <a href="/company/settings__ZONE_QUERY__">Settings</a>
+                <a href="/terminal?zone=__TERMINAL_ZONE__&role_context=__ROLE_CONTEXT__">Terminal</a>
+                __COMPANY_ADMIN_LINKS__
                 <div class="session-badge">
                     <span>__ROLE_LABEL__</span>
                     <strong>__USERNAME__</strong>
                     <small>__COMPANY_LABEL__</small>
                 </div>
-                <form class="logout-form" method="post" action="/logout">
+                <form class="logout-form" method="post" action="/logout__ZONE_QUERY__">
                     <button class="logout-button" type="submit">Logout</button>
                 </form>
             </div>
@@ -467,6 +490,7 @@ def dashboard_page(request: Request, db: Session = Depends(get_db)):
                         <button class="filter-tab active" type="button" data-view="all">All Events</button>
                         <button class="filter-tab" type="button" data-view="inside">Checked In</button>
                         <button class="filter-tab" type="button" data-view="out">Checked Out</button>
+                        <button class="filter-tab" type="button" data-view="current">Currently Inside</button>
                     </div>
                 </div>
                 <table>
@@ -497,16 +521,20 @@ def dashboard_page(request: Request, db: Session = Depends(get_db)):
 
             const viewConfig = {
                 all: {
-                    title: "Recent Scans",
-                    empty: "No scans yet"
+                    title: "Today All Events",
+                    empty: "No scans today"
                 },
                 inside: {
-                    title: "Employees Checked In",
-                    empty: "No employees are currently checked in"
+                    title: "Today Check-ins",
+                    empty: "No check-ins today"
                 },
                 out: {
-                    title: "Employees Checked Out",
-                    empty: "No employees are currently checked out"
+                    title: "Today Check-outs",
+                    empty: "No check-outs today"
+                },
+                current: {
+                    title: "Currently Inside",
+                    empty: "No employees are currently inside"
                 }
             };
 
@@ -516,6 +544,9 @@ def dashboard_page(request: Request, db: Session = Depends(get_db)):
                 }
                 if (currentView === "out") {
                     return data.checked_out_employees || [];
+                }
+                if (currentView === "current") {
+                    return data.currently_inside_employees || [];
                 }
                 return data.recent || [];
             }
@@ -597,8 +628,8 @@ def dashboard_page(request: Request, db: Session = Depends(get_db)):
     </html>
     """.replace("__ZONE_QUERY__", zone_query).replace(
         "__TERMINAL_ZONE__",
-        "platform" if request.session.get("role") in PLATFORM_ROLES else "admin",
-    ).replace("__ROLE_LABEL__", role_label).replace("__USERNAME__", username).replace(
+        "platform" if role in PLATFORM_ROLES else "admin",
+    ).replace("__ROLE_CONTEXT__", role or "").replace("__ROLE_LABEL__", role_label).replace("__USERNAME__", username).replace(
         "__COMPANY_LABEL__",
         company_label,
-    ).replace("__COMPANIES_LINK__", companies_link)
+    ).replace("__COMPANIES_LINK__", companies_link).replace("__COMPANY_ADMIN_LINKS__", company_admin_links)

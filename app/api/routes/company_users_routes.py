@@ -8,13 +8,14 @@ from app.core.auth import hash_password
 from app.core.company_context import get_current_company_id
 from app.core.database import get_db
 from app.core.roles import (
+    PERM_MANAGE_USERS,
     PLATFORM_ROLES,
     ROLE_COMPANY_ADMIN,
     ROLE_COMPANY_OWNER,
     ROLE_EMPLOYEE,
     ROLE_TERMINAL_USER,
 )
-from app.core.security import get_current_session_user
+from app.core.security import require_permission
 from app.crud.company_crud import get_company_by_id
 from app.crud.location_crud import get_location_by_id, get_locations
 from app.crud.terminal_crud import get_terminal_by_id, get_terminals
@@ -41,14 +42,7 @@ COMPANY_USER_ROLES = (
 
 
 def require_company_user_manager(request: Request):
-    user = get_current_session_user(request)
-    if user.get("role") not in COMPANY_USER_MANAGER_ROLES:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User management access required",
-        )
-
-    return user
+    return require_permission(request, PERM_MANAGE_USERS)
 
 
 def normalize_optional(value: str | None):

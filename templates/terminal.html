@@ -623,7 +623,10 @@
     </style>
 </head>
 <body>
-    {% set zone_query = '?zone=platform' if request.session.get("role") in ["super_admin", "site_admin"] else '' %}
+    {% set current_role = request.session.get("role") %}
+    {% set zone_query = '?zone=platform&role_context=' ~ current_role if current_role in ["super_admin", "site_admin"] else '?role_context=' ~ current_role if current_role in ["company_owner", "company_admin"] else '' %}
+    {% set can_manage_users = current_role in ["super_admin", "site_admin", "company_owner"] %}
+    {% set can_manage_company_tools = current_role in ["super_admin", "site_admin", "company_owner", "company_admin"] %}
     <div class="navbar">
         <div class="brand">
             <div class="brand-title">Time Tracking SaaS</div>
@@ -640,18 +643,22 @@
             <a href="/reports{{ zone_query }}">Reports</a>
             {% endif %}
             {% if request.session.get("role") == "terminal_user" %}
-            <a href="/terminal">Terminal</a>
+            <a href="/terminal?role_context={{ current_role }}">Terminal</a>
             {% else %}
-            <a href="/terminal?zone={{ 'platform' if zone_query else 'admin' }}">Terminal</a>
+            <a href="/terminal?zone={{ 'platform' if current_role in ['super_admin', 'site_admin'] else 'admin' }}&role_context={{ current_role }}">Terminal</a>
             {% endif %}
             {% if request.session.get("role") != "terminal_user" %}
+            {% if can_manage_users %}
             <a href="/company/users{{ zone_query }}">Users</a>
+            {% endif %}
+            {% if can_manage_company_tools %}
             <a href="/company/locations{{ zone_query }}">Locations</a>
             <a href="/company/terminals{{ zone_query }}">Terminals</a>
             <a href="/company/settings{{ zone_query }}">Settings</a>
             {% endif %}
+            {% endif %}
             {% include "session_badge.html" %}
-            <form class="logout-form" method="post" action="/logout">
+            <form class="logout-form" method="post" action="/logout{{ zone_query if zone_query else '?role_context=' ~ current_role }}">
                 <button class="logout-button" type="submit">Logout</button>
             </form>
         </div>
@@ -841,6 +848,7 @@
         const contextTerminal = document.getElementById("contextTerminal");
         const contextTimezone = document.getElementById("contextTimezone");
         const scanRequestZone = "{{ 'platform' if request.session.get('role') in ['super_admin', 'site_admin'] else ('admin' if request.session.get('role') != 'terminal_user' else '') }}";
+        const scanRoleContext = "{{ request.session.get('role') or '' }}";
 
         function setFeedbackState(type, label) {
             feedbackState.className = "feedback-state " + type;
@@ -975,6 +983,10 @@
 
             if (scanRequestZone) {
                 params.set("zone", scanRequestZone);
+            }
+
+            if (scanRoleContext) {
+                params.set("role_context", scanRoleContext);
             }
 
             if (!cardId) {

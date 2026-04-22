@@ -214,7 +214,10 @@
     </style>
 </head>
 <body>
-    {% set zone_query = '?zone=platform' if request.session.get("role") in ["super_admin", "site_admin"] else '' %}
+    {% set current_role = request.session.get("role") %}
+    {% set zone_query = '?zone=platform&role_context=' ~ current_role if current_role in ["super_admin", "site_admin"] else '?role_context=' ~ current_role if current_role in ["company_owner", "company_admin"] else '' %}
+    {% set can_manage_users = current_role in ["super_admin", "site_admin", "company_owner"] %}
+    {% set can_manage_company_tools = current_role in ["super_admin", "site_admin", "company_owner", "company_admin"] %}
     <div class="navbar">
         <div>
             <div class="brand-title">QB Tracker</div>
@@ -228,13 +231,17 @@
             <a href="/employees-page{{ zone_query }}">Employees</a>
             <a href="/employees-archive{{ zone_query }}">Archive</a>
             <a href="/reports{{ zone_query }}">Reports</a>
-            <a href="/terminal?zone={{ 'platform' if zone_query else 'admin' }}">Terminal</a>
+            <a href="/terminal?zone={{ 'platform' if current_role in ['super_admin', 'site_admin'] else 'admin' }}&role_context={{ current_role }}">Terminal</a>
+            {% if can_manage_users %}
             <a href="/company/users{{ zone_query }}">Users</a>
+            {% endif %}
+            {% if can_manage_company_tools %}
             <a href="/company/locations{{ zone_query }}">Locations</a>
             <a href="/company/terminals{{ zone_query }}">Terminals</a>
             <a href="/company/settings{{ zone_query }}">Settings</a>
+            {% endif %}
             {% include "session_badge.html" %}
-            <form class="logout-form" method="post" action="/logout">
+            <form class="logout-form" method="post" action="/logout{{ zone_query }}">
                 <button class="logout-button" type="submit">Logout</button>
             </form>
         </div>

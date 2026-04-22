@@ -10,9 +10,11 @@ from app.core.roles import PLATFORM_ROLES, ROLE_SUPER_ADMIN, ROLE_TERMINAL_USER
 from app.core.zoned_sessions import (
     build_session_payload,
     clear_all_zone_sessions,
+    clear_role_session,
     clear_zone_session,
     get_zone_for_role,
     get_zone_for_path,
+    get_requested_role_context,
     read_zone_session,
     write_zone_session,
     ZONE_COMPANY,
@@ -27,12 +29,12 @@ templates = Jinja2Templates(directory="templates")
 
 def get_post_login_redirect(role: str) -> str:
     if role in PLATFORM_ROLES:
-        return "/platform/companies"
+        return f"/platform/companies?role_context={role}"
 
     if role == ROLE_TERMINAL_USER:
-        return "/terminal"
+        return f"/terminal?role_context={role}"
 
-    return "/dashboard"
+    return f"/dashboard?role_context={role}"
 
 
 def clear_legacy_session(request: Request):
@@ -127,9 +129,12 @@ def login_submit(
 @router.post("/logout")
 def logout(request: Request):
     logout_zone = get_logout_zone(request)
+    role_context = get_requested_role_context(request)
     request.session.clear()
     response = RedirectResponse(url="/login", status_code=303)
-    if logout_zone:
+    if role_context:
+        clear_role_session(response, role_context)
+    elif logout_zone:
         clear_zone_session(response, logout_zone)
     else:
         clear_all_zone_sessions(response)
