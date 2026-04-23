@@ -47,6 +47,7 @@ def reports_data(
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
     employee_id: int | None = Query(default=None),
+    event_type: str | None = Query(default=None),
     db: Session = Depends(get_db),
 ):
     require_permission(request, PERM_VIEW_REPORTS)
@@ -62,6 +63,12 @@ def reports_data(
             end_local_date = date.fromisoformat(end_date)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+
+    event_type_value = event_type.strip() if event_type else None
+    if event_type_value == "":
+        event_type_value = None
+    if event_type_value not in {None, "check-in", "check-out"}:
+        raise HTTPException(status_code=400, detail="Invalid event type")
 
     active_employees = get_all_employees(db, company_id)
     archived_employees = get_archived_employees(db, company_id)
@@ -90,6 +97,8 @@ def reports_data(
         if start_local_date and scan_local_date < start_local_date:
             continue
         if end_local_date and scan_local_date > end_local_date:
+            continue
+        if event_type_value and log.event_type != event_type_value:
             continue
 
         _, scan_timezone = get_scan_timezone(log, timezone_name)
@@ -129,6 +138,7 @@ def reports_data(
             "start_date": start_date,
             "end_date": end_date,
             "employee_id": employee_id,
+            "event_type": event_type_value,
             "timezone": timezone_name,
             "company_id": company_id,
         },

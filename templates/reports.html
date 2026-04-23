@@ -131,7 +131,7 @@
 
         .filters-grid {
             display: grid;
-            grid-template-columns: repeat(4, minmax(160px, 1fr));
+            grid-template-columns: repeat(5, minmax(150px, 1fr));
             gap: 14px;
             align-items: end;
         }
@@ -160,6 +160,13 @@
             flex-wrap: wrap;
         }
 
+        .quick-ranges {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
         button {
             padding: 11px 16px;
             border-radius: 10px;
@@ -184,6 +191,19 @@
 
         .btn-secondary:hover {
             background: #d1d5db;
+        }
+
+        .quick-range.active {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .report-row {
+            cursor: pointer;
+        }
+
+        .report-row:hover {
+            background: #f8fafc;
         }
 
         .summary-grid {
@@ -214,6 +234,7 @@
 
         .table-panel table {
             width: 100%;
+            table-layout: fixed;
             border-collapse: collapse;
             margin-top: 14px;
         }
@@ -222,11 +243,50 @@
             text-align: left;
             padding: 12px;
             border-bottom: 1px solid #e5e7eb;
+            overflow-wrap: anywhere;
+            vertical-align: top;
         }
 
         th {
             background: #f9fafb;
             font-size: 14px;
+        }
+
+        .col-number {
+            width: 52px;
+        }
+
+        .col-employee {
+            width: 18%;
+        }
+
+        .col-status {
+            width: 90px;
+        }
+
+        .col-card {
+            width: 100px;
+        }
+
+        .col-event {
+            width: 110px;
+        }
+
+        .col-time {
+            width: 190px;
+        }
+
+        .col-tz {
+            width: 75px;
+        }
+
+        .col-location,
+        .col-terminal {
+            width: 13%;
+        }
+
+        .col-source {
+            width: 110px;
         }
 
         .pill {
@@ -361,12 +421,27 @@
                     </select>
                 </div>
                 <div>
+                    <label for="eventFilter">Event Type</label>
+                    <select id="eventFilter">
+                        <option value="">All events</option>
+                        <option value="check-in">Check-in</option>
+                        <option value="check-out">Check-out</option>
+                    </select>
+                </div>
+                <div>
                     <label>Actions</label>
                     <div class="actions">
                         <button id="applyFilters" class="btn-primary" type="button">Apply</button>
                         <button id="resetFilters" class="btn-secondary" type="button">Reset</button>
                     </div>
                 </div>
+            </div>
+            <div class="quick-ranges" aria-label="Quick report date ranges">
+                <button class="btn-secondary quick-range active" type="button" data-range="all">All Time</button>
+                <button class="btn-secondary quick-range" type="button" data-range="today">Today</button>
+                <button class="btn-secondary quick-range" type="button" data-range="week">This Week</button>
+                <button class="btn-secondary quick-range" type="button" data-range="month">This Month</button>
+                <button class="btn-secondary quick-range" type="button" data-range="last7">Last 7 Days</button>
             </div>
         </section>
 
@@ -392,16 +467,16 @@
             <table>
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Employee</th>
-                        <th>Status</th>
-                        <th>Card ID</th>
-                        <th>Event</th>
-                        <th>Time</th>
-                        <th>TZ</th>
-                        <th>Location</th>
-                        <th>Terminal</th>
-                        <th>Source</th>
+                        <th class="col-number">#</th>
+                        <th class="col-employee">Employee</th>
+                        <th class="col-status">Status</th>
+                        <th class="col-card">Card ID</th>
+                        <th class="col-event">Event</th>
+                        <th class="col-time">Time</th>
+                        <th class="col-tz">TZ</th>
+                        <th class="col-location">Location</th>
+                        <th class="col-terminal">Terminal</th>
+                        <th class="col-source">Source</th>
                     </tr>
                 </thead>
                 <tbody id="reportRows"></tbody>
@@ -426,6 +501,7 @@
         const startDate = document.getElementById("startDate");
         const endDate = document.getElementById("endDate");
         const employeeFilter = document.getElementById("employeeFilter");
+        const eventFilter = document.getElementById("eventFilter");
         const applyFiltersButton = document.getElementById("applyFilters");
         const resetFiltersButton = document.getElementById("resetFilters");
         const totalScans = document.getElementById("totalScans");
@@ -435,13 +511,47 @@
         const emptyState = document.getElementById("emptyState");
         const statusNote = document.getElementById("statusNote");
 
-        function setDefaultDates() {
-            const now = new Date();
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(now.getDate() - 6);
+        function formatLocalDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
 
-            startDate.value = sevenDaysAgo.toISOString().slice(0, 10);
-            endDate.value = now.toISOString().slice(0, 10);
+            return `${year}-${month}-${day}`;
+        }
+
+        function setDateRange(rangeName) {
+            const now = new Date();
+            const start = new Date(now);
+            const end = new Date(now);
+
+            if (rangeName === "all") {
+                startDate.value = "";
+                endDate.value = "";
+            } else if (rangeName === "today") {
+                startDate.value = formatLocalDate(now);
+                endDate.value = formatLocalDate(now);
+            } else if (rangeName === "week") {
+                const mondayOffset = (now.getDay() + 6) % 7;
+                start.setDate(now.getDate() - mondayOffset);
+                startDate.value = formatLocalDate(start);
+                endDate.value = formatLocalDate(end);
+            } else if (rangeName === "month") {
+                start.setDate(1);
+                startDate.value = formatLocalDate(start);
+                endDate.value = formatLocalDate(end);
+            } else {
+                start.setDate(now.getDate() - 6);
+                startDate.value = formatLocalDate(start);
+                endDate.value = formatLocalDate(end);
+            }
+
+            document.querySelectorAll(".quick-range").forEach(button => {
+                button.classList.toggle("active", button.dataset.range === rangeName);
+            });
+        }
+
+        function setDefaultDates() {
+            setDateRange("all");
         }
 
         function showError(message) {
@@ -465,6 +575,9 @@
             }
             if (employeeFilter.value) {
                 params.set("employee_id", employeeFilter.value);
+            }
+            if (eventFilter.value) {
+                params.set("event_type", eventFilter.value);
             }
 
             return params.toString();
@@ -500,6 +613,9 @@
 
             rows.forEach((row, index) => {
                 const tr = document.createElement("tr");
+                tr.className = "report-row";
+                tr.dataset.employeeId = row.employee_id;
+                tr.title = "Click to filter by this employee";
                 const localTime = row.time_display || new Date(row.time).toLocaleString();
                 const employeeStatus = row.employee_status ?? "-";
 
@@ -517,6 +633,15 @@
                 `;
 
                 reportRows.appendChild(tr);
+            });
+
+            reportRows.querySelectorAll(".report-row").forEach(row => {
+                row.addEventListener("click", () => {
+                    employeeFilter.value = row.dataset.employeeId;
+                    eventFilter.value = "";
+                    setDateRange("all");
+                    loadReports();
+                });
             });
         }
 
@@ -548,8 +673,24 @@
 
         resetFiltersButton.addEventListener("click", () => {
             employeeFilter.value = "";
+            eventFilter.value = "";
             setDefaultDates();
             loadReports();
+        });
+
+        document.querySelectorAll(".quick-range").forEach(button => {
+            button.addEventListener("click", () => {
+                setDateRange(button.dataset.range);
+                loadReports();
+            });
+        });
+
+        startDate.addEventListener("change", () => {
+            document.querySelectorAll(".quick-range").forEach(button => button.classList.remove("active"));
+        });
+
+        endDate.addEventListener("change", () => {
+            document.querySelectorAll(".quick-range").forEach(button => button.classList.remove("active"));
         });
 
         setDefaultDates();
