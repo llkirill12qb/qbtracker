@@ -5,7 +5,9 @@ import secrets
 
 from dotenv import load_dotenv
 
+from app.core.roles import PLATFORM_ROLES
 from app.crud.user_crud import get_user_by_username
+from app.models.company_model import Company
 
 load_dotenv()
 
@@ -72,6 +74,17 @@ def authenticate_user(db, username: str, password: str):
         return user
 
     return None
+
+
+def is_login_allowed_for_user(db, user) -> bool:
+    if not user:
+        return False
+
+    if user.role in PLATFORM_ROLES or user.company_id is None:
+        return True
+
+    company = db.query(Company).filter(Company.id == user.company_id).first()
+    return bool(company and company.status != "archived")
 
 
 def is_authenticated(session: dict) -> bool:

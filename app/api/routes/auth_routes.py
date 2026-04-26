@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from urllib.parse import parse_qs, urlparse
 
-from app.core.auth import authenticate_user, verify_superadmin
+from app.core.auth import authenticate_user, is_login_allowed_for_user, verify_superadmin
 from app.core.database import get_db
 from app.core.roles import PLATFORM_ROLES, ROLE_SUPER_ADMIN, ROLE_TERMINAL_USER
 from app.core.zoned_sessions import (
@@ -71,7 +71,7 @@ def login_page(request: Request):
         "login.html",
         {
             "request": request,
-            "error": None,
+            "error": request.query_params.get("error"),
         },
     )
 
@@ -86,6 +86,16 @@ def login_submit(
     user = authenticate_user(db, username, password)
 
     if user:
+        if not is_login_allowed_for_user(db, user):
+            return templates.TemplateResponse(
+                "login.html",
+                {
+                    "request": request,
+                    "error": "Company is archived. Login is disabled.",
+                },
+                status_code=403,
+            )
+
         update_last_login(db, user)
         session_payload = build_session_payload(
             user_id=user.id,

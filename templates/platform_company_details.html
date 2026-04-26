@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Details</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --nav: #111827;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        * { box-sizing: border-box; }
+        html { scrollbar-gutter: stable; }
+        body { margin: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+        .navbar {
+            background: var(--nav);
+            color: white;
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .brand-title { font-size: 22px; font-weight: bold; }
+        .brand-subtitle { margin-top: 4px; font-size: 13px; color: rgba(255,255,255,.72); }
+        .links { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+        .links a, .logout-button { color: white; text-decoration: none; font: inherit; font-weight: bold; }
+        .logout-form { display: flex; align-items: center; margin: 0; }
+        .logout-button { padding: 0; border: none; background: transparent; cursor: pointer; }
+        .links a:hover, .logout-button:hover { color: #bfdbfe; }
+        .page { max-width: 1200px; margin: 0 auto; padding: 34px 20px 48px; }
+        .page-header {
+            display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 24px;
+        }
+        h1 { margin: 0; font-size: 34px; }
+        .page-copy { margin: 8px 0 0; color: var(--muted); line-height: 1.6; max-width: 760px; }
+        .badge {
+            display: inline-flex; padding: 8px 12px; border-radius: 999px; background: var(--success-bg); color: var(--success-text); font-weight: bold; font-size: 13px;
+        }
+        .message {
+            display: inline-flex; margin-bottom: 18px; padding: 8px 12px; border-radius: 999px; background: var(--success-bg); color: var(--success-text); font-weight: bold; font-size: 13px;
+        }
+        .message.error { background: #fee2e2; color: #991b1b; }
+        .stack { display: grid; gap: 22px; }
+        .panel { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 24px; }
+        .section-title { margin: 0 0 16px; font-size: 22px; }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+        .info-card {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 16px;
+            background: #f9fafb;
+        }
+        .info-label { color: var(--muted); font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: .04em; }
+        .info-value { margin-top: 8px; font-size: 20px; font-weight: bold; }
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+        .details-card {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 18px;
+            background: #fff;
+        }
+        .detail-row + .detail-row { margin-top: 12px; }
+        .detail-label { color: var(--muted); font-size: 13px; font-weight: bold; }
+        .detail-value { margin-top: 4px; line-height: 1.5; }
+        .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+        .button, .secondary-link {
+            min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 9px 14px; border-radius: 10px; font-weight: bold; text-decoration: none;
+        }
+        .button { border: none; background: var(--primary); color: white; cursor: pointer; }
+        .button:hover { background: var(--primary-dark); }
+        .secondary-link { border: 1px solid var(--line); color: #374151; background: #f9fafb; }
+        .secondary-link:hover { background: #f3f4f6; }
+        @media (max-width: 860px) {
+            .info-grid, .details-grid { grid-template-columns: 1fr; }
+            .navbar { align-items: flex-start; flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    {% set current_role = request.session.get("role") %}
+    {% set platform_query = '?role_context=' ~ current_role if current_role else '' %}
+    <div class="navbar">
+        <div>
+            <div class="brand-title">QB Tracker Platform</div>
+            <div class="brand-subtitle">Company details and summary</div>
+        </div>
+        <div class="links">
+            <a href="/platform/companies{{ platform_query }}">Companies</a>
+            <a href="/platform/companies/new{{ platform_query }}">Create Company</a>
+            <a href="/platform/companies/delete{{ platform_query }}">Archive Company</a>
+            <a href="/platform/companies/archive{{ platform_query }}">Archived Companies</a>
+            {% include "session_badge.html" %}
+            <form class="logout-form" method="post" action="/logout{{ platform_query }}">
+                <button class="logout-button" type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <main class="page">
+        <div class="page-header">
+            <div>
+                <h1>{{ company.name }}</h1>
+                <p class="page-copy">
+                    Company summary for platform management. Here you can review company basics, activity counts, and the primary contact before opening or editing the workspace.
+                </p>
+            </div>
+            <div class="badge">{{ company.status or "active" }}</div>
+        </div>
+
+        {% if message %}
+        <div class="message">{{ message }}</div>
+        {% endif %}
+        {% if error %}
+        <div class="message error">{{ error }}</div>
+        {% endif %}
+
+        <div class="stack">
+            <section class="panel">
+                <h2 class="section-title">Workspace Summary</h2>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-label">Employees</div>
+                        <div class="info-value">{{ summary.employees_count }}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Users</div>
+                        <div class="info-value">{{ summary.users_count }}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Locations</div>
+                        <div class="info-value">{{ summary.locations_count }}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Terminals</div>
+                        <div class="info-value">{{ summary.terminals_count }}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Contacts</div>
+                        <div class="info-value">{{ summary.contacts_count }}</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Created</div>
+                        <div class="info-value">{{ company.created_at.strftime('%Y-%m-%d') if company.created_at else 'Not set' }}</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <h2 class="section-title">Company Profile</h2>
+                <div class="details-grid">
+                    <div class="details-card">
+                        <div class="detail-row">
+                            <div class="detail-label">Company Name</div>
+                            <div class="detail-value">{{ company.name }}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Legal Name</div>
+                            <div class="detail-value">{{ company.legal_name or 'Not set' }}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Timezone</div>
+                            <div class="detail-value">{{ company.timezone or 'Not set' }}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Status</div>
+                            <div class="detail-value">{{ company.status or 'active' }}</div>
+                        </div>
+                    </div>
+                    <div class="details-card">
+                        <div class="detail-row">
+                            <div class="detail-label">Email</div>
+                            <div class="detail-value">{{ company.email or 'Not set' }}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Phone</div>
+                            <div class="detail-value">{{ company.phone or 'Not set' }}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Primary Contact</div>
+                            <div class="detail-value">
+                                {% if summary.primary_contact %}
+                                    {{ summary.primary_contact.full_name }}
+                                    {% if summary.primary_contact.position %}
+                                    <div>{{ summary.primary_contact.position }}</div>
+                                    {% endif %}
+                                    {% if summary.primary_contact.email %}
+                                    <div>{{ summary.primary_contact.email }}</div>
+                                    {% endif %}
+                                    {% if summary.primary_contact.phone %}
+                                    <div>{{ summary.primary_contact.phone }}</div>
+                                    {% endif %}
+                                {% else %}
+                                    Not set
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="actions">
+                    <a class="secondary-link" href="/platform/companies{{ platform_query }}">Back to Companies</a>
+                    <a class="button" href="/platform/companies/{{ company.id }}/edit{{ platform_query }}">Edit Company</a>
+                </div>
+            </section>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,6 +1,7 @@
 import asyncio
+from urllib.parse import quote_plus
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -27,6 +28,8 @@ from app.core.zoned_sessions import (
     ZONE_COMPANY,
     ZONE_PLATFORM,
     ZONE_TERMINAL,
+    clear_role_session,
+    clear_zone_session,
     get_requested_role_context,
     get_zone_for_path,
     read_zone_session,
@@ -49,6 +52,16 @@ PUBLIC_PATHS = {"/", "/login", "/logout", "/favicon.ico"}
 PUBLIC_PREFIXES = ("/static",)
 API_PREFIXES = ("/api",)
 DIRECT_API_PATHS = {"/scan", "/logs"}
+ARCHIVED_COMPANY_ERROR = "Archived company is not available in this workspace"
+
+
+def is_api_request_path(path: str) -> bool:
+    return (
+        path in DIRECT_API_PATHS
+        or path.startswith("/employee/")
+        or (path.startswith("/employees") and path not in {"/employees-page", "/employees-archive"})
+        or any(path.startswith(prefix) for prefix in API_PREFIXES)
+    )
 
 
 class AuthRequiredMiddleware(BaseHTTPMiddleware):
@@ -81,12 +94,7 @@ class AuthRequiredMiddleware(BaseHTTPMiddleware):
             request.state.session_zone = session_source_zone
 
         if zone and not zone_session:
-            is_api_request = (
-                path in DIRECT_API_PATHS
-                or path.startswith("/employee/")
-                or (path.startswith("/employees") and path not in {"/employees-page", "/employees-archive"})
-                or any(path.startswith(prefix) for prefix in API_PREFIXES)
-            )
+            is_api_request = is_api_request_path(path)
             if is_api_request:
                 return JSONResponse(status_code=401, content={"detail": "Authentication required"})
             return RedirectResponse(url="/login", status_code=303)
@@ -94,12 +102,7 @@ class AuthRequiredMiddleware(BaseHTTPMiddleware):
         if is_authenticated(request.session):
             return await call_next(request)
 
-        is_api_request = (
-            path in DIRECT_API_PATHS
-            or path.startswith("/employee/")
-            or (path.startswith("/employees") and path not in {"/employees-page", "/employees-archive"})
-            or any(path.startswith(prefix) for prefix in API_PREFIXES)
-        )
+        is_api_request = is_api_request_path(path)
 
         if is_api_request:
             return JSONResponse(status_code=401, content={"detail": "Authentication required"})
@@ -138,6 +141,23 @@ app.include_router(dashboard.router)
 app.include_router(employees_page_router)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    if exc.status_code == 403 and exc.detail == ARCHIVED_COMPANY_ERROR and not is_api_request_path(request.url.path):
+        error_message = quote_plus("Company is archived. Access has been closed for this workspace.")
+        response = RedirectResponse(url=f"/login?error={error_message}", status_code=303)
+        role_context = request.session.get("role")
+        session_zone = getattr(request.state, "session_zone", None)
+        if role_context:
+            clear_role_session(response, role_context)
+        if session_zone:
+            clear_zone_session(response, session_zone)
+        request.session.clear()
+        return response
+
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
 @app.on_event("startup")

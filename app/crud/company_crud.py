@@ -1,6 +1,7 @@
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from app.crud.company_contact_crud import get_primary_company_contact
 from app.models.company_contact_model import CompanyContact
 from app.models.company_model import Company
 from app.models.employee_model import Employee
@@ -36,6 +37,19 @@ def get_all_companies(
 
 def get_company_by_id(db: Session, company_id: int):
     return db.query(Company).filter(Company.id == company_id).first()
+
+
+def get_company_summary(db: Session, company_id: int):
+    primary_contact = get_primary_company_contact(db, company_id)
+
+    return {
+        "employees_count": db.query(Employee).filter(Employee.company_id == company_id).count(),
+        "users_count": db.query(User).filter(User.company_id == company_id).count(),
+        "locations_count": db.query(Location).filter(Location.company_id == company_id).count(),
+        "terminals_count": db.query(Terminal).filter(Terminal.company_id == company_id).count(),
+        "contacts_count": db.query(CompanyContact).filter(CompanyContact.company_id == company_id).count(),
+        "primary_contact": primary_contact,
+    }
 
 
 def create_company(

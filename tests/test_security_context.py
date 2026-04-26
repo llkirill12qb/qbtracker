@@ -1,6 +1,7 @@
 import unittest
 from datetime import datetime
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from fastapi import HTTPException
 from sqlalchemy import create_engine
@@ -9,17 +10,20 @@ from sqlalchemy.pool import StaticPool
 
 from app.core.database import Base
 from app.core.company_context import get_current_company_id
+from app.core.auth import is_login_allowed_for_user
 from app.core.roles import (
     PERM_MANAGE_COMPANY_SETTINGS,
     PERM_MANAGE_EMPLOYEES,
     PERM_MANAGE_LOCATIONS,
     PERM_MANAGE_TERMINALS,
     PERM_MANAGE_USERS,
+    PERM_VIEW_DASHBOARD,
     ROLE_COMPANY_ADMIN,
     ROLE_COMPANY_OWNER,
     ROLE_SUPER_ADMIN,
 )
-from app.core.security import has_permission
+from app.core.security import has_permission, require_permission
+from app.crud.company_contact_crud import get_primary_company_contact, upsert_primary_company_contact
 from app.crud.employee_crud import (
     build_qr_payload,
     create_employee,
@@ -31,7 +35,9 @@ from app.crud.company_crud import (
     delete_company_cascade,
     get_all_companies,
     get_company_by_id,
+    get_company_summary,
     restore_company,
+    update_company_profile,
 )
 from app.crud.location_crud import get_location_by_id
 from app.crud.scan_crud import create_scan_log, get_report_logs
@@ -57,6 +63,20 @@ from app.services.scan_service import get_logs, process_scan
 
 
 class SecurityContextTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+        cls.SessionLocal = sessionmaker(bind=cls.engine, autocommit=False, autoflush=False)
+        Base.metadata.create_all(bind=cls.engine)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.engine.dispose()
+
     def test_rejects_role_in_wrong_zone_cookie(self):
         platform_payload = build_session_payload(
             user_id=1,
@@ -155,6 +175,31 @@ class SecurityContextTests(unittest.TestCase):
         owner_user = {"role": ROLE_COMPANY_OWNER}
 
         self.assertTrue(has_permission(owner_user, PERM_MANAGE_COMPANY_SETTINGS))
+
+    def test_archived_company_workspace_access_is_blocked_for_company_user(self):
+        db = self.SessionLocal()
+        try:
+            archived_company = Company(name="Archived Co", timezone="America/New_York", status="archived")
+            db.add(archived_company)
+            db.commit()
+            db.refresh(archived_company)
+        finally:
+            db.close()
+
+        request = SimpleNamespace(
+            session={
+                "authenticated": True,
+                "username": "owner",
+                "role": ROLE_COMPANY_OWNER,
+                "company_id": archived_company.id,
+            }
+        )
+
+        with patch("app.core.security.SessionLocal", self.SessionLocal):
+            with self.assertRaises(HTTPException) as exc:
+                require_permission(request, PERM_VIEW_DASHBOARD)
+
+        self.assertEqual(exc.exception.status_code, 403)
 
 
 class CrossCompanyIsolationTests(unittest.TestCase):
@@ -356,6 +401,127 @@ class CrossCompanyIsolationTests(unittest.TestCase):
         active_ids_after_restore = [company.id for company in get_all_companies(self.db)]
         self.assertIn(self.company_2.id, active_ids_after_restore)
         self.assertEqual(get_company_by_id(self.db, self.company_2.id).status, "active")
+
+    def test_company_summary_counts_only_selected_company(self):
+        employee = create_employee(
+            db=self.db,
+            full_name="Summary Worker",
+            card_id="EMP-SUM-1",
+            company_id=self.company_2.id,
+        )
+        location = Location(
+            company_id=self.company_2.id,
+            name="Summary Site",
+            timezone="America/Chicago",
+            is_active=True,
+        )
+        self.db.add(location)
+        self.db.commit()
+        self.db.refresh(location)
+
+        terminal = Terminal(
+            company_id=self.company_2.id,
+            location_id=location.id,
+            name="Summary Terminal",
+            status="active",
+            is_active=True,
+        )
+        contact = CompanyContact(
+            company_id=self.company_2.id,
+            full_name="Primary Contact",
+            contact_type="owner",
+            email="owner@example.com",
+            is_primary=True,
+        )
+        self.db.add_all([terminal, contact])
+        self.db.commit()
+
+        create_user(
+            db=self.db,
+            username="summary_admin",
+            password_hash="hashed",
+            role=ROLE_COMPANY_ADMIN,
+            company_id=self.company_2.id,
+            location_id=location.id,
+            terminal_id=terminal.id,
+        )
+        create_scan_log(
+            db=self.db,
+            employee_id=employee.id,
+            company_id=self.company_2.id,
+            card_id=employee.card_id,
+            event_type="check-in",
+            scan_source="test",
+            terminal_id=terminal.id,
+            location_id=location.id,
+        )
+
+        summary = get_company_summary(self.db, self.company_2.id)
+
+        self.assertEqual(summary["employees_count"], 1)
+        self.assertEqual(summary["users_count"], 1)
+        self.assertEqual(summary["locations_count"], 1)
+        self.assertEqual(summary["terminals_count"], 1)
+        self.assertEqual(summary["contacts_count"], 1)
+        self.assertIsNotNone(summary["primary_contact"])
+        self.assertEqual(summary["primary_contact"].full_name, "Primary Contact")
+
+    def test_primary_contact_upsert_sets_single_primary_contact(self):
+        first_contact = upsert_primary_company_contact(
+            self.db,
+            self.company_1.id,
+            full_name="Owner One",
+            position="Owner",
+            email="owner1@example.com",
+        )
+        second_contact = upsert_primary_company_contact(
+            self.db,
+            self.company_1.id,
+            full_name="Owner Two",
+            position="Director",
+            email="owner2@example.com",
+            phone="+1-555-2222",
+        )
+
+        primary_contact = get_primary_company_contact(self.db, self.company_1.id)
+        all_contacts = self.db.query(CompanyContact).filter(CompanyContact.company_id == self.company_1.id).all()
+
+        self.assertEqual(first_contact.id, second_contact.id)
+        self.assertEqual(primary_contact.full_name, "Owner Two")
+        self.assertEqual(primary_contact.position, "Director")
+        self.assertEqual(primary_contact.email, "owner2@example.com")
+        self.assertEqual(primary_contact.phone, "+1-555-2222")
+        self.assertEqual(sum(1 for contact in all_contacts if contact.is_primary), 1)
+
+    def test_update_company_profile_changes_core_fields(self):
+        update_company_profile(
+            self.db,
+            self.company_1,
+            name="Updated Company One",
+            legal_name="Updated Legal",
+            email="updated@example.com",
+            phone="+1-555-1234",
+            timezone="America/Los_Angeles",
+        )
+
+        updated_company = get_company_by_id(self.db, self.company_1.id)
+        self.assertEqual(updated_company.name, "Updated Company One")
+        self.assertEqual(updated_company.legal_name, "Updated Legal")
+        self.assertEqual(updated_company.email, "updated@example.com")
+        self.assertEqual(updated_company.phone, "+1-555-1234")
+        self.assertEqual(updated_company.timezone, "America/Los_Angeles")
+
+    def test_archived_company_blocks_login_for_company_user(self):
+        archived_user = create_user(
+            db=self.db,
+            username="archived_owner",
+            password_hash="hashed",
+            role=ROLE_COMPANY_OWNER,
+            company_id=self.company_2.id,
+        )
+        archive_company(self.db, self.company_2)
+
+        self.assertFalse(is_login_allowed_for_user(self.db, archived_user))
 
     def test_delete_company_cascade_removes_related_records(self):
         employee = create_employee(

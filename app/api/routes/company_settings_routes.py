@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core.roles import PLATFORM_ROLES
 from app.core.roles import PERM_MANAGE_COMPANY_SETTINGS
 from app.core.security import require_permission
+from app.crud.company_contact_crud import get_primary_company_contact, upsert_primary_company_contact
 from app.crud.company_crud import get_company_by_id, update_company_profile
 from app.services.timezone_options_service import get_timezone_options
 
@@ -31,12 +32,14 @@ def get_current_company_or_404(request: Request, db: Session):
 def company_settings_page(request: Request, db: Session = Depends(get_db)):
     require_permission(request, PERM_MANAGE_COMPANY_SETTINGS)
     company = get_current_company_or_404(request, db)
+    primary_contact = get_primary_company_contact(db, company.id)
 
     return templates.TemplateResponse(
         "company_settings.html",
         {
             "request": request,
             "company": company,
+            "primary_contact": primary_contact,
             "timezone_options": get_timezone_options(company.timezone),
             "saved": request.query_params.get("saved") == "1",
         },
@@ -59,6 +62,11 @@ def update_company_settings(
     postal_code: str = Form(default=""),
     timezone: str = Form(default="America/New_York"),
     status: str = Form(default="active"),
+    primary_contact_name: str = Form(default=""),
+    primary_contact_position: str = Form(default=""),
+    primary_contact_email: str = Form(default=""),
+    primary_contact_phone: str = Form(default=""),
+    primary_contact_notes: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
     require_permission(request, PERM_MANAGE_COMPANY_SETTINGS)
@@ -80,6 +88,15 @@ def update_company_settings(
         postal_code=postal_code.strip() or None,
         timezone=timezone.strip() or "America/New_York",
         status=status.strip() or "active",
+    )
+    upsert_primary_company_contact(
+        db,
+        company.id,
+        full_name=primary_contact_name,
+        position=primary_contact_position,
+        email=primary_contact_email,
+        phone=primary_contact_phone,
+        notes=primary_contact_notes,
     )
 
     zone_query = "&zone=platform" if request.session.get("role") in PLATFORM_ROLES else ""

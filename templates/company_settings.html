@@ -323,6 +323,26 @@
                         <label for="postal_code">Postal code</label>
                         <input id="postal_code" name="postal_code" value="{{ company.postal_code or '' }}">
                     </div>
+                    <div class="field full">
+                        <label for="primary_contact_name">Primary contact name</label>
+                        <input id="primary_contact_name" name="primary_contact_name" value="{{ primary_contact.full_name if primary_contact else '' }}">
+                    </div>
+                    <div class="field">
+                        <label for="primary_contact_position">Primary contact position</label>
+                        <input id="primary_contact_position" name="primary_contact_position" value="{{ primary_contact.position if primary_contact else '' }}">
+                    </div>
+                    <div class="field">
+                        <label for="primary_contact_email">Primary contact email</label>
+                        <input id="primary_contact_email" name="primary_contact_email" type="email" value="{{ primary_contact.email if primary_contact else '' }}">
+                    </div>
+                    <div class="field">
+                        <label for="primary_contact_phone">Primary contact phone</label>
+                        <input id="primary_contact_phone" name="primary_contact_phone" value="{{ primary_contact.phone if primary_contact else '' }}">
+                    </div>
+                    <div class="field full">
+                        <label for="primary_contact_notes">Primary contact notes</label>
+                        <input id="primary_contact_notes" name="primary_contact_notes" value="{{ primary_contact.notes if primary_contact else '' }}">
+                    </div>
                 </div>
 
                 <div class="actions">
