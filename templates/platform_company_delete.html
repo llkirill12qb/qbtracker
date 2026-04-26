@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archive Company</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --nav: #111827;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --warning: #b45309;
+            --warning-dark: #92400e;
+            --warning-bg: #fef3c7;
+            --warning-text: #92400e;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        * { box-sizing: border-box; }
+        html { scrollbar-gutter: stable; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+        .navbar {
+            background: var(--nav);
+            color: white;
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .brand-title { font-size: 22px; font-weight: bold; }
+        .brand-subtitle { margin-top: 4px; font-size: 13px; color: rgba(255,255,255,.72); }
+        .links { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+        .links a, .logout-button {
+            color: white; text-decoration: none; font: inherit; font-weight: bold;
+        }
+        .logout-form { display: flex; align-items: center; margin: 0; }
+        .logout-button { padding: 0; border: none; background: transparent; cursor: pointer; }
+        .links a:hover, .logout-button:hover { color: #bfdbfe; }
+        .page { max-width: 1200px; margin: 0 auto; padding: 34px 20px 48px; }
+        .page-header {
+            display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 24px;
+        }
+        h1 { margin: 0; font-size: 34px; }
+        .page-copy { margin: 8px 0 0; color: var(--muted); line-height: 1.6; max-width: 760px; }
+        .badge {
+            display: inline-flex; padding: 8px 12px; border-radius: 999px; background: var(--warning-bg); color: var(--warning-text); font-weight: bold; font-size: 13px;
+        }
+        .message {
+            display: inline-flex; margin-bottom: 18px; padding: 8px 12px; border-radius: 999px; background: var(--success-bg); color: var(--success-text); font-weight: bold; font-size: 13px;
+        }
+        .message.error { background: #fee2e2; color: #991b1b; }
+        .warning {
+            margin-bottom: 22px; padding: 16px 18px; border-radius: 14px; background: var(--warning-bg); color: var(--warning-text); line-height: 1.6; font-weight: bold;
+        }
+        .panel { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 24px; }
+        .toolbar {
+            display: grid; grid-template-columns: 1fr auto auto auto auto; gap: 12px; align-items: end; margin-bottom: 18px;
+        }
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        .field label { color: #374151; font-size: 13px; font-weight: bold; }
+        .field input, .field select {
+            min-height: 42px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--text); font: inherit;
+        }
+        .toolbar-button, .clear-link, .archive-button {
+            min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 9px 14px; border-radius: 10px; font-weight: bold; text-decoration: none;
+        }
+        .toolbar-button { border: none; background: var(--primary); color: white; cursor: pointer; }
+        .toolbar-button:hover { background: var(--primary-dark); }
+        .clear-link { border: 1px solid var(--line); color: #374151; background: #f9fafb; }
+        .clear-link:hover { background: #f3f4f6; }
+        .archive-button { border: none; background: var(--warning); color: white; cursor: pointer; }
+        .archive-button:hover { background: var(--warning-dark); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 13px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+        th { background: #f9fafb; color: #374151; font-size: 14px; }
+        .muted { color: var(--muted); }
+        .empty { color: var(--muted); padding: 20px 0 0; }
+        @media (max-width: 760px) {
+            .toolbar { grid-template-columns: 1fr; }
+            .panel { overflow-x: auto; }
+            .navbar { align-items: flex-start; flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    {% set current_role = request.session.get("role") %}
+    {% set platform_query = '?role_context=' ~ current_role if current_role else '' %}
+    <div class="navbar">
+        <div>
+            <div class="brand-title">QB Tracker Platform</div>
+            <div class="brand-subtitle">Move company to archive first</div>
+        </div>
+        <div class="links">
+            <a href="/platform/companies{{ platform_query }}">Companies</a>
+            <a href="/platform/companies/new{{ platform_query }}">Create Company</a>
+            <a href="/platform/companies/delete{{ platform_query }}">Archive Company</a>
+            <a href="/platform/companies/archive{{ platform_query }}">Archived Companies</a>
+            {% include "session_badge.html" %}
+            <form class="logout-form" method="post" action="/logout{{ platform_query }}">
+                <button class="logout-button" type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <main class="page">
+        <div class="page-header">
+            <div>
+                <h1>Archive Company</h1>
+                <p class="page-copy">
+                    Choose an active company and move it to archive first. Archived companies disappear from the active company list and can later be restored or deleted permanently from the archive page.
+                </p>
+            </div>
+            <div class="badge">Archive Step</div>
+        </div>
+
+        {% if message %}
+        <div class="message">{{ message }}</div>
+        {% endif %}
+        {% if error %}
+        <div class="message error">{{ error }}</div>
+        {% endif %}
+
+        <div class="warning">
+            Safety rule: companies are no longer deleted immediately. First they go to archive, and only archived companies can be restored or removed permanently.
+        </div>
+
+        <section class="panel">
+            <form class="toolbar" method="get" action="/platform/companies/delete">
+                <input name="role_context" type="hidden" value="{{ current_role }}">
+                <div class="field">
+                    <label for="q">Search by company name</label>
+                    <input id="q" name="q" type="search" value="{{ q }}" placeholder="Type company name">
+                </div>
+                <div class="field">
+                    <label for="sort">Sort by</label>
+                    <select id="sort" name="sort">
+                        <option value="id" {% if sort == "id" %}selected{% endif %}>ID number</option>
+                        <option value="name" {% if sort == "name" %}selected{% endif %}>Company name</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="direction">Direction</label>
+                    <select id="direction" name="direction">
+                        <option value="asc" {% if direction == "asc" %}selected{% endif %}>Ascending</option>
+                        <option value="desc" {% if direction == "desc" %}selected{% endif %}>Descending</option>
+                    </select>
+                </div>
+                <button class="toolbar-button" type="submit">Apply</button>
+                <a class="clear-link" href="/platform/companies/delete{{ platform_query }}">Reset</a>
+            </form>
+
+            {% if companies %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Company</th>
+                        <th>Status</th>
+                        <th>Timezone</th>
+                        <th>Contact</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for company in companies %}
+                    <tr>
+                        <td>{{ company.id }}</td>
+                        <td>
+                            <strong>{{ company.name }}</strong>
+                            {% if company.legal_name %}
+                            <div class="muted">{{ company.legal_name }}</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ company.status or "active" }}</td>
+                        <td>{{ company.timezone or "Not set" }}</td>
+                        <td>
+                            {% if company.email %}
+                            <div>{{ company.email }}</div>
+                            {% endif %}
+                            {% if company.phone %}
+                            <div class="muted">{{ company.phone }}</div>
+                            {% endif %}
+                            {% if not company.email and not company.phone %}
+                            <span class="muted">No contact yet</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="post" action="/platform/companies/{{ company.id }}/archive{{ platform_query }}" onsubmit="return confirm('Move company {{ company.name|escape }} to archive?');">
+                                <button class="archive-button" type="submit">Move to Archive</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty">No companies found.</div>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

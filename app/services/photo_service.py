@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 import uuid
 from PIL import Image
 
@@ -58,3 +59,9 @@ def delete_employee_photo(photo_filename: str | None, company_id: int) -> None:
     file_path = get_employee_upload_dir(company_id) / photo_filename
     if file_path.exists():
         file_path.unlink()
+
+
+def delete_company_upload_dir(company_id: int) -> None:
+    company_dir = BASE_UPLOAD_DIR / f"company_{company_id}"
+    if company_dir.exists():
+        shutil.rmtree(company_dir)

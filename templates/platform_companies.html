@@ -125,11 +125,56 @@
             font-size: 13px;
         }
 
+        .message {
+            display: inline-flex;
+            margin-bottom: 18px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--success-bg);
+            color: var(--success-text);
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
         .panel {
             background: var(--card);
             border-radius: 16px;
             box-shadow: var(--shadow);
             padding: 24px;
+        }
+
+        .stack {
+            display: grid;
+            gap: 22px;
+        }
+
+        .section-title {
+            margin: 0 0 8px;
+            font-size: 20px;
+        }
+
+        .section-copy {
+            margin: 0 0 18px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .create-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+            align-items: end;
+        }
+
+        .create-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 14px;
         }
 
         .toolbar {
@@ -249,6 +294,7 @@
         }
 
         @media (max-width: 760px) {
+            .create-grid,
             .toolbar {
                 grid-template-columns: 1fr;
             }
@@ -274,6 +320,11 @@
         </div>
         <div class="links">
             <a href="/platform/companies{{ platform_query }}">Companies</a>
+            {% if current_role == "super_admin" %}
+            <a href="/platform/companies/new{{ platform_query }}">Create Company</a>
+            <a href="/platform/companies/delete{{ platform_query }}">Archive Company</a>
+            <a href="/platform/companies/archive{{ platform_query }}">Archived Companies</a>
+            {% endif %}
             {% include "session_badge.html" %}
             <form class="logout-form" method="post" action="/logout{{ platform_query }}">
                 <button class="logout-button" type="submit">Logout</button>
@@ -292,82 +343,96 @@
             <div class="badge">{{ user.role }}</div>
         </div>
 
-        <section class="panel">
-            <form class="toolbar" method="get" action="/platform/companies">
-                <input name="role_context" type="hidden" value="{{ current_role }}">
-                <div class="field">
-                    <label for="q">Search by company name</label>
-                    <input id="q" name="q" type="search" value="{{ q }}" placeholder="Type company name">
-                </div>
-                <div class="field">
-                    <label for="sort">Sort by</label>
-                    <select id="sort" name="sort">
-                        <option value="id" {% if sort == "id" %}selected{% endif %}>ID number</option>
-                        <option value="name" {% if sort == "name" %}selected{% endif %}>Company name</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label for="direction">Direction</label>
-                    <select id="direction" name="direction">
-                        <option value="asc" {% if direction == "asc" %}selected{% endif %}>Ascending</option>
-                        <option value="desc" {% if direction == "desc" %}selected{% endif %}>Descending</option>
-                    </select>
-                </div>
-                <button class="toolbar-button" type="submit">Apply</button>
-                <a class="clear-link" href="/platform/companies{{ platform_query }}">Reset</a>
-            </form>
+        {% if message %}
+        <div class="message">{{ message }}</div>
+        {% endif %}
+        {% if error %}
+        <div class="message error">{{ error }}</div>
+        {% endif %}
 
-            {% if companies %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Company</th>
-                        <th>Status</th>
-                        <th>Timezone</th>
-                        <th>Contact</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for company in companies %}
-                    <tr>
-                        <td>{{ company.id }}</td>
-                        <td>
-                            <strong>{{ company.name }}</strong>
-                            {% if selected_company_id and selected_company_id|int == company.id %}
-                            <span class="selected-label">Selected</span>
-                            {% endif %}
-                            {% if company.legal_name %}
-                            <div class="muted">{{ company.legal_name }}</div>
-                            {% endif %}
-                        </td>
-                        <td>{{ company.status or "active" }}</td>
-                        <td>{{ company.timezone or "Not set" }}</td>
-                        <td>
-                            {% if company.email %}
-                            <div>{{ company.email }}</div>
-                            {% endif %}
-                            {% if company.phone %}
-                            <div class="muted">{{ company.phone }}</div>
-                            {% endif %}
-                            {% if not company.email and not company.phone %}
-                            <span class="muted">No contact yet</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <form method="post" action="/platform/companies/{{ company.id }}/open{{ platform_query }}">
-                                <button class="open-button" type="submit">Open Company</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="empty">No companies yet.</div>
-            {% endif %}
-        </section>
+        <div class="stack">
+            <section class="panel">
+                <h2 class="section-title">Company List</h2>
+                <p class="section-copy">
+                    Search, sort, and open any client company in the platform workspace.
+                </p>
+
+                <form class="toolbar" method="get" action="/platform/companies">
+                    <input name="role_context" type="hidden" value="{{ current_role }}">
+                    <div class="field">
+                        <label for="q">Search by company name</label>
+                        <input id="q" name="q" type="search" value="{{ q }}" placeholder="Type company name">
+                    </div>
+                    <div class="field">
+                        <label for="sort">Sort by</label>
+                        <select id="sort" name="sort">
+                            <option value="id" {% if sort == "id" %}selected{% endif %}>ID number</option>
+                            <option value="name" {% if sort == "name" %}selected{% endif %}>Company name</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="direction">Direction</label>
+                        <select id="direction" name="direction">
+                            <option value="asc" {% if direction == "asc" %}selected{% endif %}>Ascending</option>
+                            <option value="desc" {% if direction == "desc" %}selected{% endif %}>Descending</option>
+                        </select>
+                    </div>
+                    <button class="toolbar-button" type="submit">Apply</button>
+                    <a class="clear-link" href="/platform/companies{{ platform_query }}">Reset</a>
+                </form>
+
+                {% if companies %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Company</th>
+                            <th>Status</th>
+                            <th>Timezone</th>
+                            <th>Contact</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for company in companies %}
+                        <tr>
+                            <td>{{ company.id }}</td>
+                            <td>
+                                <strong>{{ company.name }}</strong>
+                                {% if selected_company_id and selected_company_id|int == company.id %}
+                                <span class="selected-label">Selected</span>
+                                {% endif %}
+                                {% if company.legal_name %}
+                                <div class="muted">{{ company.legal_name }}</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ company.status or "active" }}</td>
+                            <td>{{ company.timezone or "Not set" }}</td>
+                            <td>
+                                {% if company.email %}
+                                <div>{{ company.email }}</div>
+                                {% endif %}
+                                {% if company.phone %}
+                                <div class="muted">{{ company.phone }}</div>
+                                {% endif %}
+                                {% if not company.email and not company.phone %}
+                                <span class="muted">No contact yet</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="post" action="/platform/companies/{{ company.id }}/open{{ platform_query }}">
+                                    <button class="open-button" type="submit">Open Company</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty">No companies yet.</div>
+                {% endif %}
+            </section>
+        </div>
     </main>
 </body>
 </html>

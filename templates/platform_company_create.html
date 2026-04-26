@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Company</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --nav: #111827;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --error-bg: #fee2e2;
+            --error-text: #991b1b;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scrollbar-gutter: stable;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .navbar {
+            background: var(--nav);
+            color: white;
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .brand-title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .brand-subtitle {
+            margin-top: 4px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .links {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .links a,
+        .logout-button {
+            color: white;
+            text-decoration: none;
+            font: inherit;
+            font-weight: bold;
+        }
+
+        .logout-form {
+            display: flex;
+            align-items: center;
+            margin: 0;
+        }
+
+        .logout-button {
+            padding: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .links a:hover,
+        .logout-button:hover {
+            color: #bfdbfe;
+        }
+
+        .page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 34px 20px 48px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 34px;
+        }
+
+        .page-copy {
+            margin: 8px 0 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-flex;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--success-bg);
+            color: var(--success-text);
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .message {
+            display: inline-flex;
+            margin-bottom: 18px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--error-bg);
+            color: var(--error-text);
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .panel {
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        .field label {
+            color: #374151;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .field input,
+        .field select {
+            min-height: 42px;
+            padding: 9px 11px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: white;
+            color: var(--text);
+            font: inherit;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+
+        .button,
+        .secondary-link {
+            min-height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 9px 14px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .button {
+            border: none;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background: var(--primary-dark);
+        }
+
+        .secondary-link {
+            border: 1px solid var(--line);
+            color: #374151;
+            background: #f9fafb;
+        }
+
+        .secondary-link:hover {
+            background: #f3f4f6;
+        }
+
+        @media (max-width: 760px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .navbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% set current_role = request.session.get("role") %}
+    {% set platform_query = '?role_context=' ~ current_role if current_role else '' %}
+    <div class="navbar">
+        <div>
+            <div class="brand-title">QB Tracker Platform</div>
+            <div class="brand-subtitle">Create a new company workspace</div>
+        </div>
+        <div class="links">
+            <a href="/platform/companies{{ platform_query }}">Companies</a>
+            <a href="/platform/companies/new{{ platform_query }}">Create Company</a>
+            <a href="/platform/companies/delete{{ platform_query }}">Archive Company</a>
+            <a href="/platform/companies/archive{{ platform_query }}">Archived Companies</a>
+            {% include "session_badge.html" %}
+            <form class="logout-form" method="post" action="/logout{{ platform_query }}">
+                <button class="logout-button" type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <main class="page">
+        <div class="page-header">
+            <div>
+                <h1>Create Company</h1>
+                <p class="page-copy">
+                    Create a new client company and make it available in the platform workspace list.
+                </p>
+            </div>
+            <div class="badge">{{ user.role }}</div>
+        </div>
+
+        {% if error %}
+        <div class="message">{{ error }}</div>
+        {% endif %}
+
+        <section class="panel">
+            <form method="post" action="/platform/companies{{ platform_query }}">
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="name">Company name</label>
+                        <input id="name" name="name" required>
+                    </div>
+                    <div class="field">
+                        <label for="legal_name">Legal name</label>
+                        <input id="legal_name" name="legal_name">
+                    </div>
+                    <div class="field">
+                        <label for="email">Email</label>
+                        <input id="email" name="email" type="email">
+                    </div>
+                    <div class="field">
+                        <label for="phone">Phone</label>
+                        <input id="phone" name="phone">
+                    </div>
+                    <div class="field full">
+                        <label for="timezone">Timezone</label>
+                        <select id="timezone" name="timezone" required>
+                            {% for timezone_name in timezone_options %}
+                            <option value="{{ timezone_name }}" {% if timezone_name == "America/New_York" %}selected{% endif %}>
+                                {{ timezone_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="actions">
+                    <a class="secondary-link" href="/platform/companies{{ platform_query }}">Back to Companies</a>
+                    <button class="button" type="submit">Create Company</button>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
