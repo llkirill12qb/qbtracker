@@ -322,7 +322,8 @@
             <a href="/dashboard{{ zone_query }}">Dashboard</a>
             <a href="/employees-page{{ zone_query }}">Employees</a>
             <a href="/employees-archive{{ zone_query }}">Archive</a>
-            <a href="/reports{{ zone_query }}">Reports</a>
+                    <a href="/reports{{ zone_query }}">Reports</a>
+                    <a href="/reports/day-summary{{ zone_query }}">Day Summary</a>
             <a href="/terminal?zone={{ 'platform' if current_role in ['super_admin', 'site_admin'] else 'admin' }}&role_context={{ current_role }}">Terminal</a>
             {% if can_manage_users %}
             <a href="/company/users{{ zone_query }}">Users</a>

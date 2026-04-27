@@ -41,6 +41,13 @@ def reports_page(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse("reports.html", {"request": request, "company": company})
 
 
+@router.get("/reports/day-summary", response_class=HTMLResponse)
+def reports_day_summary_page(request: Request, db: Session = Depends(get_db)):
+    require_permission(request, PERM_VIEW_REPORTS)
+    company = get_company_by_id(db, get_current_company_id(request))
+    return templates.TemplateResponse("reports_day_summary.html", {"request": request, "company": company})
+
+
 @router.get("/api/reports")
 def reports_data(
     request: Request,
@@ -89,6 +96,7 @@ def reports_data(
     )
 
     report_rows = []
+    daily_summary_map = {}
     check_in_count = 0
     check_out_count = 0
 
@@ -123,6 +131,39 @@ def reports_data(
             "geo_status": log.geo_status,
         })
 
+        summary_key = (employee.id, scan_local_date.isoformat())
+        day_summary = daily_summary_map.get(summary_key)
+        if day_summary is None:
+            day_summary = {
+                "employee_id": employee.id,
+                "employee_name": employee.full_name,
+                "employee_status": employee.status,
+                "date": scan_local_date.isoformat(),
+                "first_check_in_at": None,
+                "last_check_out_at": None,
+                "events_count": 0,
+                "has_check_in": False,
+                "has_check_out": False,
+                "last_event_type": None,
+                "last_event_at": None,
+                "timezone_abbr": log.timezone_abbr or get_timezone_abbr(log.scanned_at, scan_timezone),
+                "scan_timezone": scan_timezone,
+            }
+            daily_summary_map[summary_key] = day_summary
+
+        day_summary["events_count"] += 1
+        if day_summary["last_event_at"] is None or log.scanned_at > day_summary["last_event_at"]:
+            day_summary["last_event_at"] = log.scanned_at
+            day_summary["last_event_type"] = log.event_type
+        if log.event_type == "check-in":
+            day_summary["has_check_in"] = True
+            if day_summary["first_check_in_at"] is None or log.scanned_at < day_summary["first_check_in_at"]:
+                day_summary["first_check_in_at"] = log.scanned_at
+        elif log.event_type == "check-out":
+            day_summary["has_check_out"] = True
+            if day_summary["last_check_out_at"] is None or log.scanned_at > day_summary["last_check_out_at"]:
+                day_summary["last_check_out_at"] = log.scanned_at
+
     employee_options = [
         {
             "id": emp.id,
@@ -132,6 +173,57 @@ def reports_data(
         }
         for emp in company_employees
     ]
+
+    day_summaries = []
+    for summary in daily_summary_map.values():
+        first_check_in_at = summary["first_check_in_at"]
+        last_check_out_at = summary["last_check_out_at"]
+        worked_minutes = None
+        status_label = "Complete"
+        last_event_type = summary["last_event_type"]
+
+        if first_check_in_at and last_check_out_at and last_check_out_at >= first_check_in_at:
+            worked_minutes = int((last_check_out_at - first_check_in_at).total_seconds() // 60)
+        if summary["has_check_in"] and not summary["has_check_out"]:
+            status_label = "Missing check-out"
+        elif summary["has_check_out"] and not summary["has_check_in"]:
+            status_label = "Missing check-in"
+        elif last_event_type == "check-in":
+            status_label = "Missing final check-out"
+        elif worked_minutes is None:
+            status_label = "Incomplete"
+        else:
+            status_label = "Complete"
+
+        if worked_minutes is not None:
+            hours = worked_minutes // 60
+            minutes = worked_minutes % 60
+            worked_duration = f"{hours}h {minutes:02d}m"
+        else:
+            worked_duration = "-"
+
+        first_display = "-"
+        if first_check_in_at is not None:
+            first_display = format_scan_time_display(first_check_in_at, summary["scan_timezone"])
+
+        last_display = "-"
+        if last_check_out_at is not None:
+            last_display = format_scan_time_display(last_check_out_at, summary["scan_timezone"])
+
+        day_summaries.append({
+            "employee_id": summary["employee_id"],
+            "employee_name": summary["employee_name"],
+            "employee_status": summary["employee_status"],
+            "date": summary["date"],
+            "first_check_in": first_display,
+            "last_check_out": last_display,
+            "events_count": summary["events_count"],
+            "worked_duration": worked_duration,
+            "status": status_label,
+            "timezone_abbr": summary["timezone_abbr"] or "-",
+        })
+
+    day_summaries.sort(key=lambda row: (row["date"], row["employee_name"].lower()), reverse=True)
 
     return {
         "filters": {
@@ -147,6 +239,8 @@ def reports_data(
             "total_scans": len(report_rows),
             "check_ins": check_in_count,
             "check_outs": check_out_count,
+            "day_summaries": len(day_summaries),
         },
         "rows": report_rows,
+        "day_summaries": day_summaries,
     }

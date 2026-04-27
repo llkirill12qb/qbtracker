@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports</title>
+    <title>Day Summary</title>
     <style>
         :root {
             --bg: #f4f6f8;
@@ -17,26 +17,21 @@
             --success-text: #166534;
             --danger-bg: #fee2e2;
             --danger-text: #991b1b;
+            --warning-bg: #fef3c7;
+            --warning-text: #92400e;
             --nav: #111827;
             --nav-muted: rgba(255, 255, 255, 0.72);
             --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         }
 
-        * {
-            box-sizing: border-box;
-        }
-
-        html {
-            scrollbar-gutter: stable;
-        }
-
+        * { box-sizing: border-box; }
+        html { scrollbar-gutter: stable; }
         body {
             margin: 0;
             font-family: Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
         }
-
         .navbar {
             background: var(--nav);
             color: white;
@@ -47,37 +42,11 @@
             gap: 20px;
             flex-wrap: wrap;
         }
-
-        .nav-title {
-            font-size: 22px;
-            font-weight: bold;
-        }
-
-        .nav-subtitle {
-            margin-top: 4px;
-            font-size: 13px;
-            color: var(--nav-muted);
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 18px;
-            flex-wrap: wrap;
-        }
-
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .logout-form {
-            display: flex;
-            align-items: center;
-            margin: 0;
-        }
-
+        .nav-title { font-size: 22px; font-weight: bold; }
+        .nav-subtitle { margin-top: 4px; font-size: 13px; color: var(--nav-muted); }
+        .nav-links { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+        .nav-links a { color: white; text-decoration: none; font-weight: bold; }
+        .logout-form { display: flex; align-items: center; margin: 0; }
         .logout-button {
             padding: 0;
             border: none;
@@ -87,21 +56,8 @@
             font-weight: bold;
             cursor: pointer;
         }
-
-        .nav-links a:hover {
-            color: #bfdbfe;
-        }
-
-        .logout-button:hover {
-            color: #bfdbfe;
-        }
-
-        .page {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 36px 40px 40px;
-        }
-
+        .nav-links a:hover, .logout-button:hover { color: #bfdbfe; }
+        .page { max-width: 1200px; margin: 0 auto; padding: 36px 40px 40px; }
         .page-header {
             display: flex;
             justify-content: space-between;
@@ -110,32 +66,25 @@
             flex-wrap: wrap;
             margin-bottom: 24px;
         }
-
         .page-copy p {
             margin: 8px 0 0;
             color: var(--muted);
             line-height: 1.6;
-            max-width: 720px;
+            max-width: 760px;
         }
-
         .panel {
             background: var(--card);
             border-radius: 16px;
             box-shadow: var(--shadow);
             padding: 24px;
         }
-
-        .filters-panel {
-            margin-bottom: 22px;
-        }
-
+        .filters-panel { margin-bottom: 22px; }
         .filters-grid {
             display: grid;
             grid-template-columns: repeat(5, minmax(150px, 1fr));
             gap: 14px;
             align-items: end;
         }
-
         label {
             display: block;
             margin-bottom: 6px;
@@ -143,9 +92,7 @@
             font-weight: bold;
             color: #374151;
         }
-
-        input,
-        select {
+        input, select {
             width: 100%;
             padding: 11px 12px;
             border-radius: 10px;
@@ -153,20 +100,8 @@
             background: white;
             font-size: 15px;
         }
-
-        .actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .quick-ranges {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 16px;
-        }
-
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .quick-ranges { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
         button {
             padding: 11px 16px;
             border-radius: 10px;
@@ -174,71 +109,37 @@
             cursor: pointer;
             font-weight: bold;
         }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-        }
-
-        .btn-secondary {
-            background: #e5e7eb;
-            color: #111827;
-        }
-
-        .btn-secondary:hover {
-            background: #d1d5db;
-        }
-
-        .quick-range.active {
-            background: #dbeafe;
-            color: #1d4ed8;
-        }
-
-        .report-row {
-            cursor: pointer;
-        }
-
-        .report-row:hover {
-            background: #f8fafc;
-        }
-
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-secondary { background: #e5e7eb; color: #111827; }
+        .btn-secondary:hover { background: #d1d5db; }
+        .quick-range.active { background: #dbeafe; color: #1d4ed8; }
         .summary-grid {
             display: grid;
-            grid-template-columns: repeat(4, minmax(180px, 1fr));
+            grid-template-columns: repeat(2, minmax(180px, 1fr));
             gap: 16px;
             margin-bottom: 22px;
         }
-
         .summary-card {
             background: var(--card);
             border-radius: 16px;
             box-shadow: var(--shadow);
             padding: 22px;
         }
-
-        .summary-card h3 {
-            margin: 0;
-            font-size: 15px;
-            color: var(--muted);
-        }
-
-        .summary-value {
-            margin-top: 10px;
-            font-size: 34px;
-            font-weight: bold;
-        }
-
+        .summary-card h3 { margin: 0; font-size: 15px; color: var(--muted); }
+        .summary-value { margin-top: 10px; font-size: 34px; font-weight: bold; }
         .table-panel table {
             width: 100%;
             table-layout: fixed;
             border-collapse: collapse;
             margin-top: 14px;
         }
-
+        .summary-row {
+            cursor: pointer;
+        }
+        .summary-row:hover {
+            background: #f8fafc;
+        }
         th, td {
             text-align: left;
             padding: 12px;
@@ -246,19 +147,13 @@
             overflow-wrap: anywhere;
             vertical-align: top;
         }
-
-        th {
-            background: #f9fafb;
-            font-size: 14px;
-        }
-
+        th { background: #f9fafb; font-size: 14px; }
         .th-label {
             display: inline-flex;
             align-items: center;
             gap: 4px;
             white-space: nowrap;
         }
-
         .help-tip {
             position: relative;
             display: inline-flex;
@@ -276,12 +171,10 @@
             flex: 0 0 auto;
             line-height: 1;
         }
-
         .help-tip:hover .help-bubble,
         .help-tip:focus-within .help-bubble {
             display: block;
         }
-
         .help-bubble {
             display: none;
             position: absolute;
@@ -300,50 +193,15 @@
             box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
             z-index: 20;
         }
-
         .help-bubble strong {
             display: block;
             margin-bottom: 4px;
             font-size: 12px;
         }
-
-        .col-number {
-            width: 52px;
-        }
-
-        .col-employee {
-            width: 18%;
-        }
-
-        .col-status {
-            width: 90px;
-        }
-
-        .col-card {
-            width: 100px;
-        }
-
-        .col-event {
-            width: 110px;
-        }
-
-        .col-time {
-            width: 190px;
-        }
-
-        .col-tz {
-            width: 75px;
-        }
-
-        .col-location,
-        .col-terminal {
-            width: 13%;
-        }
-
-        .col-source {
-            width: 110px;
-        }
-
+        .col-number { width: 52px; }
+        .col-employee { width: 18%; }
+        .col-status { width: 90px; }
+        .col-tz { width: 75px; }
         .pill {
             display: inline-flex;
             align-items: center;
@@ -352,74 +210,34 @@
             font-size: 12px;
             font-weight: bold;
         }
-
-        .pill.check-in {
-            background: var(--success-bg);
-            color: var(--success-text);
-        }
-
-        .pill.check-out {
-            background: var(--danger-bg);
-            color: var(--danger-text);
-        }
-
-        .summary-link {
-            display: inline-flex;
-            margin-top: 12px;
-            color: var(--primary);
-            font-weight: bold;
-            text-decoration: none;
-        }
-
-        .muted {
-            color: var(--muted);
-        }
-
+        .pill.complete { background: var(--success-bg); color: var(--success-text); }
+        .pill.warning { background: var(--warning-bg); color: var(--warning-text); }
+        .muted { color: var(--muted); }
         .status-note {
             display: none;
             margin-bottom: 16px;
             padding: 12px 14px;
             border-radius: 12px;
             font-weight: bold;
-            background: #fee2e2;
-            color: #991b1b;
+            background: var(--danger-bg);
+            color: var(--danger-text);
         }
-
-        .status-note.active {
-            display: block;
-        }
-
+        .status-note.active { display: block; }
         .empty-state {
             padding: 28px 0 8px;
             color: var(--muted);
             line-height: 1.6;
         }
-
         @media (max-width: 960px) {
             .filters-grid,
-            .summary-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .page {
-                padding-left: 20px;
-                padding-right: 20px;
-            }
+            .summary-grid { grid-template-columns: 1fr 1fr; }
+            .page { padding-left: 20px; padding-right: 20px; }
         }
-
         @media (max-width: 700px) {
-            .navbar {
-                padding: 16px 18px;
-            }
-
+            .navbar { padding: 16px 18px; }
             .filters-grid,
-            .summary-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .table-panel {
-                overflow-x: auto;
-            }
+            .summary-grid { grid-template-columns: 1fr; }
+            .table-panel { overflow-x: auto; }
         }
     </style>
 </head>
@@ -431,7 +249,7 @@
     <div class="navbar">
         <div>
             <div class="nav-title">Time Tracking SaaS</div>
-            <div class="nav-subtitle">Reports and scan history</div>
+            <div class="nav-subtitle">Daily attendance summary</div>
         </div>
         <div class="nav-links">
             {% if request.session.get("role") in ["super_admin", "site_admin"] %}
@@ -461,8 +279,8 @@
     <div class="page">
         <div class="page-header">
             <div class="page-copy">
-                <h1>Reports</h1>
-                <p>Filter scan history by date range and employee. Reports stay scoped to the current company and can include archived employees when you need historical lookup.</p>
+                <h1>Day Summary</h1>
+                <p>Grouped attendance view by employee and day. Use it to see first check-in, last check-out, worked duration, and incomplete day warnings.</p>
             </div>
         </div>
 
@@ -511,48 +329,39 @@
 
         <section class="summary-grid">
             <div class="summary-card">
-                <h3>Total Scans</h3>
-                <div id="totalScans" class="summary-value">0</div>
-            </div>
-            <div class="summary-card">
-                <h3>Check-ins</h3>
-                <div id="checkIns" class="summary-value">0</div>
-            </div>
-            <div class="summary-card">
-                <h3>Check-outs</h3>
-                <div id="checkOuts" class="summary-value">0</div>
-            </div>
-            <div class="summary-card">
                 <h3>Day Summaries</h3>
                 <div id="daySummariesCount" class="summary-value">0</div>
-                <a class="summary-link" href="/reports/day-summary{{ zone_query }}">Open Day Summary</a>
+            </div>
+            <div class="summary-card">
+                <h3>Total Scans In Scope</h3>
+                <div id="totalScans" class="summary-value">0</div>
             </div>
         </section>
 
         <section class="panel table-panel">
-            <h2>Scan History</h2>
-            <div class="muted">The table below includes company scan history for the selected filters.</div>
+            <h2>Day Summary</h2>
+            <div class="muted">Daily grouped view for the selected filters.</div>
 
             <table>
                 <thead>
                     <tr>
                         <th class="col-number"><span class="th-label">#<span class="help-tip">?<span class="help-bubble"><strong>Row Number</strong>Sequential number of the row in the current filtered table.</span></span></span></th>
-                        <th class="col-employee"><span class="th-label">Employee<span class="help-tip">?<span class="help-bubble"><strong>Employee</strong>Employee full name. Click any data row to filter the report by that employee.</span></span></span></th>
+                        <th class="col-employee"><span class="th-label">Employee<span class="help-tip">?<span class="help-bubble"><strong>Employee</strong>Employee full name. Click any data row to filter the summary by that employee.</span></span></span></th>
                         <th class="col-status"><span class="th-label">Status<span class="help-tip">?<span class="help-bubble"><strong>Status</strong>Current employee profile status, for example active or inactive.</span></span></span></th>
-                        <th class="col-card"><span class="th-label">Card ID<span class="help-tip">?<span class="help-bubble"><strong>Card ID</strong>Unique card or QR identifier used during scanning.</span></span></span></th>
-                        <th class="col-event"><span class="th-label">Event<span class="help-tip">?<span class="help-bubble"><strong>Event</strong>Scan event type. Possible values: check-in, check-out.</span></span></span></th>
-                        <th class="col-time"><span class="th-label">Time<span class="help-tip">?<span class="help-bubble"><strong>Time</strong>Exact scan timestamp shown in the timezone captured for that scan when available.</span></span></span></th>
-                        <th class="col-tz"><span class="th-label">TZ<span class="help-tip">?<span class="help-bubble"><strong>Timezone</strong>Timezone abbreviation used for the displayed time, for example EDT or CDT.</span></span></span></th>
-                        <th class="col-location"><span class="th-label">Location<span class="help-tip">?<span class="help-bubble"><strong>Location</strong>Company location linked to the scan, if available.</span></span></span></th>
-                        <th class="col-terminal"><span class="th-label">Terminal<span class="help-tip">?<span class="help-bubble"><strong>Terminal</strong>Terminal or device assigned to the scan, if available.</span></span></span></th>
-                        <th class="col-source"><span class="th-label">Source<span class="help-tip">?<span class="help-bubble"><strong>Source</strong>Where the scan came from, for example terminal, terminal_web, or another scan entry source.</span></span></span></th>
+                        <th><span class="th-label">Date<span class="help-tip">?<span class="help-bubble"><strong>Date</strong>Local scan day used for grouping this attendance summary row.</span></span></span></th>
+                        <th><span class="th-label">First Check-in<span class="help-tip">?<span class="help-bubble"><strong>First Check-in</strong>Earliest check-in event found for that employee on that day.</span></span></span></th>
+                        <th><span class="th-label">Last Check-out<span class="help-tip">?<span class="help-bubble"><strong>Last Check-out</strong>Latest check-out event found for that employee on that day.</span></span></span></th>
+                        <th><span class="th-label">Events<span class="help-tip">?<span class="help-bubble"><strong>Events</strong>Total number of scan events found for the employee on that date.</span></span></span></th>
+                        <th><span class="th-label">Worked<span class="help-tip">?<span class="help-bubble"><strong>Worked</strong>Current basic calculation from first check-in to last check-out. Breaks and lunch are not subtracted yet.</span></span></span></th>
+                        <th class="col-tz"><span class="th-label">TZ<span class="help-tip">?<span class="help-bubble"><strong>Timezone</strong>Timezone abbreviation used for the displayed day values.</span></span></span></th>
+                        <th><span class="th-label">Day Status<span class="help-tip">?<span class="help-bubble"><strong>Day Status</strong>Possible values: Complete, Missing check-in, Missing check-out, Missing final check-out, Incomplete.</span></span></span></th>
                     </tr>
                 </thead>
-                <tbody id="reportRows"></tbody>
+                <tbody id="daySummaryRows"></tbody>
             </table>
 
-            <div id="emptyState" class="empty-state" style="display:none;">
-                No scan records found for the selected filters.
+            <div id="daySummaryEmptyState" class="empty-state" style="display:none;">
+                No day summaries found for the selected filters.
             </div>
         </section>
     </div>
@@ -574,18 +383,15 @@
         const applyFiltersButton = document.getElementById("applyFilters");
         const resetFiltersButton = document.getElementById("resetFilters");
         const totalScans = document.getElementById("totalScans");
-        const checkIns = document.getElementById("checkIns");
-        const checkOuts = document.getElementById("checkOuts");
         const daySummariesCount = document.getElementById("daySummariesCount");
-        const reportRows = document.getElementById("reportRows");
-        const emptyState = document.getElementById("emptyState");
+        const daySummaryRows = document.getElementById("daySummaryRows");
+        const daySummaryEmptyState = document.getElementById("daySummaryEmptyState");
         const statusNote = document.getElementById("statusNote");
 
         function formatLocalDate(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, "0");
             const day = String(date.getDate()).padStart(2, "0");
-
             return `${year}-${month}-${day}`;
         }
 
@@ -636,86 +442,70 @@
 
         function buildQueryString() {
             const params = new URLSearchParams();
-
-            if (startDate.value) {
-                params.set("start_date", startDate.value);
-            }
-            if (endDate.value) {
-                params.set("end_date", endDate.value);
-            }
-            if (employeeFilter.value) {
-                params.set("employee_id", employeeFilter.value);
-            }
-            if (eventFilter.value) {
-                params.set("event_type", eventFilter.value);
-            }
-
+            if (startDate.value) params.set("start_date", startDate.value);
+            if (endDate.value) params.set("end_date", endDate.value);
+            if (employeeFilter.value) params.set("employee_id", employeeFilter.value);
+            if (eventFilter.value) params.set("event_type", eventFilter.value);
             return params.toString();
         }
 
         function renderEmployeeOptions(employees, selectedEmployeeId) {
             employeeFilter.innerHTML = `<option value="">All employees</option>`;
-
             employees.forEach(employee => {
                 const option = document.createElement("option");
                 option.value = employee.id;
-                option.textContent = employee.is_active
-                    ? employee.name
-                    : `${employee.name} (Archived)`;
-
+                option.textContent = employee.is_active ? employee.name : `${employee.name} (Archived)`;
                 if (selectedEmployeeId && String(employee.id) === String(selectedEmployeeId)) {
                     option.selected = true;
                 }
-
                 employeeFilter.appendChild(option);
             });
         }
 
-        function renderRows(rows) {
-            reportRows.innerHTML = "";
+        function renderDaySummaries(rows) {
+            daySummaryRows.innerHTML = "";
 
             if (!rows.length) {
-                emptyState.style.display = "block";
+                daySummaryEmptyState.style.display = "block";
                 return;
             }
 
-            emptyState.style.display = "none";
+            daySummaryEmptyState.style.display = "none";
 
             rows.forEach((row, index) => {
                 const tr = document.createElement("tr");
-                tr.className = "report-row";
+                tr.className = "summary-row";
                 tr.dataset.employeeId = row.employee_id;
                 tr.title = "Click to filter by this employee";
-                const localTime = row.time_display || new Date(row.time).toLocaleString();
-                const employeeStatus = row.employee_status ?? "-";
+                const dayStatusClass = row.status === "Complete" ? "complete" : "warning";
 
                 tr.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${row.employee_name}</td>
-                    <td>${employeeStatus}</td>
-                    <td>${row.card_id}</td>
-                    <td><span class="pill ${row.event}">${row.event}</span></td>
-                    <td>${localTime}</td>
+                    <td>${row.employee_status ?? "-"}</td>
+                    <td>${row.date}</td>
+                    <td>${row.first_check_in}</td>
+                    <td>${row.last_check_out}</td>
+                    <td>${row.events_count}</td>
+                    <td>${row.worked_duration}</td>
                     <td>${row.timezone_abbr || "-"}</td>
-                    <td>${row.location_name || "-"}</td>
-                    <td>${row.terminal_name || "-"}</td>
-                    <td>${row.scan_source || "-"}</td>
+                    <td><span class="pill ${dayStatusClass}">${row.status}</span></td>
                 `;
 
-                reportRows.appendChild(tr);
+                daySummaryRows.appendChild(tr);
             });
 
-            reportRows.querySelectorAll(".report-row").forEach(row => {
+            daySummaryRows.querySelectorAll(".summary-row").forEach(row => {
                 row.addEventListener("click", () => {
                     employeeFilter.value = row.dataset.employeeId;
                     eventFilter.value = "";
                     setDateRange("all");
-                    loadReports();
+                    loadDaySummary();
                 });
             });
         }
 
-        async function loadReports() {
+        async function loadDaySummary() {
             clearError();
 
             try {
@@ -724,35 +514,31 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    showError(data.detail || "Error loading reports");
+                    showError(data.detail || "Error loading day summary");
                     return;
                 }
 
                 totalScans.textContent = data.summary.total_scans;
-                checkIns.textContent = data.summary.check_ins;
-                checkOuts.textContent = data.summary.check_outs;
                 daySummariesCount.textContent = data.summary.day_summaries;
-
                 renderEmployeeOptions(data.employees, data.filters.employee_id);
-                renderRows(data.rows);
+                renderDaySummaries(data.day_summaries || []);
             } catch (error) {
-                showError("Error loading reports");
+                showError("Error loading day summary");
             }
         }
 
-        applyFiltersButton.addEventListener("click", loadReports);
-
+        applyFiltersButton.addEventListener("click", loadDaySummary);
         resetFiltersButton.addEventListener("click", () => {
             employeeFilter.value = "";
             eventFilter.value = "";
             setDefaultDates();
-            loadReports();
+            loadDaySummary();
         });
 
         document.querySelectorAll(".quick-range").forEach(button => {
             button.addEventListener("click", () => {
                 setDateRange(button.dataset.range);
-                loadReports();
+                loadDaySummary();
             });
         });
 
@@ -765,7 +551,7 @@
         });
 
         setDefaultDates();
-        loadReports();
+        loadDaySummary();
     </script>
 </body>
 </html>

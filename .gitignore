@@ -18,6 +18,8 @@ __pycache__/
 
 .DS_Store
 
+deploy_online.cmd
+
 uploads/*
 !uploads/.gitkeep
 !uploads/companies/

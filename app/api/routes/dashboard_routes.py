@@ -441,6 +441,7 @@ def dashboard_page(request: Request, db: Session = Depends(get_db)):
                 <a href="/employees-page__ZONE_QUERY__">Employees</a>
                 <a href="/employees-archive__ZONE_QUERY__">Archive</a>
                 <a href="/reports__ZONE_QUERY__">Reports</a>
+                <a href="/reports/day-summary__ZONE_QUERY__">Day Summary</a>
                 <a href="/terminal?zone=__TERMINAL_ZONE__&role_context=__ROLE_CONTEXT__">Terminal</a>
                 __COMPANY_ADMIN_LINKS__
                 <div class="session-badge">

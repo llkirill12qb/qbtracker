@@ -640,7 +640,8 @@
             <a href="/dashboard{{ zone_query }}">Dashboard</a>
             <a href="/employees-page{{ zone_query }}">Employees</a>
             <a href="/employees-archive{{ zone_query }}">Archive</a>
-            <a href="/reports{{ zone_query }}">Reports</a>
+                    <a href="/reports{{ zone_query }}">Reports</a>
+                    <a href="/reports/day-summary{{ zone_query }}">Day Summary</a>
             {% endif %}
             {% if request.session.get("role") == "terminal_user" %}
             <a href="/terminal?role_context={{ current_role }}">Terminal</a>
