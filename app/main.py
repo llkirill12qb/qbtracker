@@ -12,6 +12,7 @@ from app.api.routes import dashboard_routes as dashboard
 from app.api.routes.auth_routes import router as auth_router
 from app.api.routes.company_context_routes import router as company_context_router
 from app.api.routes.company_locations_routes import router as company_locations_router
+from app.api.routes.company_schedules_routes import router as company_schedules_router
 from app.api.routes.company_settings_routes import router as company_settings_router
 from app.api.routes.company_terminals_routes import router as company_terminals_router
 from app.api.routes.company_users_routes import router as company_users_router
@@ -41,6 +42,7 @@ from app.models.location_model import Location
 from app.models.scan_log_model import ScanLog
 from app.models.terminal_model import Terminal
 from app.models.user_model import User
+from app.models.work_schedule_model import WorkSchedule
 from app.services.demo_company_seed_service import ensure_demo_company_seed
 from app.services.demo_events_service import run_demo_events_scheduler
 from app.services.employee_bootstrap_service import ensure_employee_qr_tokens
@@ -128,6 +130,7 @@ with SessionLocal() as db:
 app.include_router(auth_router)
 app.include_router(company_context_router)
 app.include_router(company_locations_router)
+app.include_router(company_schedules_router)
 app.include_router(company_settings_router)
 app.include_router(company_terminals_router)
 app.include_router(company_users_router)

@@ -14,6 +14,7 @@ from app.crud.employee_crud import get_archived_employees, get_all_employees
 from app.crud.location_crud import get_location_name_by_id
 from app.crud.scan_crud import get_report_logs
 from app.crud.terminal_crud import get_terminal_name_by_id
+from app.crud.work_schedule_crud import ensure_default_work_schedule, get_schedule_map_by_id
 from app.services.company_time_service import (
     format_scan_time,
     format_scan_time_display,
@@ -22,6 +23,7 @@ from app.services.company_time_service import (
     get_scan_timezone,
     get_timezone_abbr,
 )
+from app.services.attendance_summary_service import build_day_attendance_status
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -59,6 +61,7 @@ def reports_data(
 ):
     require_permission(request, PERM_VIEW_REPORTS)
     company_id = get_current_company_id(request)
+    company = get_company_by_id(db, company_id)
     start_local_date = None
     end_local_date = None
     timezone_name, _ = get_company_timezone(db, company_id)
@@ -83,6 +86,8 @@ def reports_data(
         active_employees + archived_employees,
         key=lambda emp: (emp.full_name or "").lower(),
     )
+    default_schedule = ensure_default_work_schedule(db, company_id)
+    schedule_map = get_schedule_map_by_id(db, company_id)
 
     if employee_id is not None:
         employee_exists = any(emp.id == employee_id for emp in company_employees)
@@ -148,6 +153,7 @@ def reports_data(
                 "last_event_at": None,
                 "timezone_abbr": log.timezone_abbr or get_timezone_abbr(log.scanned_at, scan_timezone),
                 "scan_timezone": scan_timezone,
+                "work_schedule_id": employee.work_schedule_id or default_schedule.id,
             }
             daily_summary_map[summary_key] = day_summary
 
@@ -178,22 +184,20 @@ def reports_data(
     for summary in daily_summary_map.values():
         first_check_in_at = summary["first_check_in_at"]
         last_check_out_at = summary["last_check_out_at"]
-        worked_minutes = None
-        status_label = "Complete"
-        last_event_type = summary["last_event_type"]
-
-        if first_check_in_at and last_check_out_at and last_check_out_at >= first_check_in_at:
-            worked_minutes = int((last_check_out_at - first_check_in_at).total_seconds() // 60)
-        if summary["has_check_in"] and not summary["has_check_out"]:
-            status_label = "Missing check-out"
-        elif summary["has_check_out"] and not summary["has_check_in"]:
-            status_label = "Missing check-in"
-        elif last_event_type == "check-in":
-            status_label = "Missing final check-out"
-        elif worked_minutes is None:
-            status_label = "Incomplete"
-        else:
-            status_label = "Complete"
+        attendance_result = build_day_attendance_status(
+            first_check_in_at=first_check_in_at,
+            last_check_out_at=last_check_out_at,
+            has_check_in=summary["has_check_in"],
+            has_check_out=summary["has_check_out"],
+            last_event_type=summary["last_event_type"],
+            scan_timezone=summary["scan_timezone"],
+            use_work_schedules=bool(company and company.use_work_schedules),
+            shift_start=schedule_map.get(summary["work_schedule_id"]).shift_start if summary["work_schedule_id"] in schedule_map else None,
+            shift_end=schedule_map.get(summary["work_schedule_id"]).shift_end if summary["work_schedule_id"] in schedule_map else None,
+        )
+        worked_minutes = attendance_result["worked_minutes"]
+        status_label = attendance_result["status"]
+        assigned_schedule = schedule_map.get(summary["work_schedule_id"])
 
         if worked_minutes is not None:
             hours = worked_minutes // 60
@@ -221,6 +225,7 @@ def reports_data(
             "worked_duration": worked_duration,
             "status": status_label,
             "timezone_abbr": summary["timezone_abbr"] or "-",
+            "schedule_name": assigned_schedule.name if assigned_schedule else "-",
         })
 
     day_summaries.sort(key=lambda row: (row["date"], row["employee_name"].lower()), reverse=True)

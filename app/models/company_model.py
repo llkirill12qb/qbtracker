@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
 from sqlalchemy.sql import func
 
 from app.core.database import Base
@@ -20,5 +20,6 @@ class Company(Base):
     address_line2 = Column(String, nullable=True)
     postal_code = Column(String, nullable=True)
     timezone = Column(String, nullable=False, default="America/New_York")
+    use_work_schedules = Column(Boolean, nullable=False, default=False)
     status = Column(String, nullable=False, default="active")
     created_at = Column(DateTime(timezone=True), server_default=func.now())

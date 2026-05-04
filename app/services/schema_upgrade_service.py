@@ -42,6 +42,9 @@ def ensure_schema_upgrades():
             )
         )
         connection.execute(
+            text("ALTER TABLE companies ADD COLUMN IF NOT EXISTS use_work_schedules BOOLEAN NOT NULL DEFAULT FALSE")
+        )
+        connection.execute(
             text("ALTER TABLE companies ADD COLUMN IF NOT EXISTS status VARCHAR NOT NULL DEFAULT 'active'")
         )
         connection.execute(
@@ -127,6 +130,28 @@ def ensure_schema_upgrades():
         )
         connection.execute(
             text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS qr_token VARCHAR")
+        )
+        connection.execute(
+            text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS work_schedule_id INTEGER")
+        )
+        connection.execute(
+            text(
+                "CREATE TABLE IF NOT EXISTS work_schedules ("
+                "id SERIAL PRIMARY KEY, "
+                "company_id INTEGER NOT NULL, "
+                "name VARCHAR NOT NULL, "
+                "shift_start VARCHAR NOT NULL DEFAULT '09:00', "
+                "shift_end VARCHAR NOT NULL DEFAULT '17:00', "
+                "lunch_start VARCHAR, "
+                "lunch_end VARCHAR, "
+                "breaks VARCHAR, "
+                "is_default BOOLEAN NOT NULL DEFAULT FALSE, "
+                "created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()"
+                ")"
+            )
+        )
+        connection.execute(
+            text("ALTER TABLE work_schedules ADD COLUMN IF NOT EXISTS is_default BOOLEAN NOT NULL DEFAULT FALSE")
         )
         connection.execute(
             text("ALTER TABLE scan_logs ADD COLUMN IF NOT EXISTS device_timezone VARCHAR")
