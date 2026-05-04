@@ -30,3 +30,4 @@ class Employee(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False)
+    work_schedule_id = Column(Integer, ForeignKey("work_schedules.id"), nullable=True)

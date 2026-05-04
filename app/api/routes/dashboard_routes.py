@@ -182,6 +182,7 @@ def dashboard_page(request: Request, db: Session = Depends(get_db)):
                 {'<a href="/company/users' + zone_query + '">Users</a>' if role in PLATFORM_ROLES or role == "company_owner" else ''}
                 <a href="/company/locations{zone_query}">Locations</a>
                 <a href="/company/terminals{zone_query}">Terminals</a>
+                <a href="/company/schedules{zone_query}">Schedules</a>
                 <a href="/company/settings{zone_query}">Settings</a>
         """
         if role in PLATFORM_ROLES or role in {"company_owner", "company_admin"}
