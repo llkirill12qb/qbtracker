@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Schedules</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --nav: #111827;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --error-bg: #fee2e2;
+            --error-text: #991b1b;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        * { box-sizing: border-box; }
+        html { scrollbar-gutter: stable; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+        .navbar {
+            background: var(--nav);
+            color: white;
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .brand-title { font-size: 22px; font-weight: bold; }
+        .brand-subtitle { margin-top: 4px; font-size: 13px; color: rgba(255, 255, 255, 0.72); }
+        .links { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+        .links a, .logout-button {
+            color: white;
+            text-decoration: none;
+            font: inherit;
+            font-weight: bold;
+        }
+        .logout-form { display: flex; align-items: center; margin: 0; }
+        .logout-button { padding: 0; border: none; background: transparent; cursor: pointer; }
+        .links a:hover, .logout-button:hover { color: #bfdbfe; }
+        .page {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 34px 20px 48px;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        h1, h2, h3 { margin: 0; }
+        h1 { font-size: 34px; }
+        h2 { font-size: 22px; }
+        .page-copy {
+            margin: 8px 0 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        .badge, .message {
+            display: inline-flex;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--success-bg);
+            color: var(--success-text);
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .message.error {
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(360px, 0.95fr) minmax(540px, 1.4fr);
+            gap: 22px;
+            align-items: start;
+        }
+        .panel {
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 18px;
+        }
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+        .field.full { grid-column: 1 / -1; }
+        label {
+            color: #374151;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            min-height: 41px;
+            padding: 9px 11px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: white;
+            color: var(--text);
+            font: inherit;
+        }
+        textarea {
+            min-height: 84px;
+            resize: vertical;
+        }
+        input:focus, textarea:focus {
+            border-color: var(--primary);
+            outline: 3px solid rgba(37, 99, 235, 0.16);
+        }
+        .button, .button-secondary {
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .button {
+            border: none;
+            background: var(--primary);
+            color: white;
+        }
+        .button:hover { background: var(--primary-dark); }
+        .button-secondary {
+            border: 1px solid var(--line);
+            background: #f9fafb;
+            color: #374151;
+        }
+        .button-secondary:hover { background: #f3f4f6; }
+        .actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+        .helper {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .schedule-list, .employee-list {
+            display: grid;
+            gap: 14px;
+            margin-top: 18px;
+        }
+        .schedule-card, .employee-card {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 16px;
+            background: #fbfdff;
+        }
+        .schedule-card {
+            cursor: pointer;
+        }
+        .schedule-card:hover {
+            border-color: #93c5fd;
+            background: #f8fbff;
+        }
+        .schedule-meta, .employee-meta {
+            margin-top: 8px;
+            display: grid;
+            gap: 4px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+        .employee-header, .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .employee-pick {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        .employee-pick input {
+            width: auto;
+            min-height: auto;
+            margin-top: 4px;
+        }
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .toolbar-stats {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .status-pill {
+            display: inline-flex;
+            padding: 5px 8px;
+            border-radius: 999px;
+            background: var(--success-bg);
+            color: var(--success-text);
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-pill.inactive {
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+        .status-pill.default {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .danger-button {
+            border: 1px solid #fecaca;
+            background: #fff1f2;
+            color: #b91c1c;
+        }
+        .danger-button:hover {
+            background: #ffe4e6;
+        }
+        .switch-row {
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 56px;
+            height: 30px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            inset: 0;
+            cursor: pointer;
+            background: #d1d5db;
+            transition: 0.2s ease;
+            border-radius: 999px;
+        }
+        .slider:before {
+            content: "";
+            position: absolute;
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            top: 4px;
+            background: white;
+            transition: 0.2s ease;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+        }
+        .switch input:checked + .slider {
+            background: var(--primary);
+        }
+        .switch input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .switch-label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #374151;
+        }
+        @media (max-width: 980px) {
+            .grid, .form-grid { grid-template-columns: 1fr; }
+            .navbar { align-items: flex-start; flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    {% set current_role = request.session.get("role") %}
+    {% set zone_query = '?zone=platform&role_context=' ~ current_role if current_role in ["super_admin", "site_admin"] else '?role_context=' ~ current_role if current_role in ["company_owner", "company_admin"] else '' %}
+    {% set can_manage_users = current_role in ["super_admin", "site_admin", "company_owner"] %}
+    {% set can_manage_company_tools = current_role in ["super_admin", "site_admin", "company_owner", "company_admin"] %}
+    <div class="navbar">
+        <div>
+            <div class="brand-title">QB Tracker</div>
+            <div class="brand-subtitle">Work schedules</div>
+        </div>
+        <div class="links">
+            {% if request.session.get("role") in ["super_admin", "site_admin"] %}
+            <a href="/platform/companies">Companies</a>
+            {% endif %}
+            <a href="/dashboard{{ zone_query }}">Dashboard</a>
+            <a href="/employees-page{{ zone_query }}">Employees</a>
+            <a href="/employees-archive{{ zone_query }}">Archive</a>
+            <a href="/reports{{ zone_query }}">Reports</a>
+            <a href="/reports/day-summary{{ zone_query }}">Day Summary</a>
+            <a href="/terminal?zone={{ 'platform' if current_role in ['super_admin', 'site_admin'] else 'admin' }}&role_context={{ current_role }}">Terminal</a>
+            {% if can_manage_users %}
+            <a href="/company/users{{ zone_query }}">Users</a>
+            {% endif %}
+            {% if can_manage_company_tools %}
+            <a href="/company/locations{{ zone_query }}">Locations</a>
+            <a href="/company/terminals{{ zone_query }}">Terminals</a>
+            <a href="/company/schedules{{ zone_query }}">Schedules</a>
+            <a href="/company/settings{{ zone_query }}">Settings</a>
+            {% endif %}
+            {% include "session_badge.html" %}
+            <form class="logout-form" method="post" action="/logout{{ zone_query }}">
+                <button class="logout-button" type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <main class="page">
+        <div class="page-header">
+            <div>
+                <h1>Work Schedules</h1>
+                <p class="page-copy">
+                    Create simple work schedules, save them, and apply them to selected employees.
+                    This is the schedule Day Summary will use for late and early leave checks.
+                </p>
+            </div>
+            <div class="badge">Company #{{ company.id }}</div>
+        </div>
+
+        {% if message %}
+        <p class="message">{{ message }}</p>
+        {% endif %}
+        {% if error %}
+        <p class="message error">{{ error }}</p>
+        {% endif %}
+
+        <section class="panel" style="margin-bottom: 22px;">
+            <h2>Attendance Mode</h2>
+            <p class="page-copy" style="margin-top: 8px;">
+                When enabled, Day Summary uses employee schedules for statuses like Late and Early leave.
+                When disabled, worked time is still calculated from actual scans, but schedule-based warnings are ignored.
+            </p>
+            <form id="attendanceModeForm" method="post" action="/company/schedules/settings{{ zone_query }}" class="switch-row">
+                <label class="switch" aria-label="Use schedules in attendance reports">
+                    <input
+                        id="attendanceModeToggle"
+                        type="checkbox"
+                        name="use_work_schedules"
+                        {% if company.use_work_schedules %}checked{% endif %}
+                    >
+                    <span class="slider"></span>
+                </label>
+                <span id="attendanceModeLabel" class="switch-label">
+                    {{ "On" if company.use_work_schedules else "Off" }}
+                </span>
+                <span class="helper">Use schedules in attendance reports</span>
+            </form>
+        </section>
+
+        <form method="post" action="/company/schedules{{ zone_query }}">
+            <div class="grid">
+                <section class="panel">
+                    <h2>Create or Update Schedule</h2>
+                    <input id="action_mode" name="action_mode" type="hidden" value="save">
+                    <input id="schedule_id" name="schedule_id" type="hidden" value="">
+                    <div class="form-grid">
+                        <div class="field full">
+                            <label for="name">Schedule name</label>
+                            <input id="name" name="name" value="" required placeholder="Office 9-5">
+                        </div>
+                        <div class="field">
+                            <label for="shift_start">Shift start</label>
+                            <input id="shift_start" name="shift_start" type="time" value="09:00" required>
+                        </div>
+                        <div class="field">
+                            <label for="shift_end">Shift end</label>
+                            <input id="shift_end" name="shift_end" type="time" value="17:00" required>
+                        </div>
+                        <div class="field">
+                            <label for="lunch_start">Lunch start</label>
+                            <input id="lunch_start" name="lunch_start" type="time">
+                        </div>
+                        <div class="field">
+                            <label for="lunch_end">Lunch end</label>
+                            <input id="lunch_end" name="lunch_end" type="time">
+                        </div>
+                        <div class="field full">
+                            <label for="breaks">Breaks</label>
+                            <textarea id="breaks" name="breaks" placeholder="10:30-10:45, 15:00-15:10"></textarea>
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button id="editScheduleButton" class="button-secondary" type="button" style="display:none;">Edit Schedule</button>
+                            <button id="saveScheduleButton" class="button" type="submit">Save Schedule</button>
+                            <button id="applyScheduleButton" class="button-secondary" type="submit" style="display:none;">Apply To Selected Employees</button>
+                            <button id="resetScheduleButton" class="button-secondary" type="button">Create New Schedule</button>
+                            <button id="deleteScheduleButton" class="button-secondary danger-button" type="button" style="display:none;">Delete Schedule</button>
+                        </div>
+                        <div id="editingHint" class="helper">Creating a new schedule.</div>
+                    </div>
+                    <p class="helper">
+                        Saving updates only the schedule itself.
+                        Use the separate apply button to assign an existing schedule to selected employees.
+                        Saving an existing schedule updates it for everyone already using it.
+                        Deleting a non-default schedule moves its employees back to the default schedule.
+                    </p>
+
+                    <div class="schedule-list">
+                        {% for schedule in schedules %}
+                        <div
+                            class="schedule-card schedule-view-card"
+                            data-schedule-id="{{ schedule.id }}"
+                            data-name="{{ schedule.name }}"
+                            data-shift-start="{{ schedule.shift_start }}"
+                            data-shift-end="{{ schedule.shift_end }}"
+                            data-lunch-start="{{ schedule.lunch_start or '' }}"
+                            data-lunch-end="{{ schedule.lunch_end or '' }}"
+                            data-breaks="{{ schedule.breaks or '' }}"
+                            data-is-default="{{ 'true' if schedule.is_default else 'false' }}"
+                        >
+                            <div class="schedule-header">
+                                <div>
+                                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                                        <h3>{{ schedule.name }}</h3>
+                                        {% if schedule.is_default %}
+                                        <span class="status-pill default">Default</span>
+                                        {% endif %}
+                                        <span class="status-pill">{{ schedule.assigned_employees_count }} employees</span>
+                                    </div>
+                                    <div class="schedule-meta">
+                                        <div>Shift: {{ schedule.shift_start }} - {{ schedule.shift_end }}</div>
+                                        <div>Lunch: {{ schedule.lunch_start or "-" }} - {{ schedule.lunch_end or "-" }}</div>
+                                        <div>Breaks: {{ schedule.breaks or "-" }}</div>
+                                    </div>
+                                </div>
+                                <div class="helper">Click to open</div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="schedule-card">
+                            <div class="helper">No schedules saved yet.</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="toolbar">
+                        <div>
+                            <h2>Apply To Employees</h2>
+                            <div class="page-copy" style="margin-top: 6px;">
+                                Select the employees who should use the chosen schedule.
+                            </div>
+                        </div>
+                        <div class="toolbar-stats">
+                            <span class="status-pill">Total: {{ employees|length }}</span>
+                            <span id="selectedEmployeesCount" class="status-pill default">Selected: 0</span>
+                            <button id="toggleEmployeesButton" class="button-secondary" type="button">Select All</button>
+                        </div>
+                    </div>
+
+                    <div class="employee-list">
+                        {% for employee in employees %}
+                        <label class="employee-card">
+                            <div class="employee-pick">
+                                <input class="employee-checkbox" type="checkbox" name="employee_ids" value="{{ employee.id }}">
+                                <div style="flex: 1;">
+                                    <div class="employee-header">
+                                        <div>
+                                            <strong>{{ employee.full_name }}</strong>
+                                            <div class="employee-meta">
+                                                <div>Card ID: {{ employee.card_id }}</div>
+                                                <div>Current schedule: {{ employee_schedule_map.get(employee.id) or "-" }}</div>
+                                            </div>
+                                        </div>
+                                        <span class="status-pill {% if not employee.is_active %}inactive{% endif %}">
+                                            {{ employee.status or ("active" if employee.is_active else "inactive") }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        const scheduleIdInput = document.getElementById("schedule_id");
+        const actionModeInput = document.getElementById("action_mode");
+        const nameInput = document.getElementById("name");
+        const shiftStartInput = document.getElementById("shift_start");
+        const shiftEndInput = document.getElementById("shift_end");
+        const lunchStartInput = document.getElementById("lunch_start");
+        const lunchEndInput = document.getElementById("lunch_end");
+        const breaksInput = document.getElementById("breaks");
+        const editScheduleButton = document.getElementById("editScheduleButton");
+        const saveScheduleButton = document.getElementById("saveScheduleButton");
+        const applyScheduleButton = document.getElementById("applyScheduleButton");
+        const resetScheduleButton = document.getElementById("resetScheduleButton");
+        const deleteScheduleButton = document.getElementById("deleteScheduleButton");
+        const toggleEmployeesButton = document.getElementById("toggleEmployeesButton");
+        const editingHint = document.getElementById("editingHint");
+        const employeeCheckboxes = Array.from(document.querySelectorAll(".employee-checkbox"));
+        const selectedEmployeesCount = document.getElementById("selectedEmployeesCount");
+        const attendanceModeForm = document.getElementById("attendanceModeForm");
+        const attendanceModeToggle = document.getElementById("attendanceModeToggle");
+        const attendanceModeLabel = document.getElementById("attendanceModeLabel");
+
+        function updateSelectedEmployeesCount() {
+            const selectedCount = employeeCheckboxes.filter(checkbox => checkbox.checked).length;
+            selectedEmployeesCount.textContent = `Selected: ${selectedCount}`;
+            toggleEmployeesButton.textContent = selectedCount === employeeCheckboxes.length && employeeCheckboxes.length > 0
+                ? "Clear All"
+                : "Select All";
+        }
+
+        function setReadOnlyMode(isReadOnly) {
+            nameInput.readOnly = isReadOnly;
+            shiftStartInput.disabled = isReadOnly;
+            shiftEndInput.disabled = isReadOnly;
+            lunchStartInput.disabled = isReadOnly;
+            lunchEndInput.disabled = isReadOnly;
+            breaksInput.readOnly = isReadOnly;
+            editScheduleButton.style.display = isReadOnly ? "inline-flex" : "none";
+            saveScheduleButton.style.display = isReadOnly ? "none" : "inline-flex";
+        }
+
+        function fillScheduleForm(source, readOnlyMode = true) {
+            scheduleIdInput.value = source.dataset.scheduleId || "";
+            nameInput.value = source.dataset.name || "";
+            shiftStartInput.value = source.dataset.shiftStart || "09:00";
+            shiftEndInput.value = source.dataset.shiftEnd || "17:00";
+            lunchStartInput.value = source.dataset.lunchStart || "";
+            lunchEndInput.value = source.dataset.lunchEnd || "";
+            breaksInput.value = source.dataset.breaks || "";
+            const isDefault = source.dataset.isDefault === "true";
+            applyScheduleButton.style.display = "inline-flex";
+            deleteScheduleButton.style.display = isDefault ? "none" : "inline-flex";
+            setReadOnlyMode(readOnlyMode);
+            editingHint.textContent = readOnlyMode
+                ? "Viewing saved schedule. Use Edit to change it or Apply to Selected Employees to assign it."
+                : (isDefault ? "Editing the default schedule." : "Editing an existing schedule.");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function resetScheduleForm() {
+            scheduleIdInput.value = "";
+            nameInput.value = "";
+            shiftStartInput.value = "09:00";
+            shiftEndInput.value = "17:00";
+            lunchStartInput.value = "";
+            lunchEndInput.value = "";
+            breaksInput.value = "";
+            applyScheduleButton.style.display = "none";
+            deleteScheduleButton.style.display = "none";
+            setReadOnlyMode(false);
+            editingHint.textContent = "Creating a new schedule.";
+        }
+
+        document.querySelectorAll(".schedule-view-card").forEach(card => {
+            card.addEventListener("click", (event) => {
+                if (event.target.closest("button")) {
+                    return;
+                }
+                fillScheduleForm(card, true);
+            });
+        });
+
+        resetScheduleButton.addEventListener("click", resetScheduleForm);
+        editScheduleButton.addEventListener("click", () => {
+            if (!scheduleIdInput.value) {
+                return;
+            }
+            const isDefault = deleteScheduleButton.style.display === "none";
+            setReadOnlyMode(false);
+            editingHint.textContent = isDefault
+                ? "Editing the default schedule."
+                : "Editing an existing schedule.";
+        });
+        saveScheduleButton.addEventListener("click", () => {
+            actionModeInput.value = "save";
+        });
+        applyScheduleButton.addEventListener("click", () => {
+            actionModeInput.value = "apply";
+        });
+        deleteScheduleButton.addEventListener("click", () => {
+            if (!scheduleIdInput.value) {
+                return;
+            }
+            if (!confirm("Delete this schedule and move its employees to the default schedule?")) {
+                return;
+            }
+
+            const deleteForm = document.createElement("form");
+            deleteForm.method = "post";
+            deleteForm.action = `/company/schedules/${scheduleIdInput.value}/delete{{ zone_query }}`;
+            document.body.appendChild(deleteForm);
+            deleteForm.submit();
+        });
+
+        toggleEmployeesButton.addEventListener("click", () => {
+            const shouldSelectAll = employeeCheckboxes.some(checkbox => !checkbox.checked);
+            employeeCheckboxes.forEach(checkbox => {
+                checkbox.checked = shouldSelectAll;
+            });
+            updateSelectedEmployeesCount();
+        });
+
+        employeeCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", updateSelectedEmployeesCount);
+        });
+
+        attendanceModeToggle.addEventListener("change", () => {
+            attendanceModeLabel.textContent = attendanceModeToggle.checked ? "On" : "Off";
+            attendanceModeForm.submit();
+        });
+
+        updateSelectedEmployeesCount();
+    </script>
+</body>
+</html>
