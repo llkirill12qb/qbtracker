@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
@@ -19,6 +19,7 @@ from app.services.company_time_service import (
     format_scan_time,
     format_scan_time_display,
     get_company_timezone,
+    get_timezone_info,
     get_scan_local_date,
     get_scan_timezone,
     get_timezone_abbr,
@@ -27,6 +28,31 @@ from app.services.attendance_summary_service import build_day_attendance_status
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+
+
+def is_workday(local_date: date, workdays: str | None) -> bool:
+    if not workdays:
+        return local_date.weekday() < 5
+
+    allowed_days = set()
+    for part in workdays.split(","):
+        value = part.strip()
+        if value.isdigit():
+            day_index = int(value)
+            if 0 <= day_index <= 6:
+                allowed_days.add(day_index)
+
+    if not allowed_days:
+        return local_date.weekday() < 5
+
+    return local_date.weekday() in allowed_days
+
+
+def daterange(start_date: date, end_date: date):
+    current_date = start_date
+    while current_date <= end_date:
+        yield current_date
+        current_date = current_date + timedelta(days=1)
 
 def get_db():
     db = SessionLocal()
@@ -227,6 +253,60 @@ def reports_data(
             "timezone_abbr": summary["timezone_abbr"] or "-",
             "schedule_name": assigned_schedule.name if assigned_schedule else "-",
         })
+
+    if company and company.use_work_schedules and event_type_value is None:
+        _, company_timezone = get_timezone_info(timezone_name)
+        summary_keys = {
+            (row["employee_id"], row["date"])
+            for row in day_summaries
+        }
+        local_today = datetime.now(company_timezone).date()
+        timezone_abbr = datetime.now(company_timezone).tzname() or "-"
+
+        existing_dates = [
+            date.fromisoformat(row["date"])
+            for row in day_summaries
+        ]
+        range_start = start_local_date or (min(existing_dates) if existing_dates else local_today)
+        range_end = end_local_date or local_today
+
+        absence_employees = active_employees
+        if employee_id is not None:
+            absence_employees = [emp for emp in active_employees if emp.id == employee_id]
+
+        for employee in absence_employees:
+            assigned_schedule = schedule_map.get(employee.work_schedule_id or default_schedule.id)
+            employee_start_date = employee.created_at
+            if employee_start_date is not None:
+                if employee_start_date.tzinfo is None:
+                    employee_start_date = employee_start_date.replace(tzinfo=company_timezone)
+                employee_local_start = employee_start_date.astimezone(company_timezone).date()
+            else:
+                employee_local_start = range_start
+
+            effective_start = max(range_start, employee_local_start)
+            for workday in daterange(effective_start, range_end):
+                if not is_workday(workday, assigned_schedule.workdays if assigned_schedule else None):
+                    continue
+
+                summary_key = (employee.id, workday.isoformat())
+                if summary_key in summary_keys:
+                    continue
+
+                day_summaries.append({
+                    "employee_id": employee.id,
+                    "employee_name": employee.full_name,
+                    "employee_status": employee.status,
+                    "date": workday.isoformat(),
+                    "first_check_in": "-",
+                    "last_check_out": "-",
+                    "events_count": 0,
+                    "worked_duration": "-",
+                    "status": "Absence",
+                    "timezone_abbr": timezone_abbr,
+                    "schedule_name": assigned_schedule.name if assigned_schedule else "-",
+                })
+                summary_keys.add(summary_key)
 
     day_summaries.sort(key=lambda row: (row["date"], row["employee_name"].lower()), reverse=True)
 
