@@ -145,10 +145,14 @@ def ensure_schema_upgrades():
                 "lunch_start VARCHAR, "
                 "lunch_end VARCHAR, "
                 "breaks VARCHAR, "
+                "workdays VARCHAR NOT NULL DEFAULT '0,1,2,3,4', "
                 "is_default BOOLEAN NOT NULL DEFAULT FALSE, "
                 "created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()"
                 ")"
             )
+        )
+        connection.execute(
+            text("ALTER TABLE work_schedules ADD COLUMN IF NOT EXISTS workdays VARCHAR NOT NULL DEFAULT '0,1,2,3,4'")
         )
         connection.execute(
             text("ALTER TABLE work_schedules ADD COLUMN IF NOT EXISTS is_default BOOLEAN NOT NULL DEFAULT FALSE")

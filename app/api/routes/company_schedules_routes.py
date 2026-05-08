@@ -17,16 +17,27 @@ from app.crud.work_schedule_crud import (
     create_work_schedule,
     delete_work_schedule,
     ensure_default_work_schedule,
+    format_workdays_label,
     get_employee_schedule_map,
     get_default_work_schedule,
     get_work_schedule_by_id,
     get_work_schedules,
+    normalize_workdays,
     reassign_schedule_to_default,
     update_work_schedule,
 )
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+WEEKDAY_OPTIONS = [
+    (0, "Mon"),
+    (1, "Tue"),
+    (2, "Wed"),
+    (3, "Thu"),
+    (4, "Fri"),
+    (5, "Sat"),
+    (6, "Sun"),
+]
 
 
 def redirect_with_query(request: Request, **params):
@@ -87,6 +98,7 @@ def company_schedules_page(request: Request, db: Session = Depends(get_db)):
             "message": request.query_params.get("message"),
             "error": request.query_params.get("error"),
             "default_schedule_id": default_schedule.id,
+            "weekday_options": WEEKDAY_OPTIONS,
         },
     )
 
@@ -119,6 +131,7 @@ def save_company_schedule(
     lunch_start: str = Form(default=""),
     lunch_end: str = Form(default=""),
     breaks: str = Form(default=""),
+    workdays: list[int] = Form(default=[]),
     employee_ids: list[int] = Form(default=[]),
     db: Session = Depends(get_db),
 ):
@@ -155,6 +168,7 @@ def save_company_schedule(
     normalized_lunch_start = normalize_time_value(lunch_start)
     normalized_lunch_end = normalize_time_value(lunch_end)
     breaks_value = breaks.strip() or None
+    normalized_workdays = normalize_workdays(workdays)
 
     if schedule_id.strip():
         schedule = get_work_schedule_by_id(db, int(schedule_id), company_id)
@@ -169,6 +183,7 @@ def save_company_schedule(
             lunch_start=normalized_lunch_start,
             lunch_end=normalized_lunch_end,
             breaks=breaks_value,
+            workdays=normalized_workdays,
         )
         message = "Schedule updated"
     else:
@@ -181,11 +196,13 @@ def save_company_schedule(
             lunch_start=normalized_lunch_start,
             lunch_end=normalized_lunch_end,
             breaks=breaks_value,
+            workdays=normalized_workdays,
         )
         message = "Schedule created"
 
     if schedule.id == default_schedule.id:
         message += " (default)"
+    message += f" • {format_workdays_label(schedule.workdays)}"
 
     return redirect_with_query(request, message=message)
 
