@@ -163,6 +163,34 @@
             font-size: 13px;
             line-height: 1.5;
         }
+        .workdays-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .workday-option {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: #f9fafb;
+            font-size: 14px;
+            font-weight: bold;
+            color: #374151;
+            cursor: pointer;
+        }
+        .workday-option input {
+            width: auto;
+            min-height: auto;
+            margin: 0;
+        }
+        .workday-option.disabled {
+            cursor: default;
+            opacity: 0.7;
+        }
         .schedule-list, .employee-list {
             display: grid;
             gap: 14px;
@@ -407,6 +435,23 @@
                             <label for="breaks">Breaks</label>
                             <textarea id="breaks" name="breaks" placeholder="10:30-10:45, 15:00-15:10"></textarea>
                         </div>
+                        <div class="field full">
+                            <label>Workdays</label>
+                            <div class="workdays-grid">
+                                {% for weekday_value, weekday_label in weekday_options %}
+                                <label class="workday-option" data-workday-option>
+                                    <input
+                                        class="workday-checkbox"
+                                        type="checkbox"
+                                        name="workdays"
+                                        value="{{ weekday_value }}"
+                                        {% if weekday_value < 5 %}checked{% endif %}
+                                    >
+                                    <span>{{ weekday_label }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
                     <div class="actions">
                         <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -436,6 +481,7 @@
                             data-lunch-start="{{ schedule.lunch_start or '' }}"
                             data-lunch-end="{{ schedule.lunch_end or '' }}"
                             data-breaks="{{ schedule.breaks or '' }}"
+                            data-workdays="{{ schedule.workdays }}"
                             data-is-default="{{ 'true' if schedule.is_default else 'false' }}"
                         >
                             <div class="schedule-header">
@@ -450,6 +496,7 @@
                                     <div class="schedule-meta">
                                         <div>Shift: {{ schedule.shift_start }} - {{ schedule.shift_end }}</div>
                                         <div>Lunch: {{ schedule.lunch_start or "-" }} - {{ schedule.lunch_end or "-" }}</div>
+                                        <div>Workdays: {{ schedule.workdays_label }}</div>
                                         <div>Breaks: {{ schedule.breaks or "-" }}</div>
                                     </div>
                                 </div>
@@ -516,6 +563,8 @@
         const lunchStartInput = document.getElementById("lunch_start");
         const lunchEndInput = document.getElementById("lunch_end");
         const breaksInput = document.getElementById("breaks");
+        const workdayCheckboxes = Array.from(document.querySelectorAll(".workday-checkbox"));
+        const workdayOptions = Array.from(document.querySelectorAll("[data-workday-option]"));
         const editScheduleButton = document.getElementById("editScheduleButton");
         const saveScheduleButton = document.getElementById("saveScheduleButton");
         const applyScheduleButton = document.getElementById("applyScheduleButton");
@@ -544,8 +593,21 @@
             lunchStartInput.disabled = isReadOnly;
             lunchEndInput.disabled = isReadOnly;
             breaksInput.readOnly = isReadOnly;
+            workdayCheckboxes.forEach(checkbox => {
+                checkbox.disabled = isReadOnly;
+            });
+            workdayOptions.forEach(option => {
+                option.classList.toggle("disabled", isReadOnly);
+            });
             editScheduleButton.style.display = isReadOnly ? "inline-flex" : "none";
             saveScheduleButton.style.display = isReadOnly ? "none" : "inline-flex";
+        }
+
+        function setWorkdaysFromString(workdaysValue) {
+            const selectedValues = new Set((workdaysValue || "0,1,2,3,4").split(",").map(value => value.trim()).filter(Boolean));
+            workdayCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectedValues.has(checkbox.value);
+            });
         }
 
         function fillScheduleForm(source, readOnlyMode = true) {
@@ -556,6 +618,7 @@
             lunchStartInput.value = source.dataset.lunchStart || "";
             lunchEndInput.value = source.dataset.lunchEnd || "";
             breaksInput.value = source.dataset.breaks || "";
+            setWorkdaysFromString(source.dataset.workdays || "0,1,2,3,4");
             const isDefault = source.dataset.isDefault === "true";
             applyScheduleButton.style.display = "inline-flex";
             deleteScheduleButton.style.display = isDefault ? "none" : "inline-flex";
@@ -574,6 +637,7 @@
             lunchStartInput.value = "";
             lunchEndInput.value = "";
             breaksInput.value = "";
+            setWorkdaysFromString("0,1,2,3,4");
             applyScheduleButton.style.display = "none";
             deleteScheduleButton.style.display = "none";
             setReadOnlyMode(false);

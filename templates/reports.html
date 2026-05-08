@@ -506,7 +506,7 @@
                 <button class="btn-secondary quick-range" type="button" data-range="today">Today</button>
                 <button class="btn-secondary quick-range" type="button" data-range="week">This Week</button>
                 <button class="btn-secondary quick-range" type="button" data-range="month">This Month</button>
-                <button class="btn-secondary quick-range" type="button" data-range="last7">Last 7 Days</button>
+                <button class="btn-secondary quick-range" type="button" data-range="year">This Year</button>
             </div>
         </section>
 
@@ -611,7 +611,7 @@
                 startDate.value = formatLocalDate(start);
                 endDate.value = formatLocalDate(end);
             } else {
-                start.setDate(now.getDate() - 6);
+                start.setMonth(0, 1);
                 startDate.value = formatLocalDate(start);
                 endDate.value = formatLocalDate(end);
             }
@@ -710,7 +710,6 @@
                 row.addEventListener("click", () => {
                     employeeFilter.value = row.dataset.employeeId;
                     eventFilter.value = "";
-                    setDateRange("all");
                     loadReports();
                 });
             });
