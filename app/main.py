@@ -70,6 +70,13 @@ def is_api_request_path(path: str) -> bool:
     )
 
 
+def should_refresh_session_activity(request: Request) -> bool:
+    path = request.url.path
+    if request.method == "GET" and path == "/api/dashboard":
+        return False
+    return True
+
+
 class AuthRequiredMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
@@ -110,10 +117,11 @@ class AuthRequiredMiddleware(BaseHTTPMiddleware):
                 request.session.clear()
                 return response
 
-            touch_session(zone_session)
+            if should_refresh_session_activity(request):
+                touch_session(zone_session)
+                request.state.should_refresh_session = True
             request.scope["session"] = zone_session
             request.state.session_zone = session_source_zone
-            request.state.should_refresh_session = True
 
         if zone and not zone_session:
             is_api_request = is_api_request_path(path)
