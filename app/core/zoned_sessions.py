@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from itsdangerous import BadSignature, URLSafeSerializer
 from starlette.requests import Request
 from starlette.responses import Response
@@ -43,6 +45,23 @@ ZONE_COOKIE_NAMES = {
 
 serializer = URLSafeSerializer(SESSION_SECRET, salt="qbtracker-zoned-session")
 
+ROLE_SESSION_TIMEOUTS = {
+    ROLE_SUPER_ADMIN: {"idle_seconds": 30 * 60, "absolute_seconds": 12 * 60 * 60},
+    ROLE_SITE_ADMIN: {"idle_seconds": 30 * 60, "absolute_seconds": 12 * 60 * 60},
+    ROLE_COMPANY_OWNER: {"idle_seconds": 60 * 60, "absolute_seconds": 12 * 60 * 60},
+    ROLE_COMPANY_ADMIN: {"idle_seconds": 60 * 60, "absolute_seconds": 12 * 60 * 60},
+    ROLE_TERMINAL_USER: {"idle_seconds": 12 * 60 * 60, "absolute_seconds": 7 * 24 * 60 * 60},
+    ROLE_EMPLOYEE: {"idle_seconds": 60 * 60, "absolute_seconds": 12 * 60 * 60},
+}
+
+
+def get_current_timestamp() -> int:
+    return int(datetime.now(UTC).timestamp())
+
+
+def get_role_session_timeouts(role: str):
+    return ROLE_SESSION_TIMEOUTS.get(role, {"idle_seconds": 60 * 60, "absolute_seconds": 12 * 60 * 60})
+
 
 def build_session_payload(
     *,
@@ -54,6 +73,7 @@ def build_session_payload(
     terminal_id=None,
     auth_source: str,
 ):
+    current_timestamp = get_current_timestamp()
     return {
         "authenticated": True,
         "user_id": user_id,
@@ -63,6 +83,8 @@ def build_session_payload(
         "location_id": location_id,
         "terminal_id": terminal_id,
         "auth_source": auth_source,
+        "issued_at": current_timestamp,
+        "last_seen_at": current_timestamp,
     }
 
 
@@ -140,6 +162,30 @@ def read_role_session(request: Request, role: str | None):
     return session
 
 
+def is_session_expired(session: dict):
+    role = session.get("role")
+    timeouts = get_role_session_timeouts(role)
+    current_timestamp = get_current_timestamp()
+    issued_at = session.get("issued_at")
+    last_seen_at = session.get("last_seen_at", issued_at)
+
+    if not isinstance(issued_at, int) or not isinstance(last_seen_at, int):
+        return True
+
+    if current_timestamp - issued_at > timeouts["absolute_seconds"]:
+        return True
+
+    if current_timestamp - last_seen_at > timeouts["idle_seconds"]:
+        return True
+
+    return False
+
+
+def touch_session(session: dict):
+    session["last_seen_at"] = get_current_timestamp()
+    return session
+
+
 def read_zone_session(request: Request, zone: str | None, role_context: str | None = None):
     if not zone:
         return None
@@ -187,24 +233,26 @@ def read_zone_session(request: Request, zone: str | None, role_context: str | No
 
 def write_zone_session(response: Response, zone: str, session: dict):
     cookie_name = ZONE_COOKIE_NAMES[zone]
+    timeouts = get_role_session_timeouts(session["role"])
     response.set_cookie(
         key=cookie_name,
         value=serializer.dumps(session),
         httponly=True,
         samesite="lax",
-        max_age=60 * 60 * 24 * 30,
+        max_age=timeouts["absolute_seconds"],
     )
     write_role_session(response, session)
 
 
 def write_role_session(response: Response, session: dict):
     cookie_name = ROLE_SESSION_COOKIE_NAMES[session["role"]]
+    timeouts = get_role_session_timeouts(session["role"])
     response.set_cookie(
         key=cookie_name,
         value=serializer.dumps(session),
         httponly=True,
         samesite="lax",
-        max_age=60 * 60 * 24 * 30,
+        max_age=timeouts["absolute_seconds"],
     )
 
 
