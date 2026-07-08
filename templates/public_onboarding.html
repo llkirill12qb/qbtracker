@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onboarding</title>
+    <style>
+        :root {
+            --bg: #f4f8fb;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --line: #e5e7eb;
+            --primary: #08a9d6;
+            --primary-dark: #047fa3;
+            --shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background:
+                radial-gradient(circle at top right, rgba(8, 169, 214, 0.14), transparent 32rem),
+                linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
+            color: var(--text);
+        }
+
+        .page {
+            width: min(720px, 100%);
+            margin: 0 auto;
+            padding: 28px 18px 46px;
+        }
+
+        .brand {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .brand-mark {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+        }
+
+        .language-tabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            margin-bottom: 22px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .language-tabs button {
+            min-height: 46px;
+            border: 0;
+            background: white;
+            color: var(--muted);
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .language-tabs button.active {
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+            overflow: hidden;
+        }
+
+        .error {
+            margin-bottom: 18px;
+            padding: 13px 15px;
+            border-radius: 14px;
+            background: #fee2e2;
+            color: #991b1b;
+            font-weight: bold;
+        }
+
+        .hero {
+            padding: 30px 26px;
+            background: linear-gradient(135deg, rgba(8, 169, 214, 0.12), rgba(255, 255, 255, 0));
+        }
+
+        .eyebrow {
+            margin: 0 0 6px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(30px, 7vw, 46px);
+            line-height: 1.05;
+            letter-spacing: -0.05em;
+        }
+
+        .project {
+            margin-top: 14px;
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .content {
+            padding: 26px;
+        }
+
+        .form-section {
+            display: grid;
+            gap: 14px;
+            margin-bottom: 26px;
+        }
+
+        .section-title {
+            margin: 0;
+            color: var(--primary-dark);
+            text-align: center;
+            font-size: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            color: #374151;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            min-height: 48px;
+            padding: 12px 13px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: white;
+            font: inherit;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: var(--primary);
+            outline: 3px solid rgba(8, 169, 214, 0.16);
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            line-height: 1.5;
+            color: #374151;
+        }
+
+        .checkbox-label input {
+            width: auto;
+            min-height: auto;
+            margin-top: 4px;
+        }
+
+        .signature-pad {
+            width: 100%;
+            height: 180px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: white;
+            touch-action: none;
+        }
+
+        .steps {
+            display: grid;
+            gap: 12px;
+            margin: 0 0 24px;
+            padding: 0;
+            list-style: none;
+        }
+
+        .steps li {
+            padding: 14px 16px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: #fbfdff;
+            color: #374151;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .button {
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 18px;
+            border-radius: 12px;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font: inherit;
+        }
+
+        .button:hover {
+            background: var(--primary-dark);
+        }
+
+        .note {
+            color: var(--muted);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .footer {
+            margin-top: 24px;
+            color: var(--muted);
+            text-align: center;
+            font-size: 13px;
+        }
+
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <div class="brand">
+            <div class="brand-mark">QB Tracker</div>
+        </div>
+
+        <div class="language-tabs" aria-label="Language selector">
+            <button class="active" type="button">English</button>
+            <button type="button">Español</button>
+            <button type="button">Русский</button>
+        </div>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <section class="card">
+            <div class="hero">
+                <p class="eyebrow">Registration</p>
+                <h1>{{ company.name }}</h1>
+                <div class="project">{{ location.name }}</div>
+            </div>
+            <div class="content">
+                <form method="post" action="{{ request.url_for('submit_public_onboarding', token=location.onboarding_token) }}" id="onboardingForm">
+                    <section class="form-section">
+                        <h2 class="section-title">Personal Info</h2>
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="first_name">First Name*</label>
+                                <input id="first_name" name="first_name" required>
+                            </div>
+                            <div class="field">
+                                <label for="middle_name">Middle Name</label>
+                                <input id="middle_name" name="middle_name">
+                            </div>
+                            <div class="field">
+                                <label for="last_name">Last Name*</label>
+                                <input id="last_name" name="last_name" required>
+                            </div>
+                            <div class="field">
+                                <label for="birth_date">Birth Date*</label>
+                                <input id="birth_date" name="birth_date" type="date" required>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="form-section">
+                        <h2 class="section-title">Contact Info</h2>
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="phone">Telephone*</label>
+                                <input id="phone" name="phone" type="tel" required>
+                            </div>
+                            <div class="field">
+                                <label for="email">Email</label>
+                                <input id="email" name="email" type="email">
+                            </div>
+                            <div class="field">
+                                <label for="emergency_contact_name">Emergency Contact Name*</label>
+                                <input id="emergency_contact_name" name="emergency_contact_name" required>
+                            </div>
+                            <div class="field">
+                                <label for="emergency_contact_phone">Emergency Contact Phone*</label>
+                                <input id="emergency_contact_phone" name="emergency_contact_phone" type="tel" required>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="form-section">
+                        <h2 class="section-title">Employment Info</h2>
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="contractor_company">Contractor / Company*</label>
+                                <input id="contractor_company" name="contractor_company" required>
+                            </div>
+                            <div class="field">
+                                <label for="job_title">Title*</label>
+                                <input id="job_title" name="job_title" required>
+                            </div>
+                            <div class="field full">
+                                <label for="trade">Trade*</label>
+                                <input id="trade" name="trade" required>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="form-section">
+                        <h2 class="section-title">Health</h2>
+                        <div class="field">
+                            <label for="medical_notes">Medical Allergies / Notes</label>
+                            <textarea id="medical_notes" name="medical_notes"></textarea>
+                        </div>
+                    </section>
+
+                    <section class="form-section">
+                        <h2 class="section-title">Documents</h2>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="document_ack" required>
+                            <span>I confirm that I have reviewed the project onboarding, safety instructions, and required documents.</span>
+                        </label>
+                    </section>
+
+                    <section class="form-section">
+                        <h2 class="section-title">Signature</h2>
+                        <p class="note">Draw your signature below.</p>
+                        <canvas id="signaturePad" class="signature-pad"></canvas>
+                        <input id="signatureData" name="signature_data" type="hidden">
+                        <button class="button" type="button" id="clearSignature">Clear Signature</button>
+                    </section>
+
+                    <div class="actions">
+                        <p class="note">After submission, site staff can find you in QB Tracker, take your photo, and print your badge.</p>
+                        <button class="button" type="submit">Submit Onboarding</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <div class="footer">Powered by QB Tracker</div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById("signaturePad");
+        const signatureData = document.getElementById("signatureData");
+        const clearSignature = document.getElementById("clearSignature");
+        const form = document.getElementById("onboardingForm");
+        const context = canvas.getContext("2d");
+        let drawing = false;
+
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            const rect = canvas.getBoundingClientRect();
+            const imageData = canvas.toDataURL("image/png");
+            canvas.width = rect.width * ratio;
+            canvas.height = rect.height * ratio;
+            context.setTransform(ratio, 0, 0, ratio, 0, 0);
+            context.lineWidth = 3;
+            context.lineCap = "round";
+            context.strokeStyle = "#111827";
+            if (imageData && signatureData.value) {
+                const image = new Image();
+                image.onload = () => context.drawImage(image, 0, 0, rect.width, rect.height);
+                image.src = imageData;
+            }
+        }
+
+        function getPoint(event) {
+            const rect = canvas.getBoundingClientRect();
+            const touch = event.touches ? event.touches[0] : event;
+            return {
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top,
+            };
+        }
+
+        function startDrawing(event) {
+            event.preventDefault();
+            drawing = true;
+            const point = getPoint(event);
+            context.beginPath();
+            context.moveTo(point.x, point.y);
+        }
+
+        function draw(event) {
+            if (!drawing) {
+                return;
+            }
+            event.preventDefault();
+            const point = getPoint(event);
+            context.lineTo(point.x, point.y);
+            context.stroke();
+            signatureData.value = canvas.toDataURL("image/png");
+        }
+
+        function stopDrawing() {
+            drawing = false;
+            signatureData.value = canvas.toDataURL("image/png");
+        }
+
+        clearSignature.addEventListener("click", () => {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            signatureData.value = "";
+        });
+
+        form.addEventListener("submit", () => {
+            if (!signatureData.value) {
+                signatureData.value = canvas.toDataURL("image/png");
+            }
+        });
+
+        canvas.addEventListener("mousedown", startDrawing);
+        canvas.addEventListener("mousemove", draw);
+        window.addEventListener("mouseup", stopDrawing);
+        canvas.addEventListener("touchstart", startDrawing, { passive: false });
+        canvas.addEventListener("touchmove", draw, { passive: false });
+        canvas.addEventListener("touchend", stopDrawing);
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+    </script>
+</body>
+</html>

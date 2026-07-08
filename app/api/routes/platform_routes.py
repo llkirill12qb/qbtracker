@@ -174,6 +174,21 @@ def archived_platform_companies_page(
     )
 
 
+@router.get("/platform/admin-tools", response_class=HTMLResponse)
+def platform_admin_tools_page(request: Request):
+    user = require_platform_user(request)
+    if user.get("role") != ROLE_SUPER_ADMIN:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only super admin can view admin tools")
+
+    return templates.TemplateResponse(
+        "platform_admin_tools.html",
+        {
+            "request": request,
+            "user": user,
+        },
+    )
+
+
 @router.get("/platform/companies/{company_id}", response_class=HTMLResponse)
 def platform_company_details_page(
     company_id: int,

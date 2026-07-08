@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.location_model import Location
+from app.services.location_onboarding_service import generate_location_onboarding_token
 
 
 def get_locations(db: Session, company_id: int, include_inactive: bool = False):
@@ -21,6 +22,10 @@ def get_location_by_id(db: Session, location_id: int, company_id: int):
         )
         .first()
     )
+
+
+def get_location_by_onboarding_token(db: Session, token: str):
+    return db.query(Location).filter(Location.onboarding_token == token).first()
 
 
 def get_location_name_by_id(db: Session, location_id: int | None, company_id: int):
@@ -60,6 +65,8 @@ def create_location(
         latitude=latitude,
         longitude=longitude,
         geo_radius_meters=geo_radius_meters,
+        onboarding_token=generate_location_onboarding_token(db),
+        onboarding_enabled=True,
         is_active=is_active,
     )
     db.add(location)

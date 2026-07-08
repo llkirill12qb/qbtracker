@@ -6,6 +6,11 @@ from app.models.employee_model import Employee
 
 
 QR_PAYLOAD_PREFIX = "QBT:v1"
+VISIBLE_EMPLOYEE_STATUSES = {"active", "pending_photo", "pending_badge", "on_leave"}
+
+
+def employee_status_is_visible(status: str | None) -> bool:
+    return (status or "active") in VISIBLE_EMPLOYEE_STATUSES
 
 
 def generate_qr_token() -> str:
@@ -109,7 +114,19 @@ def create_employee(
     status: str = "active",
     notes: str | None = None,
     company_id: int | None = None,
+    location_id: int | None = None,
     photo_filename: str | None = None,
+    middle_name: str | None = None,
+    birth_date: str | None = None,
+    emergency_contact_name: str | None = None,
+    emergency_contact_phone: str | None = None,
+    contractor_company: str | None = None,
+    job_title: str | None = None,
+    trade: str | None = None,
+    medical_notes: str | None = None,
+    onboarding_status: str | None = None,
+    onboarding_signature: str | None = None,
+    onboarding_completed_at=None,
 ):
     qr_token = generate_qr_token()
     new_employee = Employee(
@@ -121,10 +138,23 @@ def create_employee(
         email=email,
         employee_type=employee_type,
         status=status,
+        is_active=employee_status_is_visible(status),
         notes=notes,
         company_id=company_id,
+        location_id=location_id,
         photo_filename=photo_filename,
         qr_token=qr_token,
+        middle_name=middle_name,
+        birth_date=birth_date,
+        emergency_contact_name=emergency_contact_name,
+        emergency_contact_phone=emergency_contact_phone,
+        contractor_company=contractor_company,
+        job_title=job_title,
+        trade=trade,
+        medical_notes=medical_notes,
+        onboarding_status=onboarding_status,
+        onboarding_signature=onboarding_signature,
+        onboarding_completed_at=onboarding_completed_at,
     )
     db.add(new_employee)
     db.commit()
@@ -161,7 +191,7 @@ def update_employee(
     employee.employee_type = employee_type
     employee.status = status
     employee.notes = notes
-    employee.is_active = status == "active"
+    employee.is_active = employee_status_is_visible(status)
 
     db.commit()
     db.refresh(employee)

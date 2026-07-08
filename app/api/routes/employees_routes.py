@@ -19,7 +19,11 @@ from app.crud.employee_crud import (
     update_employee_photo,
 )
 from app.schemas.employee_schema import EmployeeResponse
-from app.services.photo_service import delete_employee_photo, save_employee_photo
+from app.services.photo_service import (
+    delete_employee_photo,
+    save_employee_photo,
+    save_employee_photo_from_data_url,
+)
 
 router = APIRouter()
 
@@ -42,6 +46,14 @@ def validate_photo_extension(photo: UploadFile | None) -> None:
             status_code=400,
             detail="Only jpg, jpeg, png, webp files are allowed",
         )
+
+
+def normalize_captured_photo(captured_photo: str | None) -> str | None:
+    if not captured_photo:
+        return None
+
+    captured_photo = captured_photo.strip()
+    return captured_photo or None
 
 
 def build_employee_response(employee) -> EmployeeResponse:
@@ -81,6 +93,7 @@ def create_employee(
     employee_type: str = Form("full_time"),
     status: str = Form("active"),
     notes: str = Form(""),
+    captured_photo: str = Form(""),
     photo: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
@@ -94,6 +107,7 @@ def create_employee(
         )
 
     validate_photo_extension(photo)
+    captured_photo_value = normalize_captured_photo(captured_photo)
 
     new_employee = create_employee_crud(
         db=db,
@@ -109,18 +123,33 @@ def create_employee(
         company_id=company_id,
     )
 
-    if photo and photo.filename:
-        saved_path = save_employee_photo(
-            upload_file=photo,
-            company_id=company_id,
-            employee_id=new_employee.id,
-        )
-        photo_filename = os.path.basename(saved_path)
-        new_employee = update_employee_photo(
-            db=db,
-            employee=new_employee,
-            photo_filename=photo_filename,
-        )
+    try:
+        if captured_photo_value:
+            saved_path = save_employee_photo_from_data_url(
+                data_url=captured_photo_value,
+                company_id=company_id,
+                employee_id=new_employee.id,
+            )
+            photo_filename = os.path.basename(saved_path)
+            new_employee = update_employee_photo(
+                db=db,
+                employee=new_employee,
+                photo_filename=photo_filename,
+            )
+        elif photo and photo.filename:
+            saved_path = save_employee_photo(
+                upload_file=photo,
+                company_id=company_id,
+                employee_id=new_employee.id,
+            )
+            photo_filename = os.path.basename(saved_path)
+            new_employee = update_employee_photo(
+                db=db,
+                employee=new_employee,
+                photo_filename=photo_filename,
+            )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     return build_employee_response(new_employee)
 
@@ -154,6 +183,7 @@ def update_employee(
     employee_type: str = Form("full_time"),
     status: str = Form("active"),
     notes: str = Form(""),
+    captured_photo: str = Form(""),
     photo: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
@@ -171,6 +201,7 @@ def update_employee(
         )
 
     validate_photo_extension(photo)
+    captured_photo_value = normalize_captured_photo(captured_photo)
 
     employee = update_employee_crud(
         db=db,
@@ -186,19 +217,35 @@ def update_employee(
         notes=notes or None,
     )
 
-    if photo and photo.filename:
-        delete_employee_photo(employee.photo_filename, company_id)
-        saved_path = save_employee_photo(
-            upload_file=photo,
-            company_id=company_id,
-            employee_id=employee.id,
-        )
-        photo_filename = os.path.basename(saved_path)
-        employee = update_employee_photo(
-            db=db,
-            employee=employee,
-            photo_filename=photo_filename,
-        )
+    try:
+        if captured_photo_value:
+            delete_employee_photo(employee.photo_filename, company_id)
+            saved_path = save_employee_photo_from_data_url(
+                data_url=captured_photo_value,
+                company_id=company_id,
+                employee_id=employee.id,
+            )
+            photo_filename = os.path.basename(saved_path)
+            employee = update_employee_photo(
+                db=db,
+                employee=employee,
+                photo_filename=photo_filename,
+            )
+        elif photo and photo.filename:
+            delete_employee_photo(employee.photo_filename, company_id)
+            saved_path = save_employee_photo(
+                upload_file=photo,
+                company_id=company_id,
+                employee_id=employee.id,
+            )
+            photo_filename = os.path.basename(saved_path)
+            employee = update_employee_photo(
+                db=db,
+                employee=employee,
+                photo_filename=photo_filename,
+            )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     return build_employee_response(employee)
 

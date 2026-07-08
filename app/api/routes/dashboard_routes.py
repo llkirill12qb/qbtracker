@@ -600,6 +600,10 @@ def dashboard_page(request: Request, db: Session = Depends(get_db)):
             async function loadDashboard() {
                 try {
                     const response = await fetch("/api/dashboard__ZONE_QUERY__");
+                    if (response.status === 401) {
+                        window.location.href = "/login?error=Session%20expired.%20Please%20sign%20in%20again.";
+                        return;
+                    }
                     const data = await response.json();
                     dashboardData = data;
 

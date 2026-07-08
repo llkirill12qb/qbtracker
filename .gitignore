@@ -19,6 +19,10 @@ __pycache__/
 .DS_Store
 
 deploy_online.cmd
+backups/
+*.dump
+*.sql.gz
+*.tar.gz
 
 uploads/*
 !uploads/.gitkeep

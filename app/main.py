@@ -18,6 +18,7 @@ from app.api.routes.company_terminals_routes import router as company_terminals_
 from app.api.routes.company_users_routes import router as company_users_router
 from app.api.routes.employees_page_routes import router as employees_page_router
 from app.api.routes.employees_routes import router as employees_router
+from app.api.routes.onboarding_routes import router as onboarding_router
 from app.api.routes.platform_routes import router as platform_router
 from app.api.routes.qr_routes import router as qr_router
 from app.api.routes.reports_routes import router as reports_router
@@ -33,7 +34,11 @@ from app.core.zoned_sessions import (
     clear_zone_session,
     get_requested_role_context,
     get_zone_for_path,
+    get_zone_for_role,
+    is_session_expired,
     read_zone_session,
+    touch_session,
+    write_zone_session,
 )
 from app.models.company_contact_model import CompanyContact
 from app.models.company_model import Company
@@ -46,12 +51,13 @@ from app.models.work_schedule_model import WorkSchedule
 from app.services.demo_company_seed_service import ensure_demo_company_seed
 from app.services.demo_events_service import run_demo_events_scheduler
 from app.services.employee_bootstrap_service import ensure_employee_qr_tokens
+from app.services.location_onboarding_service import ensure_all_location_onboarding_tokens
 from app.services.schema_upgrade_service import ensure_schema_upgrades
 from app.services.user_bootstrap_service import ensure_superadmin_user
 
 
 PUBLIC_PATHS = {"/", "/login", "/logout", "/favicon.ico"}
-PUBLIC_PREFIXES = ("/static",)
+PUBLIC_PREFIXES = ("/static", "/onboarding")
 API_PREFIXES = ("/api",)
 DIRECT_API_PATHS = {"/scan", "/logs"}
 ARCHIVED_COMPANY_ERROR = "Archived company is not available in this workspace"
@@ -64,6 +70,13 @@ def is_api_request_path(path: str) -> bool:
         or (path.startswith("/employees") and path not in {"/employees-page", "/employees-archive"})
         or any(path.startswith(prefix) for prefix in API_PREFIXES)
     )
+
+
+def should_refresh_session_activity(request: Request) -> bool:
+    path = request.url.path
+    if request.method == "GET" and path == "/api/dashboard":
+        return False
+    return True
 
 
 class AuthRequiredMiddleware(BaseHTTPMiddleware):
@@ -92,6 +105,23 @@ class AuthRequiredMiddleware(BaseHTTPMiddleware):
             zone_session = read_zone_session(request, zone, role_context)
 
         if zone_session:
+            if is_session_expired(zone_session):
+                is_api_request = is_api_request_path(path)
+                response = (
+                    JSONResponse(status_code=401, content={"detail": "Session expired"})
+                    if is_api_request
+                    else RedirectResponse(url="/login?error=Session%20expired.%20Please%20sign%20in%20again.", status_code=303)
+                )
+                role = zone_session.get("role")
+                if role:
+                    clear_role_session(response, role)
+                    clear_zone_session(response, get_zone_for_role(role))
+                request.session.clear()
+                return response
+
+            if should_refresh_session_activity(request):
+                touch_session(zone_session)
+                request.state.should_refresh_session = True
             request.scope["session"] = zone_session
             request.state.session_zone = session_source_zone
 
@@ -102,7 +132,10 @@ class AuthRequiredMiddleware(BaseHTTPMiddleware):
             return RedirectResponse(url="/login", status_code=303)
 
         if is_authenticated(request.session):
-            return await call_next(request)
+            response = await call_next(request)
+            if getattr(request.state, "should_refresh_session", False):
+                write_zone_session(response, get_zone_for_role(request.session["role"]), request.session)
+            return response
 
         is_api_request = is_api_request_path(path)
 
@@ -125,6 +158,7 @@ ensure_schema_upgrades()
 with SessionLocal() as db:
     ensure_superadmin_user(db)
     ensure_demo_company_seed(db)
+    ensure_all_location_onboarding_tokens(db)
     ensure_employee_qr_tokens(db)
 
 app.include_router(auth_router)
@@ -134,6 +168,7 @@ app.include_router(company_schedules_router)
 app.include_router(company_settings_router)
 app.include_router(company_terminals_router)
 app.include_router(company_users_router)
+app.include_router(onboarding_router)
 app.include_router(platform_router)
 app.include_router(employees_router)
 app.include_router(scan_router)
