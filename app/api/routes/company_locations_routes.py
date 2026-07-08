@@ -17,6 +17,7 @@ from app.crud.location_crud import (
     get_locations,
     update_location,
 )
+from app.services.location_onboarding_service import ensure_location_onboarding_token
 from app.services.timezone_options_service import get_timezone_options
 
 router = APIRouter()
@@ -66,6 +67,7 @@ def company_locations_page(request: Request, db: Session = Depends(get_db)):
     require_permission(request, PERM_MANAGE_LOCATIONS)
     company_id, company = get_company_context_or_404(request, db)
     locations = get_locations(db, company_id, include_inactive=True)
+    locations = [ensure_location_onboarding_token(db, location) for location in locations]
 
     return templates.TemplateResponse(
         "company_locations.html",

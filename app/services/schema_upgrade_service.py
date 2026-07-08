@@ -102,6 +102,18 @@ def ensure_schema_upgrades():
             text("ALTER TABLE locations ADD COLUMN IF NOT EXISTS geo_radius_meters DOUBLE PRECISION")
         )
         connection.execute(
+            text("ALTER TABLE locations ADD COLUMN IF NOT EXISTS onboarding_token VARCHAR")
+        )
+        connection.execute(
+            text("ALTER TABLE locations ADD COLUMN IF NOT EXISTS onboarding_enabled BOOLEAN NOT NULL DEFAULT TRUE")
+        )
+        connection.execute(
+            text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ix_locations_onboarding_token "
+                "ON locations (onboarding_token)"
+            )
+        )
+        connection.execute(
             text("ALTER TABLE locations ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE")
         )
         connection.execute(
@@ -132,7 +144,51 @@ def ensure_schema_upgrades():
             text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS qr_token VARCHAR")
         )
         connection.execute(
+            text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS location_id INTEGER")
+        )
+        connection.execute(
+            text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS middle_name VARCHAR")
+        )
+        connection.execute(
+            text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS birth_date VARCHAR")
+        )
+        connection.execute(
+            text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS emergency_contact_name VARCHAR")
+        )
+        connection.execute(
+            text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS emergency_contact_phone VARCHAR")
+        )
+        connection.execute(
+            text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS contractor_company VARCHAR")
+        )
+        connection.execute(
+            text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS job_title VARCHAR")
+        )
+        connection.execute(
+            text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS trade VARCHAR")
+        )
+        connection.execute(
+            text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS medical_notes TEXT")
+        )
+        connection.execute(
+            text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS onboarding_status VARCHAR")
+        )
+        connection.execute(
+            text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS onboarding_signature TEXT")
+        )
+        connection.execute(
+            text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS onboarding_completed_at TIMESTAMP WITH TIME ZONE")
+        )
+        connection.execute(
             text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS work_schedule_id INTEGER")
+        )
+        connection.execute(
+            text(
+                "UPDATE employees "
+                "SET is_active = TRUE "
+                "WHERE status IN ('active', 'pending_photo', 'pending_badge', 'on_leave') "
+                "AND is_active IS NOT TRUE"
+            )
         )
         connection.execute(
             text(

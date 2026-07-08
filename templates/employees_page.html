@@ -220,6 +220,66 @@
             padding: 8px;
         }
 
+        .camera-box {
+            margin-bottom: 16px;
+            padding: 16px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: #f9fafb;
+        }
+
+        .camera-box h4 {
+            margin: 0 0 8px;
+        }
+
+        .camera-copy {
+            margin: 0 0 12px;
+            color: var(--muted);
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .camera-preview-wrap {
+            display: grid;
+            grid-template-columns: minmax(220px, 1fr) 150px;
+            gap: 14px;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .camera-video,
+        .camera-photo-preview {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            background: #111827;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .camera-photo-preview {
+            background: #e5e7eb;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .camera-note {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .upload-fallback {
+            padding-top: 12px;
+            margin-top: 12px;
+            border-top: 1px dashed #cbd5e1;
+        }
+
         .form-actions,
         .card-actions,
         .row-actions {
@@ -555,12 +615,35 @@
 
                 <select name="status">
                     <option value="active">Active</option>
+                    <option value="pending_photo">Pending Photo</option>
+                    <option value="pending_badge">Pending Badge</option>
                     <option value="inactive">Inactive</option>
                     <option value="on_leave">On Leave</option>
                 </select>
 
                 <textarea name="notes" placeholder="Notes"></textarea>
-                <input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp">
+
+                <div class="camera-box">
+                    <h4>Employee photo from camera</h4>
+                    <p class="camera-copy">Camera capture is the default photo source. If camera access is unavailable, you can still upload a file below.</p>
+                    <input type="hidden" id="capturedPhoto" name="captured_photo">
+                    <div class="camera-preview-wrap">
+                        <video id="cameraVideo" class="camera-video" autoplay playsinline muted></video>
+                        <img id="cameraPhotoPreview" class="camera-photo-preview" alt="Captured photo preview">
+                    </div>
+                    <canvas id="cameraCanvas" style="display:none;"></canvas>
+                    <div class="camera-controls">
+                        <button id="startCameraButton" class="btn-secondary" type="button">Turn Camera On</button>
+                        <button id="capturePhotoButton" class="btn-primary" type="button">Capture Photo</button>
+                        <button id="retakePhotoButton" class="btn-secondary" type="button">Retake</button>
+                    </div>
+                    <div id="cameraStatus" class="camera-note">Camera is off. Turn it on when you want to capture a photo.</div>
+
+                    <div class="upload-fallback">
+                        <label for="photoUploadInput" class="muted" style="font-weight:bold; margin-bottom: 8px; display:block;">Optional fallback: upload photo file</label>
+                        <input id="photoUploadInput" type="file" name="photo" accept=".jpg,.jpeg,.png,.webp">
+                    </div>
+                </div>
 
                 <div class="form-actions">
                     <button id="submitButton" class="btn-primary" type="submit">Add Employee</button>
@@ -648,11 +731,21 @@ const emptyCard = document.getElementById("emptyCard");
 const editCardButton = document.getElementById("editCardButton");
 const deleteCardButton = document.getElementById("deleteCardButton");
 const employeeCount = document.getElementById("employeeCount");
+const cameraVideo = document.getElementById("cameraVideo");
+const cameraCanvas = document.getElementById("cameraCanvas");
+const cameraPhotoPreview = document.getElementById("cameraPhotoPreview");
+const capturedPhotoInput = document.getElementById("capturedPhoto");
+const photoUploadInput = document.getElementById("photoUploadInput");
+const cameraStatus = document.getElementById("cameraStatus");
+const startCameraButton = document.getElementById("startCameraButton");
+const capturePhotoButton = document.getElementById("capturePhotoButton");
+const retakePhotoButton = document.getElementById("retakePhotoButton");
 
 let employeesState = [];
 let selectedEmployeeId = null;
 let formMode = "create";
 let assetVersion = Date.now();
+let cameraStream = null;
 
 function placeholderSvg(label, size) {
     const svg = `
@@ -683,6 +776,79 @@ function clearStatus() {
     statusMessage.textContent = "";
 }
 
+function setCameraStatus(message) {
+    cameraStatus.textContent = message;
+}
+
+function stopCameraStream() {
+    if (!cameraStream) {
+        return;
+    }
+
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+}
+
+async function startCameraStream() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setCameraStatus("Camera is not supported in this browser. Use file upload if needed.");
+        return;
+    }
+
+    stopCameraStream();
+
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: "user",
+                width: { ideal: 960 },
+                height: { ideal: 720 }
+            },
+            audio: false
+        });
+        cameraVideo.srcObject = cameraStream;
+        startCameraButton.textContent = "Turn Camera Off";
+        setCameraStatus("Camera is ready. Capture a photo for the employee.");
+    } catch (error) {
+        setCameraStatus("Camera access was not granted. You can use file upload below.");
+    }
+}
+
+function resetCameraCapture() {
+    capturedPhotoInput.value = "";
+    cameraPhotoPreview.src = placeholderSvg("Preview", 320);
+}
+
+function turnCameraOff() {
+    stopCameraStream();
+    if (cameraVideo.srcObject) {
+        cameraVideo.srcObject = null;
+    }
+    startCameraButton.textContent = "Turn Camera On";
+    setCameraStatus("Camera is off. Turn it on when you want to capture a photo.");
+}
+
+function capturePhotoFromCamera() {
+    if (!cameraStream) {
+        setCameraStatus("Start the camera first, then capture a photo.");
+        return;
+    }
+
+    const width = cameraVideo.videoWidth || 640;
+    const height = cameraVideo.videoHeight || 480;
+    cameraCanvas.width = width;
+    cameraCanvas.height = height;
+
+    const context = cameraCanvas.getContext("2d");
+    context.drawImage(cameraVideo, 0, 0, width, height);
+
+    const dataUrl = cameraCanvas.toDataURL("image/jpeg", 0.9);
+    capturedPhotoInput.value = dataUrl;
+    cameraPhotoPreview.src = dataUrl;
+    photoUploadInput.value = "";
+    setCameraStatus("Photo captured. It will be used when you save the employee.");
+}
+
 function setFormMode(mode, employee = null) {
     formMode = mode;
 
@@ -704,6 +870,12 @@ function setFormMode(mode, employee = null) {
         form.status.value = employee.status ?? "active";
         form.notes.value = employee.notes ?? "";
         form.photo.value = "";
+        capturedPhotoInput.value = "";
+        cameraPhotoPreview.src = employee.photo_url
+            ? `${employee.photo_url}?v=${Date.now()}`
+            : placeholderSvg("Preview", 320);
+        turnCameraOff();
+        setCameraStatus("Existing employee photo loaded. Capture a new photo or upload a file to replace it.");
     } else {
         formTitle.textContent = "Add Employee";
         formSubtitle.textContent = "Create a new employee profile with card, photo, and contact details.";
@@ -712,6 +884,9 @@ function setFormMode(mode, employee = null) {
         cancelEditButton.style.display = "none";
         employeeIdInput.value = "";
         form.reset();
+        resetCameraCapture();
+        turnCameraOff();
+        setCameraStatus("Camera is the default photo source. Capture a photo or use file upload below.");
     }
 }
 
@@ -927,6 +1102,31 @@ cancelEditButton.addEventListener("click", () => {
     clearStatus();
 });
 
+startCameraButton.addEventListener("click", () => {
+    if (cameraStream) {
+        turnCameraOff();
+        return;
+    }
+    startCameraStream();
+});
+
+capturePhotoButton.addEventListener("click", () => {
+    capturePhotoFromCamera();
+});
+
+retakePhotoButton.addEventListener("click", () => {
+    resetCameraCapture();
+    startCameraStream();
+});
+
+photoUploadInput.addEventListener("change", () => {
+    if (photoUploadInput.files && photoUploadInput.files.length > 0) {
+        capturedPhotoInput.value = "";
+        cameraPhotoPreview.src = placeholderSvg("File", 320);
+        setCameraStatus("Photo file selected. The uploaded file will be used instead of camera capture.");
+    }
+});
+
 form.addEventListener("submit", async event => {
     event.preventDefault();
     clearStatus();
@@ -954,7 +1154,10 @@ form.addEventListener("submit", async event => {
     await loadEmployees(data.id);
 });
 
+cameraPhotoPreview.src = placeholderSvg("Preview", 320);
+turnCameraOff();
 loadEmployees();
+window.addEventListener("beforeunload", stopCameraStream);
 </script>
 </body>
 </html>
