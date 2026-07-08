@@ -19,6 +19,8 @@
             --error-bg: #fee2e2;
             --error-text: #991b1b;
             --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --info-bg: #eff6ff;
+            --info-text: #1d4ed8;
         }
 
         * {
@@ -270,6 +272,51 @@
             font-size: 13px;
         }
 
+        .onboarding-box {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 16px;
+            align-items: center;
+            margin: 16px 0;
+            padding: 16px;
+            border: 1px solid #bfdbfe;
+            border-radius: 14px;
+            background: var(--info-bg);
+        }
+
+        .onboarding-qr {
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            background: white;
+            padding: 8px;
+        }
+
+        .onboarding-title {
+            margin: 0 0 8px;
+            color: var(--info-text);
+            font-weight: bold;
+        }
+
+        .onboarding-link {
+            display: block;
+            color: #075985;
+            overflow-wrap: anywhere;
+            line-height: 1.5;
+        }
+
+        .onboarding-code {
+            display: inline-flex;
+            margin-top: 8px;
+            padding: 5px 8px;
+            border-radius: 999px;
+            background: white;
+            color: #374151;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
         .empty {
             margin-top: 18px;
         }
@@ -413,6 +460,7 @@
             {% if locations %}
             <div class="locations-list">
                 {% for location in locations %}
+                {% set onboarding_url = request.url_for('public_onboarding_page', token=location.onboarding_token) %}
                 <article class="location-card">
                     <div class="location-header">
                         <div>
@@ -424,6 +472,15 @@
                         <span class="status-pill {% if not location.is_active %}inactive{% endif %}">
                             {% if location.is_active %}Active{% else %}Inactive{% endif %}
                         </span>
+                    </div>
+
+                    <div class="onboarding-box">
+                        <img class="onboarding-qr" src="{{ request.url_for('public_onboarding_qr', token=location.onboarding_token) }}" alt="Onboarding QR for {{ location.name }}">
+                        <div>
+                            <p class="onboarding-title">Onboarding QR</p>
+                            <a class="onboarding-link" href="{{ onboarding_url }}" target="_blank" rel="noopener">{{ onboarding_url }}</a>
+                            <span class="onboarding-code">Project code: {{ location.id }}</span>
+                        </div>
                     </div>
 
                     <form method="post" action="/company/locations/{{ location.id }}/update{{ zone_query }}">

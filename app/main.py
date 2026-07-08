@@ -18,6 +18,7 @@ from app.api.routes.company_terminals_routes import router as company_terminals_
 from app.api.routes.company_users_routes import router as company_users_router
 from app.api.routes.employees_page_routes import router as employees_page_router
 from app.api.routes.employees_routes import router as employees_router
+from app.api.routes.onboarding_routes import router as onboarding_router
 from app.api.routes.platform_routes import router as platform_router
 from app.api.routes.qr_routes import router as qr_router
 from app.api.routes.reports_routes import router as reports_router
@@ -50,12 +51,13 @@ from app.models.work_schedule_model import WorkSchedule
 from app.services.demo_company_seed_service import ensure_demo_company_seed
 from app.services.demo_events_service import run_demo_events_scheduler
 from app.services.employee_bootstrap_service import ensure_employee_qr_tokens
+from app.services.location_onboarding_service import ensure_all_location_onboarding_tokens
 from app.services.schema_upgrade_service import ensure_schema_upgrades
 from app.services.user_bootstrap_service import ensure_superadmin_user
 
 
 PUBLIC_PATHS = {"/", "/login", "/logout", "/favicon.ico"}
-PUBLIC_PREFIXES = ("/static",)
+PUBLIC_PREFIXES = ("/static", "/onboarding")
 API_PREFIXES = ("/api",)
 DIRECT_API_PATHS = {"/scan", "/logs"}
 ARCHIVED_COMPANY_ERROR = "Archived company is not available in this workspace"
@@ -156,6 +158,7 @@ ensure_schema_upgrades()
 with SessionLocal() as db:
     ensure_superadmin_user(db)
     ensure_demo_company_seed(db)
+    ensure_all_location_onboarding_tokens(db)
     ensure_employee_qr_tokens(db)
 
 app.include_router(auth_router)
@@ -165,6 +168,7 @@ app.include_router(company_schedules_router)
 app.include_router(company_settings_router)
 app.include_router(company_terminals_router)
 app.include_router(company_users_router)
+app.include_router(onboarding_router)
 app.include_router(platform_router)
 app.include_router(employees_router)
 app.include_router(scan_router)

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Company</title>
+    <title>Admin Tools</title>
     <style>
         :root {
             --bg: #f4f6f8;
@@ -14,10 +14,12 @@
             --nav: #111827;
             --primary: #2563eb;
             --primary-dark: #1d4ed8;
+            --warning-bg: #fef3c7;
+            --warning-text: #92400e;
+            --danger-bg: #fee2e2;
+            --danger-text: #991b1b;
             --success-bg: #dcfce7;
             --success-text: #166534;
-            --error-bg: #fee2e2;
-            --error-text: #991b1b;
             --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         }
 
@@ -92,7 +94,7 @@
         }
 
         .page {
-            max-width: 900px;
+            max-width: 1180px;
             margin: 0 auto;
             padding: 34px 20px 48px;
         }
@@ -113,6 +115,7 @@
 
         .page-copy {
             margin: 8px 0 0;
+            max-width: 780px;
             color: var(--muted);
             line-height: 1.6;
         }
@@ -127,15 +130,20 @@
             font-size: 13px;
         }
 
-        .message {
-            display: inline-flex;
-            margin-bottom: 18px;
-            padding: 8px 12px;
-            border-radius: 999px;
-            background: var(--error-bg);
-            color: var(--error-text);
+        .warning {
+            margin-bottom: 22px;
+            padding: 16px 18px;
+            border-radius: 14px;
+            background: var(--warning-bg);
+            color: var(--warning-text);
+            line-height: 1.6;
             font-weight: bold;
-            font-size: 13px;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
         }
 
         .panel {
@@ -145,46 +153,56 @@
             padding: 24px;
         }
 
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 14px;
+        .panel h2 {
+            margin: 0 0 10px;
+            font-size: 22px;
         }
 
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+        .panel-copy {
+            margin: 0 0 16px;
+            color: var(--muted);
+            line-height: 1.6;
         }
 
-        .field.full {
-            grid-column: 1 / -1;
-        }
-
-        .field label {
-            color: #374151;
-            font-size: 13px;
+        .status {
+            display: inline-flex;
+            margin-bottom: 14px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 12px;
             font-weight: bold;
         }
 
-        .field input,
-        .field select {
-            min-height: 42px;
-            padding: 9px 11px;
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            background: white;
-            color: var(--text);
-            font: inherit;
+        .status.danger {
+            background: var(--danger-bg);
+            color: var(--danger-text);
         }
 
-        .actions {
+        .command {
+            margin: 0;
+            padding: 14px;
+            border-radius: 12px;
+            background: #111827;
+            color: #e5e7eb;
+            overflow-x: auto;
+            line-height: 1.6;
+            font-size: 13px;
+        }
+
+        .checklist {
+            margin: 0;
+            padding-left: 18px;
+            color: #374151;
+            line-height: 1.7;
+        }
+
+        .button-row {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-top: 18px;
+            gap: 10px;
             flex-wrap: wrap;
+            margin-top: 16px;
         }
 
         .button,
@@ -203,7 +221,6 @@
             border: none;
             background: var(--primary);
             color: white;
-            cursor: pointer;
         }
 
         .button:hover {
@@ -220,8 +237,8 @@
             background: #f3f4f6;
         }
 
-        @media (max-width: 760px) {
-            .form-grid {
+        @media (max-width: 820px) {
+            .tools-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -238,7 +255,7 @@
     <div class="navbar">
         <div>
             <div class="brand-title">QB Tracker Platform</div>
-            <div class="brand-subtitle">Create a new company workspace</div>
+            <div class="brand-subtitle">Super Admin system tools</div>
         </div>
         <div class="links">
             <a href="/platform/companies{{ platform_query }}">Companies</a>
@@ -256,54 +273,76 @@
     <main class="page">
         <div class="page-header">
             <div>
-                <h1>Create Company</h1>
+                <h1>Admin Tools</h1>
                 <p class="page-copy">
-                    Create a new client company and make it available in the platform workspace list.
+                    A protected workspace for platform-level operations. Keep risky maintenance tools here instead of mixing them with company screens.
                 </p>
             </div>
             <div class="badge">{{ user.role }}</div>
         </div>
 
-        {% if error %}
-        <div class="message">{{ error }}</div>
-        {% endif %}
+        <div class="warning">
+            Restore and destructive maintenance should stay server-side until we add audit logs, confirmation codes, and backup verification. This page is visible only to Super Admin.
+        </div>
 
-        <section class="panel">
-            <form method="post" action="/platform/companies{{ platform_query }}">
-                <div class="form-grid">
-                    <div class="field">
-                        <label for="name">Company name</label>
-                        <input id="name" name="name" required>
-                    </div>
-                    <div class="field">
-                        <label for="legal_name">Legal name</label>
-                        <input id="legal_name" name="legal_name">
-                    </div>
-                    <div class="field">
-                        <label for="email">Email</label>
-                        <input id="email" name="email" type="email">
-                    </div>
-                    <div class="field">
-                        <label for="phone">Phone</label>
-                        <input id="phone" name="phone">
-                    </div>
-                    <div class="field full">
-                        <label for="timezone">Timezone</label>
-                        <select id="timezone" name="timezone" required>
-                            {% for timezone_name in timezone_options %}
-                            <option value="{{ timezone_name }}" {% if timezone_name == "America/New_York" %}selected{% endif %}>
-                                {{ timezone_name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+        <div class="tools-grid">
+            <section class="panel">
+                <span class="status">Ready for server use</span>
+                <h2>Backup</h2>
+                <p class="panel-copy">
+                    Run a manual production backup before risky deploys or schedule it with cron for daily protection.
+                </p>
+                <pre class="command">cd /srv/qbtracker
+APP_DIR=/srv/qbtracker BACKUP_DIR=/srv/backups/qbtracker ./scripts/qbtracker_backup.sh</pre>
+                <div class="button-row">
+                    <a class="button" href="/platform/companies{{ platform_query }}">Back to Companies</a>
+                    <a class="secondary-link" href="/platform/admin-tools{{ platform_query }}">Refresh</a>
                 </div>
-                <div class="actions">
-                    <a class="secondary-link" href="/platform/companies{{ platform_query }}">Back to Companies</a>
-                    <button class="button" type="submit">Create Company</button>
-                </div>
-            </form>
-        </section>
+            </section>
+
+            <section class="panel">
+                <span class="status danger">Manual only for now</span>
+                <h2>Restore</h2>
+                <p class="panel-copy">
+                    Production restore is intentionally not a web button yet. The safer path is to restore to a test database first, verify, then replace production only when needed.
+                </p>
+                <pre class="command">cd /srv/qbtracker
+systemctl stop qbtracker.service
+source .env
+gunzip -c /srv/backups/qbtracker/qbtracker_db_TIMESTAMP.sql.gz | psql "$DATABASE_URL"
+systemctl start qbtracker.service</pre>
+            </section>
+
+            <section class="panel">
+                <span class="status">Pre-launch checklist</span>
+                <h2>Safety Checks</h2>
+                <p class="panel-copy">
+                    Things we should check from this area before launch.
+                </p>
+                <ul class="checklist">
+                    <li>Latest backup exists and is not empty.</li>
+                    <li>Restore was tested on a separate database.</li>
+                    <li>Company isolation tests pass.</li>
+                    <li>Role access tests pass.</li>
+                    <li>Production service has no recent warnings.</li>
+                </ul>
+            </section>
+
+            <section class="panel">
+                <span class="status">Future tools</span>
+                <h2>Coming Next</h2>
+                <p class="panel-copy">
+                    Good candidates for this page after backup/restore is stable.
+                </p>
+                <ul class="checklist">
+                    <li>Run demo company seed manually.</li>
+                    <li>View production health status.</li>
+                    <li>Check storage size for uploads.</li>
+                    <li>Export platform audit logs.</li>
+                    <li>Rotate system secrets with a guided flow.</li>
+                </ul>
+            </section>
+        </div>
     </main>
 </body>
 </html>

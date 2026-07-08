@@ -20,5 +20,7 @@ class Location(Base):
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
     geo_radius_meters = Column(Float, nullable=True)
+    onboarding_token = Column(String, unique=True, nullable=True, index=True)
+    onboarding_enabled = Column(Boolean, nullable=False, default=True)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
