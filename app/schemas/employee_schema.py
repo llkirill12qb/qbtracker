@@ -29,6 +29,8 @@ class EmployeeResponse(BaseModel):
     status: str | None = None
 
     is_active: bool
+    location_id: int | None = None
+    location_name: str | None = None
 
     photo_url: str | None = None
 

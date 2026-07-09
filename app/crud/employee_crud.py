@@ -180,6 +180,7 @@ def update_employee(
     email: str | None = None,
     employee_type: str = "full_time",
     status: str = "active",
+    location_id: int | None = None,
     notes: str | None = None,
 ):
     employee.full_name = full_name
@@ -190,6 +191,7 @@ def update_employee(
     employee.email = email
     employee.employee_type = employee_type
     employee.status = status
+    employee.location_id = location_id
     employee.notes = notes
     employee.is_active = employee_status_is_visible(status)
 

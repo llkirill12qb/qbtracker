@@ -406,6 +406,46 @@
             flex-wrap: wrap;
         }
 
+        .filters-bar {
+            display: grid;
+            grid-template-columns: minmax(180px, 260px) 1fr;
+            gap: 14px;
+            align-items: end;
+            margin-bottom: 16px;
+            padding: 16px;
+            border-radius: 16px;
+            background: white;
+            box-shadow: var(--shadow);
+        }
+
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-field label {
+            color: #374151;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .status-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .status-filter {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .status-filter.active {
+            background: var(--primary);
+            color: white;
+        }
+
         .employee {
             background: white;
             padding: 15px;
@@ -504,6 +544,10 @@
                 margin-left: 0;
                 width: 100%;
                 justify-content: space-between;
+            }
+
+            .filters-bar {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -607,6 +651,13 @@
                 <input name="phone" placeholder="Phone">
                 <input type="email" name="email" placeholder="Email">
 
+                <select name="location_id">
+                    <option value="">No Location</option>
+                    {% for location in locations %}
+                    <option value="{{ location.id }}">{{ location.name }}</option>
+                    {% endfor %}
+                </select>
+
                 <select name="employee_type">
                     <option value="full_time">Full Time</option>
                     <option value="part_time">Part Time</option>
@@ -671,6 +722,7 @@
                         <div id="cardPosition" class="employee-card-line"></div>
                         <div id="cardPhone" class="employee-card-line"></div>
                         <div id="cardEmail" class="employee-card-line"></div>
+                        <div id="cardLocation" class="employee-card-line"></div>
                         <div id="cardType" class="employee-card-line"></div>
                         <div id="cardStatus" class="employee-card-line"></div>
                         <div id="cardNotes" class="employee-card-line"></div>
@@ -702,6 +754,27 @@
         <div class="list-header">
             <h2 class="list-title">Employees List</h2>
             <div class="muted">Click any employee row to open the large card. Archived employees are shown on the Archive page.</div>
+        </div>
+        <div class="filters-bar">
+            <div class="filter-field">
+                <label for="locationFilter">Location</label>
+                <select id="locationFilter">
+                    <option value="">All Locations</option>
+                    <option value="none">No Location</option>
+                    {% for location in locations %}
+                    <option value="{{ location.id }}">{{ location.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label>Status</label>
+                <div class="status-filters">
+                    <button class="status-filter active" type="button" data-status="">All</button>
+                    <button class="status-filter" type="button" data-status="pending_photo">Pending Photo</button>
+                    <button class="status-filter" type="button" data-status="pending_badge">Pending Badge</button>
+                    <button class="status-filter" type="button" data-status="active">Active</button>
+                </div>
+            </div>
         </div>
         <div id="employees"></div>
     </div>
@@ -740,12 +813,15 @@ const cameraStatus = document.getElementById("cameraStatus");
 const startCameraButton = document.getElementById("startCameraButton");
 const capturePhotoButton = document.getElementById("capturePhotoButton");
 const retakePhotoButton = document.getElementById("retakePhotoButton");
+const locationFilter = document.getElementById("locationFilter");
+const statusFilterButtons = document.querySelectorAll(".status-filter");
 
 let employeesState = [];
 let selectedEmployeeId = null;
 let formMode = "create";
 let assetVersion = Date.now();
 let cameraStream = null;
+let activeStatusFilter = "";
 
 function placeholderSvg(label, size) {
     const svg = `
@@ -866,6 +942,7 @@ function setFormMode(mode, employee = null) {
         form.position.value = employee.position ?? "";
         form.phone.value = employee.phone ?? "";
         form.email.value = employee.email ?? "";
+        form.location_id.value = employee.location_id ?? "";
         form.employee_type.value = employee.employee_type ?? "full_time";
         form.status.value = employee.status ?? "active";
         form.notes.value = employee.notes ?? "";
@@ -927,6 +1004,7 @@ function fillEmployeeCard(emp) {
     document.getElementById("cardPosition").innerText = "Position: " + (emp.position ?? "");
     document.getElementById("cardPhone").innerText = "Phone: " + (emp.phone ?? "");
     document.getElementById("cardEmail").innerText = "Email: " + (emp.email ?? "");
+    document.getElementById("cardLocation").innerText = "Location: " + (emp.location_name ?? "No Location");
     document.getElementById("cardType").innerText = "Type: " + (emp.employee_type ?? "");
     document.getElementById("cardStatus").innerText = "Status: " + (emp.status ?? "");
     document.getElementById("cardNotes").innerText = "Notes: " + (emp.notes ?? "");
@@ -943,20 +1021,35 @@ function clearEmployeeCard() {
     emptyCard.style.display = "block";
 }
 
+function getFilteredEmployees() {
+    const selectedLocation = locationFilter.value;
+
+    return employeesState.filter(emp => {
+        const locationMatches =
+            !selectedLocation ||
+            (selectedLocation === "none" && !emp.location_id) ||
+            String(emp.location_id ?? "") === selectedLocation;
+        const statusMatches = !activeStatusFilter || emp.status === activeStatusFilter;
+        return locationMatches && statusMatches;
+    });
+}
+
 function renderEmployees() {
     employeesContainer.innerHTML = "";
-    employeeCount.textContent = `${employeesState.length} employee${employeesState.length === 1 ? "" : "s"}`;
+    const filteredEmployees = getFilteredEmployees();
+    const totalText = `${employeesState.length} total`;
+    employeeCount.textContent = `${filteredEmployees.length} shown / ${totalText}`;
 
-    if (!employeesState.length) {
+    if (!filteredEmployees.length) {
         employeesContainer.innerHTML = `
             <div class="empty-list">
-                No employees yet. Create the first employee from the form above to generate a card and QR code.
+                No employees match the current filters.
             </div>
         `;
         return;
     }
 
-    employeesState.forEach(emp => {
+    filteredEmployees.forEach(emp => {
         const row = document.createElement("div");
         row.className = "employee";
         row.dataset.employeeId = emp.id;
@@ -980,6 +1073,7 @@ function renderEmployees() {
         info.innerHTML = `
             <strong>${escapeHtml(emp.full_name)}</strong><br>
             <div class="employee-meta">Card: ${escapeHtml(emp.card_id)} | Dept: ${escapeHtml(emp.department ?? "-")} | Status: ${escapeHtml(emp.status ?? "-")}</div>
+            Location: ${escapeHtml(emp.location_name ?? "No Location")}<br>
             Position: ${escapeHtml(emp.position ?? "")}<br>
             Phone: ${escapeHtml(emp.phone ?? "")}<br>
             Email: ${escapeHtml(emp.email ?? "")}<br>
@@ -1053,7 +1147,9 @@ async function loadEmployees(selectedId = null) {
 
         renderEmployees();
 
-        const selectedEmployee = selectedEmployeeId ? getEmployeeById(selectedEmployeeId) : null;
+        const selectedEmployee = selectedEmployeeId && getFilteredEmployees().some(emp => emp.id === selectedEmployeeId)
+            ? getEmployeeById(selectedEmployeeId)
+            : null;
         if (selectedEmployee) {
             fillEmployeeCard(selectedEmployee);
         } else {
@@ -1125,6 +1221,36 @@ photoUploadInput.addEventListener("change", () => {
         cameraPhotoPreview.src = placeholderSvg("File", 320);
         setCameraStatus("Photo file selected. The uploaded file will be used instead of camera capture.");
     }
+});
+
+locationFilter.addEventListener("change", () => {
+    renderEmployees();
+    const selectedEmployee = selectedEmployeeId && getFilteredEmployees().some(emp => emp.id === selectedEmployeeId)
+        ? getEmployeeById(selectedEmployeeId)
+        : null;
+    if (selectedEmployee) {
+        fillEmployeeCard(selectedEmployee);
+    } else {
+        clearEmployeeCard();
+    }
+});
+
+statusFilterButtons.forEach(button => {
+    button.addEventListener("click", () => {
+        activeStatusFilter = button.dataset.status || "";
+        statusFilterButtons.forEach(filterButton => {
+            filterButton.classList.toggle("active", filterButton === button);
+        });
+        renderEmployees();
+        const selectedEmployee = selectedEmployeeId && getFilteredEmployees().some(emp => emp.id === selectedEmployeeId)
+            ? getEmployeeById(selectedEmployeeId)
+            : null;
+        if (selectedEmployee) {
+            fillEmployeeCard(selectedEmployee);
+        } else {
+            clearEmployeeCard();
+        }
+    });
 });
 
 form.addEventListener("submit", async event => {
