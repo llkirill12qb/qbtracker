@@ -8,11 +8,13 @@ from app.core.database import SessionLocal
 from app.core.roles import PERM_MANAGE_EMPLOYEES
 from app.core.security import require_permission
 from app.crud.employee_crud import (
+    advance_employee_after_photo,
     create_employee as create_employee_crud,
     get_all_employees,
     get_archived_employees,
     get_employee_by_card_id,
     get_employee_by_id,
+    mark_employee_badge_issued,
     restore_employee as restore_employee_crud,
     soft_delete_employee,
     update_employee as update_employee_crud,
@@ -97,8 +99,14 @@ def build_employee_response(employee, db: Session | None = None) -> EmployeeResp
         position=employee.position,
         phone=employee.phone,
         email=employee.email,
+        emergency_contact_name=employee.emergency_contact_name,
+        emergency_contact_phone=employee.emergency_contact_phone,
+        contractor_company=employee.contractor_company,
+        job_title=employee.job_title,
+        trade=employee.trade,
         employee_type=employee.employee_type,
         status=employee.status,
+        onboarding_status=employee.onboarding_status,
         is_active=employee.is_active,
         location_id=employee.location_id,
         location_name=location_name,
@@ -166,6 +174,7 @@ def create_employee(
                 employee=new_employee,
                 photo_filename=photo_filename,
             )
+            new_employee = advance_employee_after_photo(db, new_employee)
         elif photo and photo.filename:
             saved_path = save_employee_photo(
                 upload_file=photo,
@@ -178,6 +187,7 @@ def create_employee(
                 employee=new_employee,
                 photo_filename=photo_filename,
             )
+            new_employee = advance_employee_after_photo(db, new_employee)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -264,6 +274,7 @@ def update_employee(
                 employee=employee,
                 photo_filename=photo_filename,
             )
+            employee = advance_employee_after_photo(db, employee)
         elif photo and photo.filename:
             delete_employee_photo(employee.photo_filename, company_id)
             saved_path = save_employee_photo(
@@ -277,9 +288,28 @@ def update_employee(
                 employee=employee,
                 photo_filename=photo_filename,
             )
+            employee = advance_employee_after_photo(db, employee)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    return build_employee_response(employee, db)
+
+
+@router.post("/employees/{employee_id}/badge-issued", response_model=EmployeeResponse)
+def issue_employee_badge(request: Request, employee_id: int, db: Session = Depends(get_db)):
+    require_permission(request, PERM_MANAGE_EMPLOYEES)
+    company_id = get_current_company_id(request)
+    employee = get_employee_by_id(db, employee_id, company_id)
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    if employee.status != "pending_badge":
+        raise HTTPException(
+            status_code=400,
+            detail="Employee must be pending badge before issuing a badge",
+        )
+
+    employee = mark_employee_badge_issued(db, employee)
     return build_employee_response(employee, db)
 
 

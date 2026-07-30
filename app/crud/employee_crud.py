@@ -169,6 +169,27 @@ def update_employee_photo(db: Session, employee: Employee, photo_filename: str):
     return employee
 
 
+def advance_employee_after_photo(db: Session, employee: Employee):
+    if employee.status != "pending_photo":
+        return employee
+
+    employee.status = "pending_badge"
+    employee.onboarding_status = "pending_badge"
+    employee.is_active = True
+    db.commit()
+    db.refresh(employee)
+    return employee
+
+
+def mark_employee_badge_issued(db: Session, employee: Employee):
+    employee.status = "active"
+    employee.onboarding_status = "badge_issued"
+    employee.is_active = True
+    db.commit()
+    db.refresh(employee)
+    return employee
+
+
 def update_employee(
     db: Session,
     employee: Employee,
