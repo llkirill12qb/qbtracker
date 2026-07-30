@@ -497,6 +497,7 @@
                     <label>Actions</label>
                     <div class="actions">
                         <button id="applyFilters" class="btn-primary" type="button">Apply</button>
+                        <button id="exportCsv" class="btn-secondary" type="button">Export CSV</button>
                         <button id="resetFilters" class="btn-secondary" type="button">Reset</button>
                     </div>
                 </div>
@@ -573,6 +574,7 @@
         const employeeFilter = document.getElementById("employeeFilter");
         const eventFilter = document.getElementById("eventFilter");
         const applyFiltersButton = document.getElementById("applyFilters");
+        const exportCsvButton = document.getElementById("exportCsv");
         const resetFiltersButton = document.getElementById("resetFilters");
         const totalScans = document.getElementById("totalScans");
         const checkIns = document.getElementById("checkIns");
@@ -741,6 +743,10 @@
         }
 
         applyFiltersButton.addEventListener("click", loadReports);
+        exportCsvButton.addEventListener("click", () => {
+            const query = buildQueryString();
+            window.location.href = withWorkspaceQuery(`/reports/export.csv${query ? `?${query}` : ""}`);
+        });
 
         resetFiltersButton.addEventListener("click", () => {
             employeeFilter.value = "";
