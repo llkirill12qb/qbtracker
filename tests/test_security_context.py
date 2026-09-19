@@ -59,6 +59,7 @@ from app.models.location_model import Location
 from app.models.scan_log_model import ScanLog
 from app.models.terminal_model import Terminal
 from app.models.user_model import User
+from app.models.work_schedule_model import WorkSchedule
 from app.services.scan_service import get_logs, process_scan
 
 
