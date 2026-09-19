@@ -169,6 +169,27 @@ def update_employee_photo(db: Session, employee: Employee, photo_filename: str):
     return employee
 
 
+def advance_employee_after_photo(db: Session, employee: Employee):
+    if employee.status != "pending_photo":
+        return employee
+
+    employee.status = "pending_badge"
+    employee.onboarding_status = "pending_badge"
+    employee.is_active = True
+    db.commit()
+    db.refresh(employee)
+    return employee
+
+
+def mark_employee_badge_issued(db: Session, employee: Employee):
+    employee.status = "active"
+    employee.onboarding_status = "badge_issued"
+    employee.is_active = True
+    db.commit()
+    db.refresh(employee)
+    return employee
+
+
 def update_employee(
     db: Session,
     employee: Employee,
@@ -180,6 +201,7 @@ def update_employee(
     email: str | None = None,
     employee_type: str = "full_time",
     status: str = "active",
+    location_id: int | None = None,
     notes: str | None = None,
 ):
     employee.full_name = full_name
@@ -190,6 +212,7 @@ def update_employee(
     employee.email = email
     employee.employee_type = employee_type
     employee.status = status
+    employee.location_id = location_id
     employee.notes = notes
     employee.is_active = employee_status_is_visible(status)
 

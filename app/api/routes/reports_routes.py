@@ -1,7 +1,9 @@
+import csv
+import io
 from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
@@ -329,3 +331,121 @@ def reports_data(
         "rows": report_rows,
         "day_summaries": day_summaries,
     }
+
+
+def build_csv_response(filename: str, headers: list[str], rows: list[list[object]]) -> Response:
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(headers)
+    writer.writerows(rows)
+
+    return Response(
+        content="\ufeff" + output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/reports/export.csv")
+def export_reports_csv(
+    request: Request,
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
+    employee_id: int | None = Query(default=None),
+    event_type: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    data = reports_data(
+        request=request,
+        start_date=start_date,
+        end_date=end_date,
+        employee_id=employee_id,
+        event_type=event_type,
+        db=db,
+    )
+
+    rows = []
+    for index, row in enumerate(data["rows"], start=1):
+        rows.append([
+            index,
+            row.get("employee_name") or "",
+            row.get("employee_status") or "",
+            row.get("card_id") or "",
+            row.get("event") or "",
+            row.get("time_display") or row.get("time") or "",
+            row.get("timezone_abbr") or "",
+            row.get("location_name") or "",
+            row.get("terminal_name") or "",
+            row.get("scan_source") or "",
+            row.get("geo_status") or "",
+        ])
+
+    return build_csv_response(
+        "qbtracker_reports.csv",
+        [
+            "#",
+            "Employee",
+            "Status",
+            "Card ID",
+            "Event",
+            "Time",
+            "Timezone",
+            "Location",
+            "Terminal",
+            "Source",
+            "Geo Status",
+        ],
+        rows,
+    )
+
+
+@router.get("/reports/day-summary/export.csv")
+def export_day_summary_csv(
+    request: Request,
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
+    employee_id: int | None = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    data = reports_data(
+        request=request,
+        start_date=start_date,
+        end_date=end_date,
+        employee_id=employee_id,
+        event_type=None,
+        db=db,
+    )
+
+    rows = []
+    for index, row in enumerate(data["day_summaries"], start=1):
+        rows.append([
+            index,
+            row.get("employee_name") or "",
+            row.get("employee_status") or "",
+            row.get("date") or "",
+            row.get("first_check_in") or "",
+            row.get("last_check_out") or "",
+            row.get("events_count") or 0,
+            row.get("worked_duration") or "",
+            row.get("schedule_name") or "",
+            row.get("timezone_abbr") or "",
+            row.get("status") or "",
+        ])
+
+    return build_csv_response(
+        "qbtracker_day_summary.csv",
+        [
+            "#",
+            "Employee",
+            "Status",
+            "Date",
+            "First Check-in",
+            "Last Check-out",
+            "Events",
+            "Worked",
+            "Schedule",
+            "Timezone",
+            "Day Status",
+        ],
+        rows,
+    )
