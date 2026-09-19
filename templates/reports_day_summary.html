@@ -308,6 +308,7 @@
                     <label>Actions</label>
                     <div class="actions">
                         <button id="applyFilters" class="btn-primary" type="button">Apply</button>
+                        <button id="exportCsv" class="btn-secondary" type="button">Export CSV</button>
                         <button id="resetFilters" class="btn-secondary" type="button">Reset</button>
                     </div>
                 </div>
@@ -375,6 +376,7 @@
         const endDate = document.getElementById("endDate");
         const employeeFilter = document.getElementById("employeeFilter");
         const applyFiltersButton = document.getElementById("applyFilters");
+        const exportCsvButton = document.getElementById("exportCsv");
         const resetFiltersButton = document.getElementById("resetFilters");
         const totalScans = document.getElementById("totalScans");
         const daySummariesCount = document.getElementById("daySummariesCount");
@@ -525,6 +527,11 @@
         }
 
         applyFiltersButton.addEventListener("click", loadDaySummary);
+        exportCsvButton.addEventListener("click", () => {
+            const query = buildQueryString();
+            window.location.href = withWorkspaceQuery(`/reports/day-summary/export.csv${query ? `?${query}` : ""}`);
+        });
+
         resetFiltersButton.addEventListener("click", () => {
             employeeFilter.value = "";
             setDefaultDates();

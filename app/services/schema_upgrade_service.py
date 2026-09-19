@@ -192,6 +192,17 @@ def ensure_schema_upgrades():
         )
         connection.execute(
             text(
+                "UPDATE employees "
+                "SET status = 'pending_badge', "
+                "onboarding_status = 'pending_badge', "
+                "is_active = TRUE "
+                "WHERE status = 'pending_photo' "
+                "AND photo_filename IS NOT NULL "
+                "AND photo_filename <> ''"
+            )
+        )
+        connection.execute(
+            text(
                 "CREATE TABLE IF NOT EXISTS work_schedules ("
                 "id SERIAL PRIMARY KEY, "
                 "company_id INTEGER NOT NULL, "

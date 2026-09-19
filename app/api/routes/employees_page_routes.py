@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.core.roles import PERM_MANAGE_EMPLOYEES
 from app.core.security import require_permission
 from app.crud.company_crud import get_company_by_id
+from app.crud.location_crud import get_locations
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -16,10 +17,12 @@ templates = Jinja2Templates(directory="templates")
 @router.get("/employees-page", response_class=HTMLResponse)
 def employees_page(request: Request, db: Session = Depends(get_db)):
     require_permission(request, PERM_MANAGE_EMPLOYEES)
-    company = get_company_by_id(db, get_current_company_id(request))
+    company_id = get_current_company_id(request)
+    company = get_company_by_id(db, company_id)
+    locations = get_locations(db, company_id)
     return templates.TemplateResponse(
         "employees_page.html",
-        {"request": request, "company": company}
+        {"request": request, "company": company, "locations": locations}
     )
 
 

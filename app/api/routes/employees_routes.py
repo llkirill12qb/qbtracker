@@ -8,16 +8,19 @@ from app.core.database import SessionLocal
 from app.core.roles import PERM_MANAGE_EMPLOYEES
 from app.core.security import require_permission
 from app.crud.employee_crud import (
+    advance_employee_after_photo,
     create_employee as create_employee_crud,
     get_all_employees,
     get_archived_employees,
     get_employee_by_card_id,
     get_employee_by_id,
+    mark_employee_badge_issued,
     restore_employee as restore_employee_crud,
     soft_delete_employee,
     update_employee as update_employee_crud,
     update_employee_photo,
 )
+from app.crud.location_crud import get_location_by_id, get_location_name_by_id
 from app.schemas.employee_schema import EmployeeResponse
 from app.services.photo_service import (
     delete_employee_photo,
@@ -56,13 +59,37 @@ def normalize_captured_photo(captured_photo: str | None) -> str | None:
     return captured_photo or None
 
 
-def build_employee_response(employee) -> EmployeeResponse:
+def normalize_location_id(db: Session, company_id: int, location_id: str | None):
+    if not location_id:
+        return None
+
+    clean_value = location_id.strip()
+    if not clean_value:
+        return None
+
+    try:
+        parsed_location_id = int(clean_value)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid location")
+
+    location = get_location_by_id(db, parsed_location_id, company_id)
+    if not location:
+        raise HTTPException(status_code=400, detail="Invalid location")
+
+    return parsed_location_id
+
+
+def build_employee_response(employee, db: Session | None = None) -> EmployeeResponse:
     photo_url = None
     if employee.photo_filename:
         photo_url = (
             f"/uploads/companies/company_{employee.company_id}/employees/"
             f"{employee.photo_filename}"
         )
+
+    location_name = None
+    if db is not None:
+        location_name = get_location_name_by_id(db, employee.location_id, employee.company_id)
 
     return EmployeeResponse(
         id=employee.id,
@@ -72,9 +99,17 @@ def build_employee_response(employee) -> EmployeeResponse:
         position=employee.position,
         phone=employee.phone,
         email=employee.email,
+        emergency_contact_name=employee.emergency_contact_name,
+        emergency_contact_phone=employee.emergency_contact_phone,
+        contractor_company=employee.contractor_company,
+        job_title=employee.job_title,
+        trade=employee.trade,
         employee_type=employee.employee_type,
         status=employee.status,
+        onboarding_status=employee.onboarding_status,
         is_active=employee.is_active,
+        location_id=employee.location_id,
+        location_name=location_name,
         photo_url=photo_url,
         notes=employee.notes,
         created_at=employee.created_at,
@@ -92,6 +127,7 @@ def create_employee(
     email: str = Form(""),
     employee_type: str = Form("full_time"),
     status: str = Form("active"),
+    location_id: str = Form(""),
     notes: str = Form(""),
     captured_photo: str = Form(""),
     photo: UploadFile | None = File(None),
@@ -108,6 +144,7 @@ def create_employee(
 
     validate_photo_extension(photo)
     captured_photo_value = normalize_captured_photo(captured_photo)
+    parsed_location_id = normalize_location_id(db, company_id, location_id)
 
     new_employee = create_employee_crud(
         db=db,
@@ -121,6 +158,7 @@ def create_employee(
         status=status,
         notes=notes or None,
         company_id=company_id,
+        location_id=parsed_location_id,
     )
 
     try:
@@ -136,6 +174,7 @@ def create_employee(
                 employee=new_employee,
                 photo_filename=photo_filename,
             )
+            new_employee = advance_employee_after_photo(db, new_employee)
         elif photo and photo.filename:
             saved_path = save_employee_photo(
                 upload_file=photo,
@@ -148,10 +187,11 @@ def create_employee(
                 employee=new_employee,
                 photo_filename=photo_filename,
             )
+            new_employee = advance_employee_after_photo(db, new_employee)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    return build_employee_response(new_employee)
+    return build_employee_response(new_employee, db)
 
 
 @router.get("/employees", response_model=list[EmployeeResponse])
@@ -159,7 +199,7 @@ def get_employees(request: Request, db: Session = Depends(get_db)):
     require_permission(request, PERM_MANAGE_EMPLOYEES)
     company_id = get_current_company_id(request)
     employees = get_all_employees(db, company_id)
-    return [build_employee_response(emp) for emp in employees]
+    return [build_employee_response(emp, db) for emp in employees]
 
 
 @router.get("/employees/archived", response_model=list[EmployeeResponse])
@@ -167,7 +207,7 @@ def get_archived_employees_list(request: Request, db: Session = Depends(get_db))
     require_permission(request, PERM_MANAGE_EMPLOYEES)
     company_id = get_current_company_id(request)
     employees = get_archived_employees(db, company_id)
-    return [build_employee_response(emp) for emp in employees]
+    return [build_employee_response(emp, db) for emp in employees]
 
 
 @router.put("/employees/{employee_id}", response_model=EmployeeResponse)
@@ -182,6 +222,7 @@ def update_employee(
     email: str = Form(""),
     employee_type: str = Form("full_time"),
     status: str = Form("active"),
+    location_id: str = Form(""),
     notes: str = Form(""),
     captured_photo: str = Form(""),
     photo: UploadFile | None = File(None),
@@ -202,6 +243,7 @@ def update_employee(
 
     validate_photo_extension(photo)
     captured_photo_value = normalize_captured_photo(captured_photo)
+    parsed_location_id = normalize_location_id(db, company_id, location_id)
 
     employee = update_employee_crud(
         db=db,
@@ -214,6 +256,7 @@ def update_employee(
         email=email or None,
         employee_type=employee_type,
         status=status,
+        location_id=parsed_location_id,
         notes=notes or None,
     )
 
@@ -231,6 +274,7 @@ def update_employee(
                 employee=employee,
                 photo_filename=photo_filename,
             )
+            employee = advance_employee_after_photo(db, employee)
         elif photo and photo.filename:
             delete_employee_photo(employee.photo_filename, company_id)
             saved_path = save_employee_photo(
@@ -244,10 +288,29 @@ def update_employee(
                 employee=employee,
                 photo_filename=photo_filename,
             )
+            employee = advance_employee_after_photo(db, employee)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    return build_employee_response(employee)
+    return build_employee_response(employee, db)
+
+
+@router.post("/employees/{employee_id}/badge-issued", response_model=EmployeeResponse)
+def issue_employee_badge(request: Request, employee_id: int, db: Session = Depends(get_db)):
+    require_permission(request, PERM_MANAGE_EMPLOYEES)
+    company_id = get_current_company_id(request)
+    employee = get_employee_by_id(db, employee_id, company_id)
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    if employee.status != "pending_badge":
+        raise HTTPException(
+            status_code=400,
+            detail="Employee must be pending badge before issuing a badge",
+        )
+
+    employee = mark_employee_badge_issued(db, employee)
+    return build_employee_response(employee, db)
 
 
 @router.delete("/employees/{employee_id}")
@@ -277,4 +340,4 @@ def restore_employee(request: Request, employee_id: int, db: Session = Depends(g
         raise HTTPException(status_code=404, detail="Employee not found")
 
     employee = restore_employee_crud(db, employee)
-    return build_employee_response(employee)
+    return build_employee_response(employee, db)

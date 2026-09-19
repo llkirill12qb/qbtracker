@@ -1,4 +1,5 @@
 import asyncio
+import os
 from urllib.parse import quote_plus
 
 from fastapi import FastAPI, HTTPException, Request
@@ -61,6 +62,12 @@ PUBLIC_PREFIXES = ("/static", "/onboarding")
 API_PREFIXES = ("/api",)
 DIRECT_API_PATHS = {"/scan", "/logs"}
 ARCHIVED_COMPANY_ERROR = "Archived company is not available in this workspace"
+ENABLE_API_DOCS = os.getenv("ENABLE_API_DOCS", "true").strip().lower() not in {
+    "0",
+    "false",
+    "no",
+    "off",
+}
 
 
 def is_api_request_path(path: str) -> bool:
@@ -145,7 +152,11 @@ class AuthRequiredMiddleware(BaseHTTPMiddleware):
         return RedirectResponse(url="/login", status_code=303)
 
 
-app = FastAPI()
+app = FastAPI(
+    docs_url="/docs" if ENABLE_API_DOCS else None,
+    redoc_url="/redoc" if ENABLE_API_DOCS else None,
+    openapi_url="/openapi.json" if ENABLE_API_DOCS else None,
+)
 app.add_middleware(AuthRequiredMiddleware)
 app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
 
