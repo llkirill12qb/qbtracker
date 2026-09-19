@@ -28,6 +28,7 @@ class AttendanceSummaryTests(unittest.TestCase):
             has_check_out=True,
             last_event_type="check-out",
             scan_timezone=self.tz,
+            use_work_schedules=True,
         )
 
         self.assertEqual(result["status"], "Late")
@@ -40,6 +41,7 @@ class AttendanceSummaryTests(unittest.TestCase):
             has_check_out=True,
             last_event_type="check-out",
             scan_timezone=self.tz,
+            use_work_schedules=True,
         )
 
         self.assertEqual(result["status"], "Early leave")
@@ -52,6 +54,7 @@ class AttendanceSummaryTests(unittest.TestCase):
             has_check_out=True,
             last_event_type="check-out",
             scan_timezone=self.tz,
+            use_work_schedules=True,
         )
 
         self.assertEqual(result["status"], "Late / Early leave")
